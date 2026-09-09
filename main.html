@@ -1,0 +1,1377 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>DxS Connect</title>
+  <script src="https://telegram.org/js/telegram-web-app.js?56"></script>
+  <style>
+    :root {
+      --tg-theme-bg-color: #ffffff;
+      --tg-theme-secondary-bg-color: #f4f4f5;
+      --tg-theme-text-color: #000000;
+      --tg-theme-hint-color: #8e8e93;
+      --tg-theme-button-color: #3390ec;
+      --tg-theme-button-text-color: #ffffff;
+      --tg-theme-link-color: #3390ec;
+      --tg-theme-destructive-text-color: #ff3b30;
+      --tg-theme-section-separator-color: rgba(0,0,0,0.08);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    html, body {
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--tg-theme-bg-color);
+      color: var(--tg-theme-text-color);
+      overflow: hidden;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      padding-bottom: calc(56px + env(safe-area-inset-bottom));
+    }
+
+    .screen {
+      display: none;
+      flex-direction: column;
+      height: 100%;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .screen.active { display: flex; }
+
+    .page-header {
+      padding: 16px 16px 8px;
+      position: sticky;
+      top: 0;
+      background: var(--tg-theme-bg-color);
+      z-index: 10;
+    }
+    .page-header.with-back {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .back-btn {
+      width: 40px;
+      height: 40px;
+      border: none;
+      background: none;
+      color: var(--tg-theme-button-color);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-left: -8px;
+      border-radius: 10px;
+    }
+    .back-btn:active { background: rgba(0,0,0,0.05); }
+    .page-title {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+    .page-subtitle {
+      font-size: 14px;
+      color: var(--tg-theme-hint-color);
+      margin-top: 4px;
+    }
+
+    .content { padding: 8px 16px 24px; }
+
+    .card {
+      background: var(--tg-theme-secondary-bg-color);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .btn {
+      width: 100%;
+      height: 48px;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.15s;
+      gap: 8px;
+    }
+    .btn:active { opacity: 0.85; }
+    .btn-primary {
+      background: var(--tg-theme-button-color);
+      color: var(--tg-theme-button-text-color);
+    }
+    .btn-secondary {
+      background: var(--tg-theme-secondary-bg-color);
+      color: var(--tg-theme-text-color);
+    }
+    .btn-destructive {
+      background: transparent;
+      color: var(--tg-theme-destructive-text-color);
+      font-weight: 500;
+    }
+
+    /* HOME */
+    .brand-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 16px 12px;
+    }
+    .shield-icon {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      background: var(--tg-theme-button-color);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .brand-title { font-size: 20px; font-weight: 700; line-height: 1.2; }
+    .brand-subtitle { font-size: 13px; color: var(--tg-theme-hint-color); margin-top: 2px; }
+
+    .sub-card {
+      margin: 8px 16px 20px;
+      background: var(--tg-theme-secondary-bg-color);
+      border-radius: 16px;
+      padding: 16px;
+    }
+    .status-row {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 15px; font-weight: 500; margin-bottom: 16px;
+    }
+    .status-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #34c759;
+      box-shadow: 0 0 0 3px rgba(52,199,89,0.25);
+    }
+    .stats-grid {
+      display: grid; grid-template-columns: 1fr 1fr 1fr;
+      margin-bottom: 16px; position: relative;
+    }
+    .stat-item { text-align: center; padding: 0 6px; }
+    .stat-label { font-size: 12px; color: var(--tg-theme-hint-color); margin-bottom: 4px; }
+    .stat-value { font-size: 15px; font-weight: 600; }
+    .stats-grid::before, .stats-grid::after {
+      content: ""; position: absolute; top: 10%; bottom: 10%;
+      width: 1px; background: var(--tg-theme-section-separator-color);
+    }
+    .stats-grid::before { left: 33.333%; }
+    .stats-grid::after  { left: 66.666%; }
+
+    .menu-section {
+      margin: 0 16px 24px;
+      background: var(--tg-theme-secondary-bg-color);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .menu-item {
+      display: flex; align-items: center;
+      padding: 12px 14px; gap: 14px;
+      cursor: pointer; position: relative;
+    }
+    .menu-item:active { background: rgba(0,0,0,0.04); }
+    .menu-item:not(:last-child)::after {
+      content: ""; position: absolute;
+      left: 62px; right: 0; bottom: 0;
+      height: 0.5px; background: var(--tg-theme-section-separator-color);
+    }
+    .menu-icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; color: #fff;
+    }
+    .menu-icon.blue   { background: #3390ec; }
+    .menu-icon.purple { background: #af52de; }
+    .menu-icon.green  { background: #34c759; }
+    .menu-icon.orange { background: #ff9500; }
+    .menu-icon.gray   { background: #8e8e93; }
+    .menu-text { flex: 1; min-width: 0; }
+    .menu-title { font-size: 16px; font-weight: 500; }
+    .menu-desc {
+      font-size: 13px; color: var(--tg-theme-hint-color);
+      margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .menu-arrow { color: var(--tg-theme-hint-color); opacity: 0.7; display: flex; }
+
+    /* TARIFFS */
+    .tariff-card {
+      background: var(--tg-theme-secondary-bg-color);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 12px;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .tariff-card.selected {
+      border-color: var(--tg-theme-button-color);
+      background: color-mix(in srgb, var(--tg-theme-button-color) 8%, var(--tg-theme-secondary-bg-color));
+    }
+    .tariff-top {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      margin-bottom: 6px;
+    }
+    .tariff-name { font-size: 17px; font-weight: 600; }
+    .tariff-price { font-size: 18px; font-weight: 700; color: var(--tg-theme-button-color); }
+    .tariff-badge {
+      display: inline-block;
+      font-size: 12px; font-weight: 600;
+      color: #34c759;
+      background: rgba(52,199,89,0.12);
+      padding: 2px 8px; border-radius: 6px;
+      margin-bottom: 6px;
+    }
+    .tariff-desc { font-size: 14px; color: var(--tg-theme-hint-color); }
+
+    /* DEVICES */
+    .device-card {
+      background: var(--tg-theme-secondary-bg-color);
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .device-icon {
+      width: 40px; height: 40px; border-radius: 10px;
+      background: var(--tg-theme-bg-color);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      color: var(--tg-theme-text-color);
+    }
+    .device-info { flex: 1; min-width: 0; }
+    .device-name { font-size: 16px; font-weight: 500; }
+    .device-meta { font-size: 13px; color: var(--tg-theme-hint-color); margin-top: 2px; }
+    .device-badge { font-size: 12px; font-weight: 500; color: #34c759; }
+    .device-more {
+      width: 36px; height: 36px;
+      border: none; background: none;
+      color: var(--tg-theme-hint-color);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 8px;
+    }
+    .device-more:active { background: rgba(0,0,0,0.05); }
+
+    /* CONNECTION */
+    .conn-item {
+      display: flex; align-items: center;
+      background: var(--tg-theme-secondary-bg-color);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 10px;
+      gap: 14px;
+      cursor: pointer;
+    }
+    .conn-item:active { opacity: 0.85; }
+    .conn-icon {
+      width: 44px; height: 44px; border-radius: 12px;
+      background: var(--tg-theme-bg-color);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      color: var(--tg-theme-text-color);
+    }
+    .conn-text { flex: 1; }
+    .conn-title { font-size: 16px; font-weight: 600; }
+    .conn-desc { font-size: 13px; color: var(--tg-theme-hint-color); margin-top: 2px; }
+
+    .steps { margin-top: 8px; }
+    .step { display: flex; gap: 14px; margin-bottom: 20px; }
+    .step-num {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--tg-theme-button-color);
+      color: #fff; font-size: 14px; font-weight: 600;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .step-body { flex: 1; padding-top: 3px; }
+    .step-title { font-size: 16px; font-weight: 500; margin-bottom: 4px; }
+    .step-desc { font-size: 14px; color: var(--tg-theme-hint-color); line-height: 1.4; }
+
+    /* PROMO */
+    .promo-center {
+      display: flex; flex-direction: column;
+      align-items: center; text-align: center;
+      padding: 32px 16px 24px;
+    }
+    .promo-icon-wrap {
+      width: 64px; height: 64px; border-radius: 16px;
+      background: rgba(255,149,0,0.12);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 16px;
+      color: #ff9500;
+    }
+    .promo-title { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+    .promo-desc {
+      font-size: 15px; color: var(--tg-theme-hint-color);
+      max-width: 280px; line-height: 1.4; margin-bottom: 28px;
+    }
+    .promo-input {
+      width: 100%; height: 50px;
+      border: none; border-radius: 12px;
+      background: var(--tg-theme-secondary-bg-color);
+      padding: 0 16px; font-size: 17px;
+      color: var(--tg-theme-text-color);
+      text-align: center; letter-spacing: 1px;
+      outline: none; margin-bottom: 12px;
+    }
+    .promo-input::placeholder { color: var(--tg-theme-hint-color); letter-spacing: 0; }
+    .promo-success {
+      display: none;
+      background: rgba(52,199,89,0.12);
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-top: 16px;
+      text-align: center;
+      width: 100%;
+    }
+    .promo-success.visible { display: block; }
+    .promo-success-title {
+      font-size: 16px; font-weight: 600; color: #34c759;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .promo-success-desc { font-size: 14px; color: var(--tg-theme-hint-color); margin-top: 4px; }
+
+    /* HELP */
+    .search-box { margin-bottom: 16px; }
+    .search-input {
+      width: 100%; height: 40px;
+      border: none; border-radius: 10px;
+      background: var(--tg-theme-secondary-bg-color);
+      padding: 0 14px 0 40px;
+      font-size: 16px; color: var(--tg-theme-text-color);
+      outline: none;
+    }
+    .search-wrap { position: relative; }
+    .search-wrap svg {
+      position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+      color: var(--tg-theme-hint-color); pointer-events: none;
+    }
+    .faq-group { margin-bottom: 20px; }
+    .faq-group-title {
+      font-size: 13px; font-weight: 600;
+      color: var(--tg-theme-hint-color);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      margin-bottom: 8px; padding-left: 4px;
+    }
+    .faq-item {
+      background: var(--tg-theme-secondary-bg-color);
+      border-radius: 12px;
+      margin-bottom: 6px;
+      overflow: hidden;
+    }
+    .faq-question {
+      padding: 14px 16px;
+      font-size: 15px; font-weight: 500;
+      cursor: pointer;
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 12px;
+    }
+    .faq-chevron {
+      color: var(--tg-theme-hint-color);
+      transition: transform 0.2s;
+      flex-shrink: 0;
+    }
+    .faq-item.open .faq-chevron { transform: rotate(-90deg); }
+    .faq-answer {
+      display: none;
+      padding: 0 16px 14px;
+      font-size: 14px; color: var(--tg-theme-hint-color);
+      line-height: 1.45;
+    }
+    .faq-item.open .faq-answer { display: block; }
+
+    .help-footer { margin-top: 24px; text-align: center; }
+    .help-footer-text {
+      font-size: 14px; color: var(--tg-theme-hint-color);
+      margin-bottom: 12px;
+    }
+
+    /* SUBSCRIPTION */
+    .sub-status-card {
+      background: var(--tg-theme-secondary-bg-color);
+      border-radius: 16px;
+      padding: 20px 16px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .sub-status-icon {
+      width: 48px; height: 48px; border-radius: 50%;
+      background: rgba(52,199,89,0.12);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 10px;
+      color: #34c759;
+    }
+    .sub-status-title { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+    .sub-status-plan { font-size: 15px; color: var(--tg-theme-hint-color); }
+
+    .sub-info-row {
+      display: flex; justify-content: space-between;
+      padding: 14px 0;
+      border-bottom: 0.5px solid var(--tg-theme-section-separator-color);
+      font-size: 15px;
+    }
+    .sub-info-row:last-child { border-bottom: none; }
+    .sub-info-label { color: var(--tg-theme-hint-color); }
+    .sub-info-value { font-weight: 500; }
+
+    .settings-group { margin-bottom: 24px; }
+    .settings-group-title {
+      font-size: 13px; font-weight: 600;
+      color: var(--tg-theme-hint-color);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      margin-bottom: 8px; padding-left: 4px;
+    }
+    .settings-list {
+      background: var(--tg-theme-secondary-bg-color);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .settings-item {
+      display: flex; align-items: center;
+      padding: 13px 16px; gap: 12px;
+      cursor: pointer; position: relative;
+    }
+    .settings-item:active { background: rgba(0,0,0,0.04); }
+    .settings-item:not(:last-child)::after {
+      content: ""; position: absolute;
+      left: 16px; right: 0; bottom: 0;
+      height: 0.5px; background: var(--tg-theme-section-separator-color);
+    }
+    .settings-item-icon {
+      width: 28px; height: 28px; border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; color: #fff;
+    }
+    .settings-item-text { flex: 1; font-size: 16px; }
+    .settings-item-value { font-size: 15px; color: var(--tg-theme-hint-color); }
+    .settings-item-arrow { color: var(--tg-theme-hint-color); opacity: 0.7; display: flex; }
+
+    /* TAB BAR */
+    .tab-bar {
+      position: fixed; left: 0; right: 0; bottom: 0;
+      height: calc(56px + env(safe-area-inset-bottom));
+      padding-bottom: env(safe-area-inset-bottom);
+      background: var(--tg-theme-bg-color);
+      border-top: 0.5px solid var(--tg-theme-section-separator-color);
+      display: flex; z-index: 50;
+    }
+    .tab {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 2px;
+      cursor: pointer; color: var(--tg-theme-hint-color);
+      font-size: 10px; font-weight: 500;
+      user-select: none;
+    }
+    .tab.active { color: var(--tg-theme-button-color); }
+    .tab-icon {
+      width: 26px; height: 26px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .tab-avatar {
+      width: 26px; height: 26px; border-radius: 50%;
+      object-fit: cover; background: var(--tg-theme-secondary-bg-color);
+    }
+
+    /* Modal sheet */
+    .sheet-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 100;
+      opacity: 0; visibility: hidden;
+      transition: opacity 0.25s, visibility 0.25s;
+    }
+    .sheet-overlay.open { opacity: 1; visibility: visible; }
+    .sheet {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: var(--tg-theme-bg-color);
+      border-radius: 16px 16px 0 0;
+      padding: 12px 16px calc(16px + env(safe-area-inset-bottom));
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+    }
+    .sheet-overlay.open .sheet { transform: translateY(0); }
+    .sheet-title {
+      font-size: 13px; font-weight: 600;
+      color: var(--tg-theme-hint-color);
+      text-align: center;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+    }
+    .sheet-btn {
+      width: 100%; height: 50px;
+      border: none; border-radius: 12px;
+      background: var(--tg-theme-secondary-bg-color);
+      color: var(--tg-theme-text-color);
+      font-size: 16px; font-weight: 500;
+      cursor: pointer;
+      margin-bottom: 8px;
+    }
+    .sheet-btn.danger { color: var(--tg-theme-destructive-text-color); }
+    .sheet-btn.cancel {
+      background: transparent;
+      color: var(--tg-theme-button-color);
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==================== HOME ==================== -->
+  <div class="screen active" id="screen-home">
+    <header class="brand-header">
+      <div class="shield-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-title">DxS Connect</div>
+        <div class="brand-subtitle">По-настоящему быстрый интернет</div>
+      </div>
+    </header>
+
+    <section class="sub-card">
+      <div class="status-row">
+        <span class="status-dot"></span>
+        <span>Подписка активна</span>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-label">Тариф</div>
+          <div class="stat-value">1 месяц</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Осталось</div>
+          <div class="stat-value">24 дня</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Действует до</div>
+          <div class="stat-value">12.10.2025</div>
+        </div>
+      </div>
+      <button class="btn btn-primary" data-go="subscription" data-from="home">Управление подпиской</button>
+    </section>
+
+    <section class="menu-section">
+      <div class="menu-item" data-go="tariffs" data-from="home">
+        <div class="menu-icon blue">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+        </div>
+        <div class="menu-text">
+          <div class="menu-title">Тарифы</div>
+          <div class="menu-desc">Выбрать или продлить план</div>
+        </div>
+        <div class="menu-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+      </div>
+      <div class="menu-item" data-go="devices" data-from="home">
+        <div class="menu-icon purple">
+          <!-- Devices: phone + laptop -->
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="7" y="2" width="10" height="16" rx="1.5"/>
+            <path d="M11 15h2"/>
+            <path d="M2 18h6"/>
+            <path d="M16 18h6"/>
+            <path d="M4 18v-5a1 1 0 0 1 1-1h2"/>
+            <path d="M20 18v-5a1 1 0 0 0-1-1h-2"/>
+          </svg>
+        </div>
+        <div class="menu-text">
+          <div class="menu-title">Мои устройства</div>
+          <div class="menu-desc">Управление подключёнными устройствами</div>
+        </div>
+        <div class="menu-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+      </div>
+      <div class="menu-item" data-go="connection" data-from="home">
+        <div class="menu-icon green">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1"/></svg>
+        </div>
+        <div class="menu-text">
+          <div class="menu-title">Подключение</div>
+          <div class="menu-desc">Конфигурации и инструкции</div>
+        </div>
+        <div class="menu-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+      </div>
+      <div class="menu-item" data-go="promo" data-from="home">
+        <div class="menu-icon orange">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+        </div>
+        <div class="menu-text">
+          <div class="menu-title">Промокод</div>
+          <div class="menu-desc">Активировать бонусный код</div>
+        </div>
+        <div class="menu-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+      </div>
+      <div class="menu-item" data-go="help" data-from="home">
+        <div class="menu-icon gray">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+        <div class="menu-text">
+          <div class="menu-title">Помощь</div>
+          <div class="menu-desc">FAQ и поддержка</div>
+        </div>
+        <div class="menu-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ==================== TARIFFS ==================== -->
+  <div class="screen" id="screen-tariffs">
+    <div class="page-header with-back">
+      <button class="back-btn" data-back>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div>
+        <div class="page-title">Тарифы</div>
+        <div class="page-subtitle">Выберите подходящий вариант</div>
+      </div>
+    </div>
+    <div class="content">
+      <div class="tariff-card selected" data-plan="1">
+        <div class="tariff-top">
+          <div class="tariff-name">1 месяц</div>
+          <div class="tariff-price">199 ₽</div>
+        </div>
+        <div class="tariff-desc">Без обязательств · Можно отменить в любой момент</div>
+      </div>
+      <div class="tariff-card" data-plan="3">
+        <div class="tariff-top">
+          <div class="tariff-name">3 месяца</div>
+          <div class="tariff-price">499 ₽</div>
+        </div>
+        <div class="tariff-badge">Экономия 17%</div>
+        <div class="tariff-desc">Выгоднее помесячной оплаты</div>
+      </div>
+      <div class="tariff-card" data-plan="12">
+        <div class="tariff-top">
+          <div class="tariff-name">12 месяцев</div>
+          <div class="tariff-price">1 499 ₽</div>
+        </div>
+        <div class="tariff-badge">Экономия 37%</div>
+        <div class="tariff-desc">Максимальная выгода</div>
+      </div>
+      <button class="btn btn-primary" id="btn-pay" style="margin-top:16px">Выбрать</button>
+    </div>
+  </div>
+
+  <!-- ==================== DEVICES ==================== -->
+  <div class="screen" id="screen-devices">
+    <div class="page-header with-back">
+      <button class="back-btn" data-back>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div>
+        <div class="page-title">Мои устройства</div>
+        <div class="page-subtitle">2 из 5 устройств подключено</div>
+      </div>
+    </div>
+    <div class="content">
+      <div class="device-card" data-device="iphone">
+        <div class="device-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg>
+        </div>
+        <div class="device-info">
+          <div class="device-name">iPhone 16 Pro</div>
+          <div class="device-meta">iOS · <span class="device-badge">Сейчас подключено</span></div>
+        </div>
+        <button class="device-more" data-device-action="iphone">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+        </button>
+      </div>
+      <div class="device-card" data-device="mac">
+        <div class="device-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg>
+        </div>
+        <div class="device-info">
+          <div class="device-name">Mac mini</div>
+          <div class="device-meta">macOS · Был в сети 4 мин назад</div>
+        </div>
+        <button class="device-more" data-device-action="mac">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+        </button>
+      </div>
+      <div class="device-card" data-device="ipad">
+        <div class="device-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M11 18h2"/></svg>
+        </div>
+        <div class="device-info">
+          <div class="device-name">iPad</div>
+          <div class="device-meta">iPadOS · Был в сети вчера</div>
+        </div>
+        <button class="device-more" data-device-action="ipad">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== CONNECTION ==================== -->
+  <div class="screen" id="screen-connection">
+    <div class="page-header with-back">
+      <button class="back-btn" data-back>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div>
+        <div class="page-title">Подключение</div>
+        <div class="page-subtitle">Настройте DxS Connect на своём устройстве</div>
+      </div>
+    </div>
+    <div class="content" id="conn-list">
+      <div class="conn-item" data-platform="ios">
+        <div class="conn-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+        </div>
+        <div class="conn-text">
+          <div class="conn-title">iPhone / iPad</div>
+          <div class="conn-desc">Подключить на iOS</div>
+        </div>
+        <div class="menu-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+      </div>
+      <div class="conn-item" data-platform="mac">
+        <div class="conn-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg>
+        </div>
+        <div class="conn-text">
+          <div class="conn-title">Mac</div>
+          <div class="conn-desc">Подключить на macOS</div>
+        </div>
+        <div class="menu-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+      </div>
+      <div class="conn-item" data-platform="android">
+        <div class="conn-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M17.6 9.48l1.84-3.18c.16-.31.04-.69-.26-.85-.29-.15-.65-.06-.83.22l-1.88 3.24a11.43 11.43 0 0 0-8.94 0L5.65 5.67c-.19-.28-.54-.37-.83-.22-.3.16-.42.54-.26.85L6.4 9.48C3.3 11.25 1.28 14.44 1 18h22c-.28-3.56-2.3-6.75-5.4-8.52zM7 15.25a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5zm10 0a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5z"/></svg>
+        </div>
+        <div class="conn-text">
+          <div class="conn-title">Android</div>
+          <div class="conn-desc">Подключить на Android</div>
+        </div>
+        <div class="menu-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+      </div>
+      <div class="conn-item" data-platform="windows">
+        <div class="conn-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M3 5.5L10.5 4.5v6.5H3V5.5zm0 13L10.5 19.5v-6.5H3v5.5zM11.5 4.3L21 3v8h-9.5V4.3zm0 16.4L21 21v-8h-9.5v7.7z"/></svg>
+        </div>
+        <div class="conn-text">
+          <div class="conn-title">Windows</div>
+          <div class="conn-desc">Подключить на Windows</div>
+        </div>
+        <div class="menu-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+      </div>
+    </div>
+
+    <div class="content" id="conn-guide" style="display:none">
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">Скачайте приложение</div>
+            <div class="step-desc">Установите рекомендуемый клиент из App Store / Google Play / сайта.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Импортируйте конфигурацию</div>
+            <div class="step-desc">Нажмите кнопку ниже — конфигурация откроется автоматически в приложении.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">Нажмите «Подключиться»</div>
+            <div class="step-desc">Готово! VPN начнёт работать.</div>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="btn-get-config">Получить конфигурацию</button>
+      <button class="btn btn-secondary" style="margin-top:10px" id="btn-back-platforms">Назад к выбору</button>
+    </div>
+  </div>
+
+  <!-- ==================== PROMO ==================== -->
+  <div class="screen" id="screen-promo">
+    <div class="page-header with-back">
+      <button class="back-btn" data-back>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div class="page-title">Промокод</div>
+    </div>
+    <div class="promo-center">
+      <div class="promo-icon-wrap">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+      </div>
+      <div class="promo-title">Промокод</div>
+      <div class="promo-desc">Введите промокод, чтобы получить скидку или бонус.</div>
+      <input type="text" class="promo-input" id="promo-input" placeholder="Введите промокод" autocomplete="off">
+      <button class="btn btn-primary" id="btn-promo">Активировать</button>
+      <div class="promo-success" id="promo-success">
+        <div class="promo-success-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#34c759" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+          Промокод активирован
+        </div>
+        <div class="promo-success-desc">Ваша скидка — 20%</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== HELP ==================== -->
+  <div class="screen" id="screen-help">
+    <div class="page-header with-back">
+      <button class="back-btn" data-back>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div class="page-title">Помощь</div>
+    </div>
+    <div class="content">
+      <div class="search-box">
+        <div class="search-wrap">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          <input type="text" class="search-input" id="faq-search" placeholder="Поиск по вопросам">
+        </div>
+      </div>
+
+      <div class="faq-group" data-group="start">
+        <div class="faq-group-title">Начало работы</div>
+        <div class="faq-item">
+          <div class="faq-question">
+            Как подключить VPN?
+            <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+          <div class="faq-answer">Откройте раздел «Подключение», выберите ваше устройство и следуйте пошаговой инструкции. Конфигурация импортируется автоматически.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-question">
+            Какое приложение использовать?
+            <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+          <div class="faq-answer">Мы рекомендуем официальные клиенты: Streisand / Hiddify для iOS, v2rayNG для Android, Clash Verge для desktop.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-question">
+            На каких устройствах работает DxS Connect?
+            <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+          <div class="faq-answer">iOS, Android, Windows, macOS, Linux. Можно подключить до 5 устройств одновременно.</div>
+        </div>
+      </div>
+
+      <div class="faq-group" data-group="sub">
+        <div class="faq-group-title">Подписка</div>
+        <div class="faq-item">
+          <div class="faq-question">
+            Как купить подписку?
+            <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+          <div class="faq-answer">Перейдите в «Тарифы», выберите план и оплатите удобным способом. Подписка активируется мгновенно.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-question">
+            Как продлить подписку?
+            <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+          <div class="faq-answer">Откройте «Управление подпиской» → «Продлить подписку» или включите автопродление.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-question">
+            Что произойдёт после окончания подписки?
+            <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+          <div class="faq-answer">VPN перестанет работать. Данные и конфигурации сохранятся — достаточно продлить подписку.</div>
+        </div>
+      </div>
+
+      <div class="faq-group" data-group="pay">
+        <div class="faq-group-title">Оплата</div>
+        <div class="faq-item">
+          <div class="faq-question">
+            Какие способы оплаты доступны?
+            <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+          <div class="faq-answer">Банковские карты, СБП, криптовалюта. Список зависит от вашего региона.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-question">
+            Что делать, если платёж не прошёл?
+            <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+          <div class="faq-answer">Проверьте баланс и лимиты карты. Если проблема остаётся — напишите в поддержку с номером заказа.</div>
+        </div>
+      </div>
+
+      <div class="help-footer">
+        <div class="help-footer-text">Не нашли ответ?</div>
+        <button class="btn btn-primary" id="btn-support">Написать в поддержку</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SUBSCRIPTION ==================== -->
+  <div class="screen" id="screen-subscription">
+    <div class="page-header">
+      <div class="page-title">Ваша подписка</div>
+    </div>
+    <div class="content">
+      <div class="sub-status-card">
+        <div class="sub-status-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+        </div>
+        <div class="sub-status-title">Активна</div>
+        <div class="sub-status-plan">DxS Connect — 1 месяц</div>
+      </div>
+
+      <div class="card" style="padding: 4px 16px; margin-bottom: 20px;">
+        <div class="sub-info-row">
+          <span class="sub-info-label">Осталось</span>
+          <span class="sub-info-value">24 дня</span>
+        </div>
+        <div class="sub-info-row">
+          <span class="sub-info-label">Действует до</span>
+          <span class="sub-info-value">12.10.2025</span>
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <div class="settings-list">
+          <div class="settings-item" data-action="autorenew">
+            <div class="settings-item-text">Автопродление</div>
+            <div class="settings-item-value" id="autorenew-value">Включено</div>
+            <div class="settings-item-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+          </div>
+          <div class="settings-item" data-action="history">
+            <div class="settings-item-text">История платежей</div>
+            <div class="settings-item-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+          </div>
+          <div class="settings-item" data-go="tariffs" data-from="subscription">
+            <div class="settings-item-text">Изменить тариф</div>
+            <div class="settings-item-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+          </div>
+          <div class="settings-item" data-go="tariffs" data-from="subscription">
+            <div class="settings-item-text">Продлить подписку</div>
+            <div class="settings-item-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn btn-destructive" id="btn-cancel-sub">Отменить подписку</button>
+    </div>
+  </div>
+
+  <!-- ==================== SETTINGS ==================== -->
+  <div class="screen" id="screen-settings">
+    <div class="page-header">
+      <div class="page-title">Настройки</div>
+    </div>
+    <div class="content">
+      <div class="settings-group">
+        <div class="settings-group-title">Аккаунт</div>
+        <div class="settings-list">
+          <div class="settings-item" data-action="account">
+            <div class="settings-item-icon" style="background:#3390ec">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <div class="settings-item-text" id="tg-username">Telegram аккаунт</div>
+            <div class="settings-item-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <div class="settings-group-title">Приложение</div>
+        <div class="settings-list">
+          <div class="settings-item" data-action="notifications">
+            <div class="settings-item-icon" style="background:#ff9500">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            </div>
+            <div class="settings-item-text">Уведомления</div>
+            <div class="settings-item-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+          </div>
+          <div class="settings-item" data-action="language">
+            <div class="settings-item-icon" style="background:#34c759">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            </div>
+            <div class="settings-item-text">Язык</div>
+            <div class="settings-item-value">Русский</div>
+            <div class="settings-item-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+          </div>
+          <div class="settings-item" data-action="theme">
+            <div class="settings-item-icon" style="background:#af52de">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+            </div>
+            <div class="settings-item-text">Тема</div>
+            <div class="settings-item-value">Системная</div>
+            <div class="settings-item-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <div class="settings-group-title">Поддержка</div>
+        <div class="settings-list">
+          <div class="settings-item" data-go="help" data-from="settings">
+            <div class="settings-item-icon" style="background:#8e8e93">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            </div>
+            <div class="settings-item-text">Помощь</div>
+            <div class="settings-item-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+          </div>
+          <div class="settings-item" data-action="support">
+            <div class="settings-item-icon" style="background:#3390ec">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            </div>
+            <div class="settings-item-text">Связаться с поддержкой</div>
+            <div class="settings-item-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <div class="settings-group-title">Информация</div>
+        <div class="settings-list">
+          <div class="settings-item" data-action="terms">
+            <div class="settings-item-text">Пользовательское соглашение</div>
+            <div class="settings-item-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+          </div>
+          <div class="settings-item" data-action="privacy">
+            <div class="settings-item-text">Политика конфиденциальности</div>
+            <div class="settings-item-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+          </div>
+          <div class="settings-item" data-action="about">
+            <div class="settings-item-text">О DxS Connect</div>
+            <div class="settings-item-value">v1.0.0</div>
+            <div class="settings-item-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB BAR -->
+  <nav class="tab-bar">
+    <div class="tab active" data-tab="home">
+      <div class="tab-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+      </div>
+      <span>Главная</span>
+    </div>
+    <div class="tab" data-tab="subscription">
+      <div class="tab-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+      </div>
+      <span>Подписка</span>
+    </div>
+    <div class="tab" data-tab="settings">
+      <div class="tab-icon">
+        <img id="user-avatar" class="tab-avatar" src="" alt="" style="display:none">
+        <svg id="default-avatar" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+      </div>
+      <span>Настройки</span>
+    </div>
+  </nav>
+
+  <!-- Device action sheet -->
+  <div class="sheet-overlay" id="device-sheet">
+    <div class="sheet">
+      <div class="sheet-title" id="device-sheet-title">Устройство</div>
+      <button class="sheet-btn danger" id="sheet-disconnect">Отключить устройство</button>
+      <button class="sheet-btn cancel" id="sheet-cancel">Отмена</button>
+    </div>
+  </div>
+
+<script>
+(function () {
+  /* ===== Telegram init ===== */
+  if (!window.Telegram || !window.Telegram.WebApp) {
+    window.Telegram = {
+      WebApp: {
+        ready: () => {}, expand: () => {},
+        themeParams: {}, colorScheme: 'light',
+        initDataUnsafe: { user: { first_name: 'User', username: 'username', photo_url: null } },
+        showAlert: (m) => alert(m),
+        HapticFeedback: {
+          impactOccurred: () => {},
+          notificationOccurred: () => {},
+          selectionChanged: () => {}
+        },
+        MainButton: { hide: () => {}, show: () => {} }
+      }
+    };
+  }
+  const tg = window.Telegram.WebApp;
+  tg.ready();
+  tg.expand();
+
+  if (tg.themeParams) {
+    const root = document.documentElement;
+    const map = {
+      bg_color: '--tg-theme-bg-color',
+      secondary_bg_color: '--tg-theme-secondary-bg-color',
+      text_color: '--tg-theme-text-color',
+      hint_color: '--tg-theme-hint-color',
+      button_color: '--tg-theme-button-color',
+      button_text_color: '--tg-theme-button-text-color',
+      link_color: '--tg-theme-link-color',
+      destructive_text_color: '--tg-theme-destructive-text-color'
+    };
+    for (const [k, v] of Object.entries(map)) {
+      if (tg.themeParams[k]) root.style.setProperty(v, tg.themeParams[k]);
+    }
+  }
+
+  const user = tg.initDataUnsafe?.user;
+  if (user?.photo_url) {
+    const img = document.getElementById('user-avatar');
+    img.src = user.photo_url;
+    img.style.display = 'block';
+    document.getElementById('default-avatar').style.display = 'none';
+  }
+  if (user?.username) {
+    document.getElementById('tg-username').textContent = '@' + user.username;
+  } else if (user?.first_name) {
+    document.getElementById('tg-username').textContent = user.first_name;
+  }
+
+  /* ===== Haptics ===== */
+  function haptic(type) {
+    try {
+      const hf = tg.HapticFeedback;
+      if (!hf) return;
+      if (type === 'light') hf.impactOccurred('light');
+      else if (type === 'medium') hf.impactOccurred('medium');
+      else if (type === 'heavy') hf.impactOccurred('heavy');
+      else if (type === 'success') hf.notificationOccurred('success');
+      else if (type === 'error') hf.notificationOccurred('error');
+      else if (type === 'warning') hf.notificationOccurred('warning');
+      else if (type === 'select') hf.selectionChanged();
+    } catch (e) {}
+  }
+
+  /* ===== Navigation stack ===== */
+  const TAB_SCREENS = new Set(['home', 'subscription', 'settings']);
+  let historyStack = ['home'];
+  let currentScreen = 'home';
+
+  function showScreen(name) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    const el = document.getElementById('screen-' + name);
+    if (el) {
+      el.classList.add('active');
+      el.scrollTop = 0;
+    }
+    currentScreen = name;
+
+    if (TAB_SCREENS.has(name)) {
+      document.querySelectorAll('.tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.tab === name);
+      });
+    }
+  }
+
+  function go(name, from) {
+    if (name === currentScreen) return;
+    haptic('light');
+    if (from) {
+      historyStack.push(currentScreen);
+    }
+    // reset connection guide when leaving
+    if (currentScreen === 'connection') {
+      document.getElementById('conn-list').style.display = 'block';
+      document.getElementById('conn-guide').style.display = 'none';
+    }
+    showScreen(name);
+  }
+
+  function goBack() {
+    haptic('light');
+    if (currentScreen === 'connection') {
+      const guide = document.getElementById('conn-guide');
+      if (guide.style.display !== 'none') {
+        document.getElementById('conn-list').style.display = 'block';
+        guide.style.display = 'none';
+        return;
+      }
+    }
+    const prev = historyStack.pop() || 'home';
+    showScreen(prev);
+  }
+
+  function goTab(name) {
+    if (name === currentScreen) return;
+    haptic('light');
+    historyStack = [name];
+    showScreen(name);
+  }
+
+  /* ===== Event binding ===== */
+  // data-go navigation
+  document.querySelectorAll('[data-go]').forEach(el => {
+    el.addEventListener('click', () => {
+      const to = el.dataset.go;
+      const from = el.dataset.from || currentScreen;
+      go(to, from);
+    });
+  });
+
+  // Back buttons
+  document.querySelectorAll('[data-back]').forEach(el => {
+    el.addEventListener('click', goBack);
+  });
+
+  // Tabs
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => goTab(tab.dataset.tab));
+  });
+
+  // Tariffs select
+  document.querySelectorAll('.tariff-card').forEach(card => {
+    card.addEventListener('click', () => {
+      haptic('select');
+      document.querySelectorAll('.tariff-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+    });
+  });
+
+  document.getElementById('btn-pay').addEventListener('click', () => {
+    haptic('medium');
+    const selected = document.querySelector('.tariff-card.selected');
+    const plan = selected ? selected.dataset.plan : '1';
+    tg.showAlert('Переход к оплате тарифа: ' + plan + ' мес.');
+  });
+
+  // Devices sheet
+  const deviceSheet = document.getElementById('device-sheet');
+  let activeDevice = null;
+
+  document.querySelectorAll('[data-device-action]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      haptic('light');
+      activeDevice = btn.dataset.deviceAction;
+      const names = { iphone: 'iPhone 16 Pro', mac: 'Mac mini', ipad: 'iPad' };
+      document.getElementById('device-sheet-title').textContent = names[activeDevice] || 'Устройство';
+      deviceSheet.classList.add('open');
+    });
+  });
+
+  document.getElementById('sheet-cancel').addEventListener('click', () => {
+    haptic('light');
+    deviceSheet.classList.remove('open');
+  });
+
+  document.getElementById('sheet-disconnect').addEventListener('click', () => {
+    haptic('warning');
+    deviceSheet.classList.remove('open');
+    tg.showAlert('Устройство отключено');
+  });
+
+  deviceSheet.addEventListener('click', (e) => {
+    if (e.target === deviceSheet) {
+      haptic('light');
+      deviceSheet.classList.remove('open');
+    }
+  });
+
+  // Connection platforms
+  document.querySelectorAll('[data-platform]').forEach(item => {
+    item.addEventListener('click', () => {
+      haptic('light');
+      document.getElementById('conn-list').style.display = 'none';
+      document.getElementById('conn-guide').style.display = 'block';
+    });
+  });
+
+  document.getElementById('btn-back-platforms').addEventListener('click', () => {
+    haptic('light');
+    document.getElementById('conn-list').style.display = 'block';
+    document.getElementById('conn-guide').style.display = 'none';
+  });
+
+  document.getElementById('btn-get-config').addEventListener('click', () => {
+    haptic('success');
+    tg.showAlert('Конфигурация отправлена');
+  });
+
+  // Promo
+  document.getElementById('btn-promo').addEventListener('click', () => {
+    const val = document.getElementById('promo-input').value.trim();
+    if (!val) {
+      haptic('error');
+      tg.showAlert('Введите промокод');
+      return;
+    }
+    haptic('success');
+    document.getElementById('promo-success').classList.add('visible');
+  });
+
+  // FAQ
+  document.querySelectorAll('.faq-question').forEach(q => {
+    q.addEventListener('click', () => {
+      haptic('select');
+      q.parentElement.classList.toggle('open');
+    });
+  });
+
+  document.getElementById('faq-search').addEventListener('input', function () {
+    const q = this.value.toLowerCase().trim();
+    document.querySelectorAll('.faq-item').forEach(item => {
+      const text = item.textContent.toLowerCase();
+      item.style.display = !q || text.includes(q) ? '' : 'none';
+    });
+    document.querySelectorAll('.faq-group').forEach(g => {
+      const visible = [...g.querySelectorAll('.faq-item')].some(i => i.style.display !== 'none');
+      g.style.display = visible ? '' : 'none';
+    });
+  });
+
+  document.getElementById('btn-support').addEventListener('click', () => {
+    haptic('medium');
+    tg.showAlert('Открываем чат поддержки...');
+  });
+
+  // Subscription actions
+  let autorenew = true;
+  document.querySelectorAll('#screen-subscription [data-action]').forEach(el => {
+    el.addEventListener('click', () => {
+      haptic('light');
+      const action = el.dataset.action;
+      if (action === 'autorenew') {
+        autorenew = !autorenew;
+        document.getElementById('autorenew-value').textContent = autorenew ? 'Включено' : 'Выключено';
+        haptic(autorenew ? 'success' : 'warning');
+      } else if (action === 'history') {
+        tg.showAlert('История платежей');
+      }
+    });
+  });
+
+  document.getElementById('btn-cancel-sub').addEventListener('click', () => {
+    haptic('warning');
+    tg.showAlert('Отменить подписку?');
+  });
+
+  // Settings actions
+  document.querySelectorAll('#screen-settings [data-action]').forEach(el => {
+    el.addEventListener('click', () => {
+      haptic('light');
+      const map = {
+        account: 'Профиль Telegram',
+        notifications: 'Настройки уведомлений',
+        language: 'Выбор языка',
+        theme: 'Тема оформления',
+        support: 'Чат поддержки',
+        terms: 'Пользовательское соглашение',
+        privacy: 'Политика конфиденциальности',
+        about: 'DxS Connect v1.0.0'
+      };
+      tg.showAlert(map[el.dataset.action] || el.dataset.action);
+    });
+  });
+})();
+</script>
+</body>
+</html>
