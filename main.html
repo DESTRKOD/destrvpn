@@ -49,9 +49,6 @@
       flex-direction: column;
     }
 
-    /* ===== SCREENS =====
-       Обычный экран — без встроенного padding-bottom, потому что под островок
-       отступ задаётся адресно у контента (например, .menu-section). */
     .screen {
       position: absolute;
       inset: 0;
@@ -65,13 +62,12 @@
     }
     .screen.active { display: flex; }
 
-    /* Экраны-табы (с островком) — реальный отступ под островок через padding-bottom.
-       Он даёт скролл-контейнеру место, чтобы последний блок не уезжал под островок. */
+    /* Табы с островком — запас места под островок от самого контента,
+       не через padding-bottom скрина (он ломал flex-сжатие) */
     .screen.tab-screen {
-      padding-bottom: calc(var(--island-h) + var(--island-bottom) + 40px);
+      padding-bottom: calc(var(--island-h) + var(--island-bottom) + 16px);
     }
 
-    /* Внутренние экраны — небольшой нижний отступ */
     .screen.no-island {
       padding-bottom: calc(24px + env(safe-area-inset-bottom));
     }
@@ -147,6 +143,7 @@
       background: var(--tg-theme-secondary-bg-color);
       border-radius: 16px;
       padding: 16px;
+      flex-shrink: 0;
     }
     .status-row { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 500; margin-bottom: 16px; }
     .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #34c759; box-shadow: 0 0 0 3px rgba(52,199,89,0.25); }
@@ -161,14 +158,15 @@
     .stats-grid::before { left: 33.333%; }
     .stats-grid::after  { left: 66.666%; }
 
-    /* menu-section — реальный нижний отступ, который выходит за островок.
-       Это ключевое место: именно здесь мы даём место под «Помощь». */
+    /* КЛЮЧЕВОЙ ФИКС: flex-shrink: 0 — контейнер не сжимается, все 5 пунктов видны.
+       margin-bottom даёт место под островок, скролл делает .screen */
     .menu-section {
       margin: 0 16px;
-      margin-bottom: calc(var(--island-h) + var(--island-bottom) + 32px);
+      margin-bottom: calc(var(--island-h) + var(--island-bottom) + 16px);
       background: var(--tg-theme-secondary-bg-color);
       border-radius: 14px;
       overflow: hidden;
+      flex-shrink: 0;
     }
     .menu-item {
       display: flex; align-items: center;
@@ -468,24 +466,25 @@
     .theme-toggle.dark { background: var(--tg-theme-button-color); }
     .theme-toggle.dark::after { transform: translateX(20px); }
 
-    /* PROFILE HEADER */
+    /* PROFILE HEADER — уменьшен в 2 раза */
     .profile-header {
       position: relative;
       width: 100%;
-      padding: calc(28px + env(safe-area-inset-top)) 16px 48px;
+      padding: calc(16px + env(safe-area-inset-top)) 16px 24px;
       background: #242D34;
       color: #FFFFFF;
       overflow: hidden;
       display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 320px;
+      min-height: 160px;
+      flex-shrink: 0;
     }
     .profile-glow {
       position: absolute;
       top: 50%; left: 50%;
-      width: 520px; height: 520px;
-      max-width: 140vw; max-height: 140vw;
+      width: 300px; height: 300px;
+      max-width: 90vw; max-height: 90vw;
       transform: translate(-50%, -50%);
       background: radial-gradient(
         circle at center,
@@ -529,41 +528,42 @@
       align-items: center;
     }
     .profile-avatar {
-      width: 130px;
-      height: 130px;
+      width: 88px;
+      height: 88px;
       border-radius: 50%;
       overflow: hidden;
       border: 1px solid rgba(255, 255, 255, 0.2);
       background: #3a4650;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
-      margin-bottom: 20px;
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
+      margin-bottom: 12px;
     }
     .profile-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .profile-avatar-fallback {
       width: 100%; height: 100%;
       display: flex; align-items: center; justify-content: center;
-      font-size: 52px; font-weight: 700; color: #fff;
+      font-size: 34px; font-weight: 700; color: #fff;
       background: linear-gradient(135deg, #6b8ba4, #3a4d5c);
       text-transform: lowercase;
     }
     .profile-name {
-      font-size: 32px; font-weight: 700;
+      font-size: 22px; font-weight: 700;
       color: #FFFFFF; text-align: center;
-      line-height: 1.1; letter-spacing: -0.4px;
+      line-height: 1.1; letter-spacing: -0.3px;
       text-transform: lowercase;
-      margin-bottom: 5px;
+      margin-bottom: 3px;
       word-break: break-word; max-width: 90vw;
     }
     .profile-username {
-      font-size: 18px; font-weight: 400;
+      font-size: 14px; font-weight: 400;
       color: #A2B5C3; text-align: center;
       word-break: break-word; max-width: 90vw;
     }
     @media (max-height: 600px) {
-      .profile-header { min-height: 240px; padding: 20px 16px 40px; }
-      .profile-avatar { width: 100px; height: 100px; margin-bottom: 14px; }
-      .profile-name { font-size: 26px; }
-      .profile-username { font-size: 16px; }
+      .profile-header { min-height: 140px; padding: 12px 16px 20px; }
+      .profile-avatar { width: 72px; height: 72px; margin-bottom: 10px; }
+      .profile-avatar-fallback { font-size: 28px; }
+      .profile-name { font-size: 20px; }
+      .profile-username { font-size: 13px; }
     }
 
     /* LANGUAGE OPTION LIST */
@@ -610,8 +610,8 @@
       border: 1px solid var(--island-border);
       box-shadow:
         inset 0px 2px 4px var(--island-inset),
-        0 8px 24px rgba(20, 45, 80, 0.22),
-        0 2px 6px rgba(20, 45, 80, 0.14);
+        0 8px 24px rgba(20, 45, 80, 0.28),
+        0 2px 6px rgba(20, 45, 80, 0.2);
       z-index: 60;
       min-width: 280px;
       max-width: calc(100vw - 32px);
@@ -1415,6 +1415,7 @@
     '--island-lens-bg': 'rgba(255, 255, 255, 0.6)',
     '--island-lens-inset': 'rgba(255, 255, 255, 0.95)'
   };
+  /* Тёмная тема — островок плотнее и ярче, чтобы был виден на тёмном фоне */
   const DARK_THEME = {
     '--tg-theme-bg-color': '#17212b',
     '--tg-theme-secondary-bg-color': '#232e3c',
@@ -1425,12 +1426,12 @@
     '--tg-theme-link-color': '#6ab3f3',
     '--tg-theme-destructive-text-color': '#ec3942',
     '--tg-theme-section-separator-color': 'rgba(255,255,255,0.08)',
-    '--island-bg': 'rgba(82, 136, 193, 0.22)',
-    '--island-border': 'rgba(255, 255, 255, 0.22)',
-    '--island-inset': 'rgba(255, 255, 255, 0.3)',
-    '--island-text': 'rgba(255, 255, 255, 0.72)',
-    '--island-lens-bg': 'rgba(255, 255, 255, 0.2)',
-    '--island-lens-inset': 'rgba(255, 255, 255, 0.55)'
+    '--island-bg': 'rgba(58, 110, 170, 0.55)',
+    '--island-border': 'rgba(255, 255, 255, 0.35)',
+    '--island-inset': 'rgba(255, 255, 255, 0.45)',
+    '--island-text': 'rgba(255, 255, 255, 0.8)',
+    '--island-lens-bg': 'rgba(255, 255, 255, 0.32)',
+    '--island-lens-inset': 'rgba(255, 255, 255, 0.7)'
   };
 
   let currentTheme = localStorage.getItem('dxs_theme') || 'light';
@@ -1752,9 +1753,8 @@
     didDrag = false;
     pendingX = localX;
 
-    /* ВАЖНО: линзу здесь НЕ двигаем и НЕ сбрасываем transition.
-       Если это тап — линза просто плавно потечёт в commit().
-       Если это drag — renderDragFrame сбросит transition сам. */
+    /* Линзу НЕ двигаем здесь — она плавно дотечёт в commit при тапе,
+       или пойдёт за пальцем при drag */
   }
 
   function onPointerMove(e) {
@@ -1766,7 +1766,7 @@
 
     if (!didDrag && (dxTotal > DRAG_THRESHOLD || dyTotal > DRAG_THRESHOLD)) {
       didDrag = true;
-      island.classList.add('dragging'); // отключаем transition только когда drag реально начался
+      island.classList.add('dragging');
     }
     if (!didDrag) return;
 
@@ -1836,7 +1836,6 @@
 
     const b = btnByTab(tab);
     if (b) {
-      /* Включаем transition — линза плавно дотечёт до целевой позиции */
       lens.style.transition = '';
       applyLens(b.left, b.width, true);
       startGradientTracking();
