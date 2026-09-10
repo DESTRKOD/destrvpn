@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>DxS Connect</title>
+  <script src="https://telegram.org/js/telegram-web-app.js?56"></script>
+  <style>
+    :root {
+      --tg-theme-bg-color: #ffffff;
+      --tg-theme-secondary-bg-color: #f4f4f5;
+      --tg-theme-text-color: #000000;
+      --tg-theme-hint-color: #8e8e93;
+      --tg-theme-button-color: #3390ec;
+      --tg-theme-button-text-color: #ffffff;
+      --tg-theme-section-bg-color: #ffffff;
+      --tg-theme-section-header-text-color: #6d6d72;
+      --tg-theme-section-separator-color: #c8c7cc;
+      --tg-theme-link-color: #3390ec;
+      --tg-theme-destructive-text-color: #ff3b30;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--tg-theme-bg-color);
+      color: var(--tg-theme-text-color);
+      overflow: hidden;
+    }
+
+    body {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+      overflow: hidden;
+    }
+
+    .screen {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      padding: 0 16px;
+      background: var(--tg-theme-bg-color);
+      transform: translateX(100%);
+      opacity: 0;
+      visibility: hidden;
+      transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1),
+                  opacity 0.32s cubic-bezier(0.32, 0.72, 0, 1),
+                  visibility 0.32s;
+      will-change: transform, opacity;
+    }
+    .screen.active {
+      transform: translateX(0);
+      opacity: 1;
+      visibility: visible;
+    }
+    /* Класс для возврата вправо (назад) */
+    .screen.leaving-right {
+      transform: translateX(100%);
+      opacity: 0;
+      visibility: hidden;
+    }
+    /* Класс для ухода влево (вперёд) */
+    .screen.leaving-left {
+      transform: translateX(-30%);
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    .header {
+      text-align: center;
+      padding: 28px 8px 20px;
+    }
+    .header h1 {
+      font-size: 24px;
+      font-weight: 700;
+      line-height: 1.25;
+      margin-bottom: 10px;
+      letter-spacing: -0.3px;
+    }
+    .header p {
+      font-size: 15px;
+      line-height: 1.35;
+      color: var(--tg-theme-hint-color);
+      max-width: 320px;
+      margin: 0 auto;
+    }
+
+    .country-row {
+      display: flex;
+      align-items: center;
+      background: var(--tg-theme-section-bg-color);
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: background 0.15s;
+      user-select: none;
+    }
+    .country-row:active {
+      background: var(--tg-theme-secondary-bg-color);
+    }
+    .country-flag {
+      font-size: 28px;
+      line-height: 1;
+      margin-right: 14px;
+      width: 32px;
+      text-align: center;
+    }
+    .country-name {
+      flex: 1;
+      font-size: 17px;
+      font-weight: 400;
+    }
+    .country-arrow {
+      color: var(--tg-theme-hint-color);
+      font-size: 18px;
+      font-weight: 300;
+    }
+
+    .phone-row {
+      display: flex;
+      align-items: center;
+      background: var(--tg-theme-section-bg-color);
+      border-radius: 12px;
+      padding: 4px 16px;
+      height: 52px;
+      margin-bottom: 8px;
+    }
+    .phone-code {
+      font-size: 20px;
+      font-weight: 400;
+      min-width: 42px;
+      margin-right: 8px;
+      color: var(--tg-theme-text-color);
+    }
+    .phone-input {
+      flex: 1;
+      border: none;
+      outline: none;
+      background: transparent;
+      font-size: 20px;
+      color: var(--tg-theme-text-color);
+      letter-spacing: 0.3px;
+      height: 100%;
+      font-family: inherit;
+    }
+    .phone-input::placeholder {
+      color: var(--tg-theme-hint-color);
+      letter-spacing: 0;
+    }
+
+    .error-text {
+      font-size: 14px;
+      color: var(--tg-theme-destructive-text-color);
+      padding: 4px 4px 0;
+      min-height: 22px;
+      display: none;
+    }
+    .error-text.visible {
+      display: block;
+    }
+
+    .bottom {
+      margin-top: auto;
+      padding: 16px 0 calc(16px + env(safe-area-inset-bottom));
+    }
+    .btn {
+      width: 100%;
+      height: 50px;
+      border: none;
+      border-radius: 12px;
+      background: var(--tg-theme-button-color);
+      color: var(--tg-theme-button-text-color);
+      font-size: 17px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.2s;
+      position: relative;
+      font-family: inherit;
+    }
+    .btn:disabled {
+      opacity: 0.45;
+      cursor: default;
+    }
+    .btn:not(:disabled):active {
+      opacity: 0.85;
+    }
+    .btn .spinner {
+      display: none;
+      width: 22px;
+      height: 22px;
+      border: 2.5px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    .btn.loading .btn-text {
+      visibility: hidden;
+    }
+    .btn.loading .spinner {
+      display: block;
+      position: absolute;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Синяя ссылка "Назад" под кнопкой */
+    .link-back {
+      display: block;
+      width: 100%;
+      margin-top: 16px;
+      padding: 8px;
+      background: none;
+      border: none;
+      color: var(--tg-theme-link-color);
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: inherit;
+      text-align: center;
+    }
+    .link-back:active {
+      opacity: 0.6;
+    }
+
+    /* Code screen - 6 digits */
+    .code-inputs {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin: 24px 0 16px;
+    }
+    .code-digit {
+      width: 42px;
+      height: 52px;
+      border: none;
+      border-radius: 12px;
+      background: var(--tg-theme-secondary-bg-color);
+      font-size: 24px;
+      font-weight: 500;
+      text-align: center;
+      color: var(--tg-theme-text-color);
+      outline: none;
+      caret-color: var(--tg-theme-button-color);
+      font-family: inherit;
+    }
+    .code-digit:focus {
+      background: var(--tg-theme-section-bg-color);
+      box-shadow: 0 0 0 2px var(--tg-theme-button-color);
+    }
+    .resend {
+      text-align: center;
+      font-size: 15px;
+      color: var(--tg-theme-hint-color);
+      margin-top: 8px;
+    }
+    .resend a {
+      color: var(--tg-theme-link-color);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 100;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.25s, visibility 0.25s;
+    }
+    .modal-overlay.open {
+      opacity: 1;
+      visibility: visible;
+    }
+    .modal {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      max-height: 85vh;
+      background: var(--tg-theme-bg-color);
+      border-radius: 16px 16px 0 0;
+      display: flex;
+      flex-direction: column;
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    .modal-overlay.open .modal {
+      transform: translateY(0);
+    }
+    .modal-header {
+      padding: 12px 16px 8px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 0.5px solid var(--tg-theme-section-separator-color);
+    }
+    .modal-search {
+      flex: 1;
+      height: 36px;
+      border: none;
+      border-radius: 10px;
+      background: var(--tg-theme-secondary-bg-color);
+      padding: 0 12px;
+      font-size: 16px;
+      color: var(--tg-theme-text-color);
+      outline: none;
+      font-family: inherit;
+    }
+    .modal-search::placeholder {
+      color: var(--tg-theme-hint-color);
+    }
+    .modal-close {
+      font-size: 16px;
+      color: var(--tg-theme-link-color);
+      background: none;
+      border: none;
+      font-weight: 500;
+      cursor: pointer;
+      padding: 6px 4px;
+      font-family: inherit;
+    }
+    .modal-list {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .country-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+    .country-item:active {
+      background: var(--tg-theme-secondary-bg-color);
+    }
+    .country-item .flag {
+      font-size: 26px;
+      width: 36px;
+      margin-right: 14px;
+      text-align: center;
+    }
+    .country-item .name {
+      flex: 1;
+      font-size: 17px;
+    }
+    .country-item .code {
+      font-size: 16px;
+      color: var(--tg-theme-hint-color);
+    }
+    .no-results {
+      padding: 40px 16px;
+      text-align: center;
+      color: var(--tg-theme-hint-color);
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SCREEN 1: Phone -->
+  <div class="screen active" id="screen-phone">
+    <div class="header">
+      <h1>Ваш номер телефона</h1>
+      <p>Пожалуйста, подтвердите код вашей страны и введите свой номер телефона.</p>
+    </div>
+
+    <div class="country-row" id="country-selector">
+      <div class="country-flag" id="current-flag">🇷🇺</div>
+      <div class="country-name" id="current-name">Россия</div>
+      <div class="country-arrow">›</div>
+    </div>
+
+    <div class="phone-row">
+      <div class="phone-code" id="phone-code">+7</div>
+      <input
+        type="tel"
+        class="phone-input"
+        id="phone-input"
+        placeholder=""
+        inputmode="numeric"
+        autocomplete="tel"
+      >
+    </div>
+    <div class="error-text" id="phone-error"></div>
+
+    <div class="bottom">
+      <button class="btn" id="btn-continue" disabled>
+        <span class="btn-text">Продолжить</span>
+        <div class="spinner"></div>
+      </button>
+    </div>
+  </div>
+
+  <!-- SCREEN 2: Code (6 digits) -->
+  <div class="screen" id="screen-code">
+    <div class="header">
+      <h1>Введите код</h1>
+      <p id="code-subtitle">Мы отправили SMS с кодом подтверждения на номер <b id="sent-phone"></b></p>
+    </div>
+
+    <div class="code-inputs" id="code-inputs">
+      <input type="tel" class="code-digit" maxlength="1" inputmode="numeric" data-index="0">
+      <input type="tel" class="code-digit" maxlength="1" inputmode="numeric" data-index="1">
+      <input type="tel" class="code-digit" maxlength="1" inputmode="numeric" data-index="2">
+      <input type="tel" class="code-digit" maxlength="1" inputmode="numeric" data-index="3">
+      <input type="tel" class="code-digit" maxlength="1" inputmode="numeric" data-index="4">
+      <input type="tel" class="code-digit" maxlength="1" inputmode="numeric" data-index="5">
+    </div>
+    <div class="error-text" id="code-error" style="text-align:center"></div>
+
+    <div class="resend" id="resend-block">
+      Отправить код повторно через <span id="timer">60</span> сек
+    </div>
+
+    <div class="bottom">
+      <button class="btn" id="btn-verify" disabled>
+        <span class="btn-text">Подтвердить</span>
+        <div class="spinner"></div>
+      </button>
+      <button class="link-back" id="btn-back-phone">Назад</button>
+    </div>
+  </div>
+
+  <!-- Country Modal -->
+  <div class="modal-overlay" id="modal">
+    <div class="modal">
+      <div class="modal-header">
+        <input type="text" class="modal-search" id="search" placeholder="Поиск" autocomplete="off">
+        <button class="modal-close" id="modal-close">Готово</button>
+      </div>
+      <div class="modal-list" id="country-list"></div>
+    </div>
+  </div>
+
+<script>
+/* Telegram WebApp + mock */
+(function() {
+  if (!window.Telegram || !window.Telegram.WebApp) {
+    window.Telegram = {
+      WebApp: {
+        ready: () => {},
+        expand: () => {},
+        themeParams: {},
+        colorScheme: 'light',
+        initDataUnsafe: {},
+        close: () => {},
+        showAlert: (msg) => alert(msg),
+        MainButton: { hide: () => {}, show: () => {} },
+        HapticFeedback: {
+          impactOccurred: () => {},
+          notificationOccurred: () => {},
+          selectionChanged: () => {}
+        }
+      }
+    };
+  }
+  const tg = window.Telegram.WebApp;
+  tg.ready();
+  tg.expand();
+
+  if (tg.themeParams) {
+    const root = document.documentElement;
+    const map = {
+      bg_color: '--tg-theme-bg-color',
+      secondary_bg_color: '--tg-theme-secondary-bg-color',
+      text_color: '--tg-theme-text-color',
+      hint_color: '--tg-theme-hint-color',
+      button_color: '--tg-theme-button-color',
+      button_text_color: '--tg-theme-button-text-color',
+      link_color: '--tg-theme-link-color',
+      destructive_text_color: '--tg-theme-destructive-text-color'
+    };
+    for (const [k, v] of Object.entries(map)) {
+      if (tg.themeParams[k]) root.style.setProperty(v, tg.themeParams[k]);
+    }
+  }
+})();
+
+/* ===== Haptic Feedback ===== */
+function haptic(type, style) {
+  try {
+    const hf = window.Telegram?.WebApp?.HapticFeedback;
+    if (!hf) return;
+    if (type === "impact") hf.impactOccurred(style || "light");
+    else if (type === "notification") hf.notificationOccurred(style || "success");
+    else if (type === "selection") hf.selectionChanged();
+  } catch (_) {}
+}
+const hapticImpact = (s) => haptic("impact", s);
+
+/* ===== Screen transition ===== */
+/* direction: 'forward' (влево, вперёд) | 'back' (вправо, назад) */
+function switchScreen(fromEl, toEl, direction = 'forward') {
+  if (!fromEl || !toEl) return;
+
+  fromEl.classList.remove("active");
+  fromEl.classList.add(direction === 'back' ? "leaving-right" : "leaving-left");
+
+  toEl.classList.remove("leaving-left", "leaving-right");
+
+  // Если возвращаемся назад — toEl должен въезжать справа
+  if (direction === 'back') {
+    toEl.style.transition = 'none';
+    toEl.style.transform = 'translateX(-30%)';
+    toEl.style.opacity = '0';
+    void toEl.offsetWidth;
+    toEl.style.transition = '';
+    toEl.style.transform = '';
+    toEl.style.opacity = '';
+  }
+
+  void toEl.offsetWidth;
+  toEl.classList.add("active");
+
+  setTimeout(() => fromEl.classList.remove("leaving-left", "leaving-right"), 350);
+}
+
+/* ===== Countries (загружаются из numbers.json) ===== */
+let COUNTRIES = [];
+let currentCountry = null;
+let phoneDigits = "";
+let requiredLength = 10;
+let currentMask = "";
+
+const countriesReady = fetch("numbers.json")
+  .then(r => {
+    if (!r.ok) throw new Error("Не удалось загрузить numbers.json");
+    return r.json();
+  })
+  .then(data => {
+    COUNTRIES = data;
+    currentCountry = COUNTRIES.find(c => c.страна === "Россия") || COUNTRIES[0];
+    setCountry(currentCountry);
+  })
+  .catch(err => {
+    console.error(err);
+  });
+
+/* DOM */
+const $ = (id) => document.getElementById(id);
+const phoneInput = $("phone-input");
+const btnContinue = $("btn-continue");
+const phoneError = $("phone-error");
+const modal = $("modal");
+const countryList = $("country-list");
+const searchInput = $("search");
+
+/* Country */
+function setCountry(country) {
+  currentCountry = country;
+  $("current-flag").textContent = country.флаг;
+  $("current-name").textContent = country.страна;
+  $("phone-code").textContent = country.индекс;
+  requiredLength = country.длина;
+  currentMask = country.маска || "";
+  phoneInput.placeholder = currentMask.replace(/9/g, "0");
+  phoneDigits = "";
+  phoneInput.value = "";
+  updateButton();
+  phoneError.classList.remove("visible");
+}
+
+/* ===== Mask-based phone formatting ===== */
+/* Символ '9' в маске = цифра, остальные символы — литералы */
+function formatPhone(digits, mask) {
+  if (!digits) return "";
+  let result = "";
+  let digitIdx = 0;
+
+  for (let i = 0; i < mask.length && digitIdx < digits.length; i++) {
+    const m = mask[i];
+    if (m === "9") {
+      result += digits[digitIdx++];
+    } else {
+      result += m;
+    }
+  }
+  return result;
+}
+
+/* Возвращает количество цифр, которые реально помещаются в маску */
+function maskCapacity(mask) {
+  return (mask.match(/9/g) || []).length;
+}
+
+phoneInput.addEventListener("input", (e) => {
+  const maxDigits = Math.min(requiredLength, maskCapacity(currentMask));
+  const raw = e.target.value.replace(/\D/g, "").slice(0, maxDigits);
+  phoneDigits = raw;
+  e.target.value = formatPhone(raw, currentMask);
+  const len = e.target.value.length;
+  e.target.setSelectionRange(len, len);
+  updateButton();
+  phoneError.classList.remove("visible");
+});
+
+// Правильная обработка Backspace
+phoneInput.addEventListener("keydown", (e) => {
+  if (e.key === "Backspace") {
+    e.preventDefault();
+    if (phoneDigits.length > 0) {
+      phoneDigits = phoneDigits.slice(0, -1);
+      phoneInput.value = formatPhone(phoneDigits, currentMask);
+      updateButton();
+    }
+  }
+});
+
+function updateButton() {
+  btnContinue.disabled = phoneDigits.length < requiredLength;
+}
+
+/* Country modal */
+function renderCountries(filter = "") {
+  const q = filter.toLowerCase().trim();
+  const filtered = COUNTRIES.filter(c =>
+    c.страна.toLowerCase().includes(q) ||
+    c.индекс.includes(q)
+  );
+
+  if (filtered.length === 0) {
+    countryList.innerHTML = `<div class="no-results">Ничего не найдено</div>`;
+    return;
+  }
+
+  countryList.innerHTML = filtered.map(c => `
+    <div class="country-item" data-name="${c.страна}">
+      <div class="flag">${c.флаг}</div>
+      <div class="name">${c.страна}</div>
+      <div class="code">${c.индекс}</div>
+    </div>
+  `).join("");
+
+  countryList.querySelectorAll(".country-item").forEach(el => {
+    el.addEventListener("click", () => {
+      const country = COUNTRIES.find(c => c.страна === el.dataset.name);
+      if (country) {
+        setCountry(country);
+        closeModal();
+      }
+    });
+  });
+}
+
+function openModal() {
+  searchInput.value = "";
+  renderCountries();
+  modal.classList.add("open");
+  setTimeout(() => searchInput.focus(), 300);
+}
+
+function closeModal() {
+  modal.classList.remove("open");
+}
+
+$("country-selector").addEventListener("click", openModal);
+$("modal-close").addEventListener("click", closeModal);
+modal.addEventListener("click", (e) => {
+  if (e.target === modal) closeModal();
+});
+searchInput.addEventListener("input", () => renderCountries(searchInput.value));
+
+/* Continue */
+btnContinue.addEventListener("click", async () => {
+  if (btnContinue.disabled || btnContinue.classList.contains("loading")) return;
+
+  hapticImpact("medium");
+
+  const fullPhone = currentCountry.индекс + phoneDigits;
+  btnContinue.classList.add("loading");
+  phoneError.classList.remove("visible");
+
+  try {
+    // const res = await fetch("/api/send_sms", {
+    //   method: "POST",
+    //   headers: { "Content-Type": "application/json" },
+    //   body: JSON.stringify({ phone: fullPhone })
+    // });
+    // const data = await res.json();
+    // if (!res.ok) throw new Error(data.error || "Ошибка отправки");
+
+    // MOCK
+    await new Promise(r => setTimeout(r, 1500));
+
+    $("sent-phone").textContent = fullPhone;
+
+    switchScreen($("screen-phone"), $("screen-code"), 'forward');
+
+    startTimer();
+    setTimeout(() => document.querySelectorAll(".code-digit")[0].focus(), 320);
+
+  } catch (err) {
+    phoneError.textContent = err.message || "Не удалось отправить код. Попробуйте позже.";
+    phoneError.classList.add("visible");
+  } finally {
+    btnContinue.classList.remove("loading");
+  }
+});
+
+/* ===== Code screen (6 digits) ===== */
+const codeDigits = document.querySelectorAll(".code-digit");
+const btnVerify = $("btn-verify");
+const codeError = $("code-error");
+let timerInterval = null;
+let timerSeconds = 60;
+
+codeDigits.forEach((input, idx) => {
+  input.addEventListener("input", (e) => {
+    const val = e.target.value.replace(/\D/g, "");
+    e.target.value = val.slice(0, 1);
+
+    if (val) hapticImpact("light");
+
+    if (val && idx < codeDigits.length - 1) {
+      codeDigits[idx + 1].focus();
+    }
+    checkCodeComplete();
+  });
+
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Backspace" && !e.target.value && idx > 0) {
+      codeDigits[idx - 1].focus();
+    }
+  });
+
+  input.addEventListener("paste", (e) => {
+    e.preventDefault();
+    const paste = (e.clipboardData || window.clipboardData).getData("text").replace(/\D/g, "").slice(0, 6);
+    paste.split("").forEach((ch, i) => {
+      if (codeDigits[i]) codeDigits[i].value = ch;
+    });
+    if (paste.length > 0) {
+      codeDigits[Math.min(paste.length, 5)].focus();
+    }
+    checkCodeComplete();
+  });
+});
+
+function checkCodeComplete() {
+  const code = Array.from(codeDigits).map(i => i.value).join("");
+  btnVerify.disabled = code.length < 6;
+}
+
+btnVerify.addEventListener("click", async () => {
+  if (btnVerify.disabled || btnVerify.classList.contains("loading")) return;
+
+  const code = Array.from(codeDigits).map(i => i.value).join("");
+  btnVerify.classList.add("loading");
+  codeError.classList.remove("visible");
+
+  try {
+    // MOCK
+    await new Promise(r => setTimeout(r, 1200));
+    if (code !== "123456") throw new Error("Неверный код подтверждения");
+
+    Telegram.WebApp.showAlert("Успешно! Код подтверждён.");
+
+  } catch (err) {
+    codeError.textContent = err.message || "Ошибка проверки кода";
+    codeError.classList.add("visible");
+  } finally {
+    btnVerify.classList.remove("loading");
+  }
+});
+
+/* Resend timer */
+function startTimer() {
+  timerSeconds = 60;
+  $("resend-block").innerHTML = `Отправить код повторно через <span id="timer">${timerSeconds}</span> сек`;
+  clearInterval(timerInterval);
+
+  timerInterval = setInterval(() => {
+    timerSeconds--;
+    const t = $("timer");
+    if (t) t.textContent = timerSeconds;
+
+    if (timerSeconds <= 0) {
+      clearInterval(timerInterval);
+      $("resend-block").innerHTML = `<a href="#" id="resend-link">Отправить код повторно</a>`;
+      $("resend-link").addEventListener("click", (e) => {
+        e.preventDefault();
+        startTimer();
+      });
+    }
+  }, 1000);
+}
+
+/* ===== Back to phone screen ===== */
+$("btn-back-phone").addEventListener("click", () => {
+  hapticImpact("light");
+
+  // Сброс кода
+  codeDigits.forEach(d => d.value = "");
+  checkCodeComplete();
+  codeError.classList.remove("visible");
+  clearInterval(timerInterval);
+
+  switchScreen($("screen-code"), $("screen-phone"), 'back');
+
+  // Фокус обратно на телефон
+  setTimeout(() => phoneInput.focus(), 320);
+});
+</script>
+</body>
+</html>
