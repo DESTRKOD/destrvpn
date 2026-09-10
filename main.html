@@ -16,6 +16,11 @@
       --tg-theme-link-color: #3390ec;
       --tg-theme-destructive-text-color: #ff3b30;
       --tg-theme-section-separator-color: rgba(0,0,0,0.08);
+
+      /* Островок */
+      --island-h: 68px;
+      --island-gap: 14px;
+      --island-bottom: calc(var(--island-gap) + env(safe-area-inset-bottom));
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -32,7 +37,7 @@
       position: relative;
       display: flex;
       flex-direction: column;
-      padding-bottom: calc(56px + env(safe-area-inset-bottom));
+      padding-bottom: calc(var(--island-h) + var(--island-bottom) + 8px);
     }
 
     /* ===== SCREENS + SLIDE TRANSITION ===== */
@@ -52,28 +57,17 @@
                   opacity 0.32s cubic-bezier(0.32, 0.72, 0, 1),
                   visibility 0.32s;
       will-change: transform, opacity;
-      padding-bottom: calc(56px + env(safe-area-inset-bottom));
+      padding-bottom: calc(var(--island-h) + var(--island-bottom) + 8px);
     }
     .screen.active {
       transform: translateX(0);
       opacity: 1;
       visibility: visible;
     }
-    .screen.leaving-left {
-      transform: translateX(-30%);
-      opacity: 0;
-      visibility: hidden;
-    }
-    .screen.leaving-right {
-      transform: translateX(100%);
-      opacity: 0;
-      visibility: hidden;
-    }
+    .screen.leaving-left  { transform: translateX(-30%);  opacity: 0; visibility: hidden; }
+    .screen.leaving-right { transform: translateX(100%);  opacity: 0; visibility: hidden; }
     .screen.entering-left {
-      transform: translateX(-100%);
-      opacity: 0;
-      visibility: hidden;
-      transition: none;
+      transform: translateX(-100%); opacity: 0; visibility: hidden; transition: none;
     }
 
     .page-header {
@@ -102,16 +96,8 @@
       border-radius: 10px;
     }
     .back-btn:active { background: rgba(0,0,0,0.05); }
-    .page-title {
-      font-size: 24px;
-      font-weight: 700;
-      letter-spacing: -0.3px;
-    }
-    .page-subtitle {
-      font-size: 14px;
-      color: var(--tg-theme-hint-color);
-      margin-top: 4px;
-    }
+    .page-title { font-size: 24px; font-weight: 700; letter-spacing: -0.3px; }
+    .page-subtitle { font-size: 14px; color: var(--tg-theme-hint-color); margin-top: 4px; }
 
     .content { padding: 8px 16px 24px; }
 
@@ -136,33 +122,16 @@
       gap: 8px;
     }
     .btn:active { opacity: 0.85; }
-    .btn-primary {
-      background: var(--tg-theme-button-color);
-      color: var(--tg-theme-button-text-color);
-    }
-    .btn-secondary {
-      background: var(--tg-theme-secondary-bg-color);
-      color: var(--tg-theme-text-color);
-    }
-    .btn-destructive {
-      background: transparent;
-      color: var(--tg-theme-destructive-text-color);
-      font-weight: 500;
-    }
+    .btn-primary { background: var(--tg-theme-button-color); color: var(--tg-theme-button-text-color); }
+    .btn-secondary { background: var(--tg-theme-secondary-bg-color); color: var(--tg-theme-text-color); }
+    .btn-destructive { background: transparent; color: var(--tg-theme-destructive-text-color); font-weight: 500; }
 
     /* HOME */
-    .brand-header {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 16px 16px 12px;
-    }
+    .brand-header { display: flex; align-items: center; gap: 12px; padding: 16px 16px 12px; }
     .shield-icon {
-      width: 44px; height: 44px;
-      border-radius: 12px;
+      width: 44px; height: 44px; border-radius: 12px;
       background: var(--tg-theme-button-color);
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
     }
     .brand-title { font-size: 20px; font-weight: 700; line-height: 1.2; }
     .brand-subtitle { font-size: 13px; color: var(--tg-theme-hint-color); margin-top: 2px; }
@@ -173,19 +142,9 @@
       border-radius: 16px;
       padding: 16px;
     }
-    .status-row {
-      display: flex; align-items: center; gap: 8px;
-      font-size: 15px; font-weight: 500; margin-bottom: 16px;
-    }
-    .status-dot {
-      width: 8px; height: 8px; border-radius: 50%;
-      background: #34c759;
-      box-shadow: 0 0 0 3px rgba(52,199,89,0.25);
-    }
-    .stats-grid {
-      display: grid; grid-template-columns: 1fr 1fr 1fr;
-      margin-bottom: 16px; position: relative;
-    }
+    .status-row { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 500; margin-bottom: 16px; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #34c759; box-shadow: 0 0 0 3px rgba(52,199,89,0.25); }
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; margin-bottom: 16px; position: relative; }
     .stat-item { text-align: center; padding: 0 6px; }
     .stat-label { font-size: 12px; color: var(--tg-theme-hint-color); margin-bottom: 4px; }
     .stat-value { font-size: 15px; font-weight: 600; }
@@ -245,10 +204,7 @@
       border-color: var(--tg-theme-button-color);
       background: color-mix(in srgb, var(--tg-theme-button-color) 8%, var(--tg-theme-secondary-bg-color));
     }
-    .tariff-top {
-      display: flex; justify-content: space-between; align-items: flex-start;
-      margin-bottom: 6px;
-    }
+    .tariff-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
     .tariff-name { font-size: 17px; font-weight: 600; }
     .tariff-price { font-size: 18px; font-weight: 700; color: var(--tg-theme-button-color); }
     .tariff-badge {
@@ -339,10 +295,7 @@
       color: #ff9500;
     }
     .promo-title { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
-    .promo-desc {
-      font-size: 15px; color: var(--tg-theme-hint-color);
-      max-width: 280px; line-height: 1.4; margin-bottom: 28px;
-    }
+    .promo-desc { font-size: 15px; color: var(--tg-theme-hint-color); max-width: 280px; line-height: 1.4; margin-bottom: 28px; }
     .promo-input {
       width: 100%; height: 50px;
       border: none; border-radius: 12px;
@@ -405,11 +358,7 @@
       display: flex; justify-content: space-between; align-items: center;
       gap: 12px;
     }
-    .faq-chevron {
-      color: var(--tg-theme-hint-color);
-      transition: transform 0.2s;
-      flex-shrink: 0;
-    }
+    .faq-chevron { color: var(--tg-theme-hint-color); transition: transform 0.2s; flex-shrink: 0; }
     .faq-item.open .faq-chevron { transform: rotate(-90deg); }
     .faq-answer {
       display: none;
@@ -420,10 +369,7 @@
     .faq-item.open .faq-answer { display: block; }
 
     .help-footer { margin-top: 24px; text-align: center; }
-    .help-footer-text {
-      font-size: 14px; color: var(--tg-theme-hint-color);
-      margin-bottom: 12px;
-    }
+    .help-footer-text { font-size: 14px; color: var(--tg-theme-hint-color); margin-bottom: 12px; }
 
     /* SUBSCRIPTION */
     .sub-status-card {
@@ -498,16 +444,14 @@
       align-items: center;
       justify-content: center;
       min-height: 300px;
+      margin-bottom: 24px;
     }
 
     .profile-glow {
       position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 520px;
-      height: 520px;
-      max-width: 140vw;
-      max-height: 140vw;
+      top: 50%; left: 50%;
+      width: 520px; height: 520px;
+      max-width: 140vw; max-height: 140vw;
       transform: translate(-50%, -50%);
       background: radial-gradient(
         circle at center,
@@ -553,18 +497,7 @@
       align-items: center;
     }
 
-    .profile-avatar-orbit {
-      position: relative;
-      width: 140px;
-      height: 140px;
-      margin-bottom: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
     .profile-avatar {
-      position: relative;
       width: 130px;
       height: 130px;
       border-radius: 50%;
@@ -572,134 +505,187 @@
       border: 1px solid rgba(255, 255, 255, 0.2);
       background: #3a4650;
       box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
-      z-index: 2;
+      margin-bottom: 20px;
     }
     .profile-avatar img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
+      width: 100%; height: 100%;
+      object-fit: cover; display: block;
     }
     .profile-avatar-fallback {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 52px;
-      font-weight: 700;
-      color: #fff;
+      width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 52px; font-weight: 700; color: #fff;
       background: linear-gradient(135deg, #6b8ba4, #3a4d5c);
       text-transform: lowercase;
     }
 
-    .orbit-item {
-      position: absolute;
-      z-index: 3;
-      pointer-events: none;
-      user-select: none;
-      filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.35));
-      animation: orbit-float 3.6s ease-in-out infinite;
-    }
-    .orbit-item .emoji-3d {
-      font-size: 34px;
-      line-height: 1;
-      display: inline-block;
-    }
-    .orbit-item .sparkle {
-      position: absolute;
-      color: #fff;
-      font-size: 9px;
-      opacity: 0.9;
-      text-shadow: 0 0 6px rgba(255,255,255,0.6);
-      animation: sparkle-twinkle 1.8s ease-in-out infinite;
-    }
-
-    .orbit-duck-l { top: 4px;  left: -48px;  animation-delay: 0s; }
-    .orbit-duck-r { top: 4px;  right: -48px; animation-delay: 0.5s; }
-    .orbit-gloves { bottom: 2px; right: -46px; animation-delay: 1s; }
-    .orbit-dragon { top: -44px; left: 34px; animation-delay: 1.4s; }
-
-    .orbit-duck-l .sparkle-1 { top: -6px;  left: 4px; }
-    .orbit-duck-l .sparkle-2 { bottom: -4px; right: 2px; }
-    .orbit-duck-r .sparkle-1 { top: -6px;  right: 4px; }
-    .orbit-duck-r .sparkle-2 { bottom: -4px; left: 2px; }
-    .orbit-gloves .sparkle-1 { top: -4px;  left: -4px; }
-    .orbit-gloves .sparkle-2 { bottom: 2px; right: -6px; }
-    .orbit-gloves .sparkle-3 { top: 50%; left: -8px; }
-    .orbit-dragon .sparkle-p1 { top: 2px; right: -6px; color: #ff9bd0; }
-    .orbit-dragon .sparkle-p2 { bottom: -2px; left: -8px; color: #ff9bd0; }
-
-    @keyframes orbit-float {
-      0%, 100% { transform: translateY(0); }
-      50%      { transform: translateY(-6px); }
-    }
-    @keyframes sparkle-twinkle {
-      0%, 100% { opacity: 0.35; transform: scale(0.85); }
-      50%      { opacity: 1;    transform: scale(1.15); }
-    }
-
     .profile-name {
-      font-size: 32px;
-      font-weight: 700;
-      color: #FFFFFF;
-      text-align: center;
-      line-height: 1.1;
-      letter-spacing: -0.4px;
+      font-size: 32px; font-weight: 700;
+      color: #FFFFFF; text-align: center;
+      line-height: 1.1; letter-spacing: -0.4px;
       text-transform: lowercase;
       margin-bottom: 5px;
-      word-break: break-word;
-      max-width: 90vw;
+      word-break: break-word; max-width: 90vw;
     }
     .profile-username {
-      font-size: 18px;
-      font-weight: 400;
-      color: #A2B5C3;
-      text-align: center;
-      word-break: break-word;
-      max-width: 90vw;
+      font-size: 18px; font-weight: 400;
+      color: #A2B5C3; text-align: center;
+      word-break: break-word; max-width: 90vw;
     }
 
     @media (max-height: 600px) {
-      .profile-header { min-height: 240px; padding: 20px 16px 20px; }
-      .profile-avatar { width: 100px; height: 100px; }
-      .profile-avatar-orbit { width: 110px; height: 110px; }
-      .orbit-item .emoji-3d { font-size: 26px; }
-      .orbit-duck-l { left: -36px; }
-      .orbit-duck-r { right: -36px; }
-      .orbit-gloves { right: -34px; }
-      .orbit-dragon { top: -34px; left: 26px; }
+      .profile-header { min-height: 220px; padding: 20px 16px 20px; margin-bottom: 16px; }
+      .profile-avatar { width: 100px; height: 100px; margin-bottom: 14px; }
       .profile-name { font-size: 26px; }
       .profile-username { font-size: 16px; }
     }
 
-    /* TAB BAR */
-    .tab-bar {
-      position: fixed; left: 0; right: 0; bottom: 0;
-      height: calc(56px + env(safe-area-inset-bottom));
-      padding-bottom: env(safe-area-inset-bottom);
-      background: var(--tg-theme-bg-color);
-      border-top: 0.5px solid var(--tg-theme-section-separator-color);
-      display: flex; z-index: 50;
+    /* ===== LANGUAGE / THEME SCREENS ===== */
+    .option-list {
+      background: var(--tg-theme-secondary-bg-color);
+      border-radius: 14px;
+      overflow: hidden;
     }
-    .tab {
-      flex: 1; display: flex; flex-direction: column;
-      align-items: center; justify-content: center; gap: 2px;
-      cursor: pointer; color: var(--tg-theme-hint-color);
-      font-size: 10px; font-weight: 500;
-      user-select: none;
+    .option-item {
+      display: flex; align-items: center;
+      padding: 14px 16px; gap: 14px;
+      cursor: pointer; position: relative;
     }
-    .tab.active { color: var(--tg-theme-button-color); }
-    .tab-icon {
+    .option-item:active { background: rgba(0,0,0,0.04); }
+    .option-item:not(:last-child)::after {
+      content: ""; position: absolute;
+      left: 60px; right: 0; bottom: 0;
+      height: 0.5px; background: var(--tg-theme-section-separator-color);
+    }
+    .option-flag { font-size: 24px; line-height: 1; width: 28px; text-align: center; flex-shrink: 0; }
+    .option-text { flex: 1; font-size: 16px; }
+    .option-check {
+      color: var(--tg-theme-button-color);
+      display: none; flex-shrink: 0;
+    }
+    .option-item.active .option-check { display: flex; }
+
+    /* Тумблер темы */
+    .theme-toggle-wrap {
+      display: flex; align-items: center;
+      gap: 12px;
+      background: var(--tg-theme-secondary-bg-color);
+      border-radius: 14px;
+      padding: 16px;
+    }
+    .theme-toggle-label {
+      flex: 1;
+      font-size: 16px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .theme-toggle-label .ico { font-size: 20px; }
+    .theme-toggle {
+      position: relative;
+      width: 56px; height: 32px;
+      border-radius: 16px;
+      background: #d1d1d6;
+      border: none;
+      cursor: pointer;
+      transition: background 0.25s;
+      flex-shrink: 0;
+      padding: 0;
+    }
+    .theme-toggle::after {
+      content: "";
+      position: absolute;
+      top: 3px; left: 3px;
       width: 26px; height: 26px;
-      display: flex; align-items: center; justify-content: center;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.25);
+      transition: transform 0.25s cubic-bezier(0.32, 0.72, 0, 1);
     }
-    .tab-avatar {
-      width: 26px; height: 26px; border-radius: 50%;
-      object-fit: cover; background: var(--tg-theme-secondary-bg-color);
+    .theme-toggle.dark {
+      background: var(--tg-theme-button-color);
+    }
+    .theme-toggle.dark::after {
+      transform: translateX(24px);
     }
 
-    /* Modal sheet */
+    /* ===== NAV ISLAND (Liquid Glass) ===== */
+    .nav-island {
+      position: fixed;
+      left: 50%;
+      bottom: var(--island-bottom);
+      transform: translateX(-50%);
+      height: var(--island-h);
+      padding: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      gap: 2px;
+      border-radius: 50px;
+      background: rgba(36, 123, 192, 0.12);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      box-shadow:
+        inset 0px 2px 4px rgba(255, 255, 255, 0.4),
+        0 8px 24px rgba(20, 45, 80, 0.28),
+        0 2px 6px rgba(20, 45, 80, 0.18);
+      z-index: 60;
+      min-width: 260px;
+      max-width: calc(100vw - 32px);
+    }
+
+    .nav-btn {
+      position: relative;
+      z-index: 2;
+      flex: 1;
+      height: 100%;
+      padding: 0 18px;
+      border: none;
+      background: transparent;
+      color: rgba(255, 255, 255, 0.7);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.1px;
+      cursor: pointer;
+      border-radius: 50px;
+      transition: color 0.25s;
+      white-space: nowrap;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .nav-btn svg { display: block; }
+    .nav-btn.active { color: #FFFFFF; }
+    .nav-btn:active { opacity: 0.85; }
+
+    /* Линза, которая ездит за активной кнопкой */
+    .nav-lens {
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      height: calc(var(--island-h) - 12px);
+      border-radius: 50px;
+      background: rgba(255, 255, 255, 0.2);
+      box-shadow:
+        inset 0px 3px 6px rgba(255, 255, 255, 0.6),
+        inset 0px -1px 2px rgba(255, 255, 255, 0.2),
+        0 2px 8px rgba(20, 45, 80, 0.25);
+      transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1),
+                  width 0.4s cubic-bezier(0.25, 1, 0.5, 1),
+                  left 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+      z-index: 1;
+      pointer-events: none;
+      will-change: transform, width;
+    }
+    .nav-lens.stretch {
+      transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1),
+                  width 0.2s cubic-bezier(0.25, 1, 0.5, 1),
+                  left 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+
+    /* Modal sheet (для device-sheet — оставляем) */
     .sheet-overlay {
       position: fixed; inset: 0;
       background: rgba(0,0,0,0.4);
@@ -738,11 +724,6 @@
       background: transparent;
       color: var(--tg-theme-button-color);
       font-weight: 600;
-    }
-    .sheet-btn.active {
-      color: var(--tg-theme-button-color);
-      font-weight: 600;
-      background: color-mix(in srgb, var(--tg-theme-button-color) 12%, var(--tg-theme-secondary-bg-color));
     }
   </style>
 </head>
@@ -797,7 +778,6 @@
       </div>
       <div class="menu-item" data-go="devices" data-from="home">
         <div class="menu-icon purple">
-          <!-- Устройства: смартфон + ноутбук -->
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="4" width="12" height="9" rx="1.5"/>
             <path d="M1.5 17h15"/>
@@ -823,7 +803,6 @@
       </div>
       <div class="menu-item" data-go="promo" data-from="home">
         <div class="menu-icon orange">
-          <!-- Промокод: тег -->
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L3 13V4a1 1 0 0 1 1-1h9l7.6 7.6a2 2 0 0 1 0 2.8z"/>
             <circle cx="7.8" cy="7.8" r="1.4"/>
@@ -837,14 +816,11 @@
       </div>
       <div class="menu-item" data-go="help" data-from="home">
         <div class="menu-icon gray">
-          <!-- Помощь: спасательный круг -->
+          <!-- Помощь: знак вопроса в круге -->
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="9"/>
-            <circle cx="12" cy="12" r="3.5"/>
-            <path d="M5.6 5.6l3.9 3.9"/>
-            <path d="M14.5 14.5l3.9 3.9"/>
-            <path d="M18.4 5.6l-3.9 3.9"/>
-            <path d="M9.5 14.5l-3.9 3.9"/>
+            <path d="M9.5 9.2a2.5 2.5 0 0 1 4.86.83c0 1.67-2.5 2.14-2.5 3.6"/>
+            <circle cx="12" cy="17" r="0.6" fill="#fff" stroke="none"/>
           </svg>
         </div>
         <div class="menu-text">
@@ -1199,39 +1175,15 @@
 
   <!-- ==================== SETTINGS ==================== -->
   <div class="screen" id="screen-settings">
-    <!-- ===== PROFILE HEADER ===== -->
+    <!-- PROFILE HEADER -->
     <div class="profile-header">
       <div class="profile-glow"></div>
       <div class="profile-pattern"></div>
 
       <div class="profile-center">
-        <div class="profile-avatar-orbit">
-          <div class="orbit-item orbit-duck-l">
-            <span class="emoji-3d">🦆</span>
-            <span class="sparkle sparkle-1">✦</span>
-            <span class="sparkle sparkle-2">✦</span>
-          </div>
-          <div class="orbit-item orbit-duck-r">
-            <span class="emoji-3d">🦆</span>
-            <span class="sparkle sparkle-1">✦</span>
-            <span class="sparkle sparkle-2">✦</span>
-          </div>
-          <div class="orbit-item orbit-gloves">
-            <span class="emoji-3d">🥊</span>
-            <span class="sparkle sparkle-1">✦</span>
-            <span class="sparkle sparkle-2">✦</span>
-            <span class="sparkle sparkle-3">✦</span>
-          </div>
-          <div class="orbit-item orbit-dragon">
-            <span class="emoji-3d">🐉</span>
-            <span class="sparkle sparkle-p1">✦</span>
-            <span class="sparkle sparkle-p2">✦</span>
-          </div>
-
-          <div class="profile-avatar">
-            <img id="profile-photo" src="" alt="">
-            <div id="profile-photo-fallback" class="profile-avatar-fallback"></div>
-          </div>
+        <div class="profile-avatar">
+          <img id="profile-photo" src="" alt="">
+          <div id="profile-photo-fallback" class="profile-avatar-fallback"></div>
         </div>
 
         <div class="profile-name" id="profile-name">user</div>
@@ -1250,20 +1202,20 @@
             <div class="settings-item-text">Уведомления</div>
             <div class="settings-item-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
           </div>
-          <div class="settings-item" data-action="language">
+          <div class="settings-item" data-go="language" data-from="settings">
             <div class="settings-item-icon" style="background:#34c759">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
             </div>
             <div class="settings-item-text">Язык</div>
-            <div class="settings-item-value">Русский</div>
+            <div class="settings-item-value" id="lang-value">Русский</div>
             <div class="settings-item-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
           </div>
-          <div class="settings-item" data-action="theme">
+          <div class="settings-item" data-go="theme" data-from="settings">
             <div class="settings-item-icon" style="background:#af52de">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
             </div>
             <div class="settings-item-text">Тема</div>
-            <div class="settings-item-value">Системная</div>
+            <div class="settings-item-value" id="theme-value">Светлая</div>
             <div class="settings-item-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
           </div>
         </div>
@@ -1274,7 +1226,12 @@
         <div class="settings-list">
           <div class="settings-item" data-go="help" data-from="settings">
             <div class="settings-item-icon" style="background:#8e8e93">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              <!-- Помощь: знак вопроса в круге -->
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="9"/>
+                <path d="M9.5 9.2a2.5 2.5 0 0 1 4.86.83c0 1.67-2.5 2.14-2.5 3.6"/>
+                <circle cx="12" cy="17" r="0.6" fill="#fff" stroke="none"/>
+              </svg>
             </div>
             <div class="settings-item-text">Помощь</div>
             <div class="settings-item-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
@@ -1310,27 +1267,87 @@
     </div>
   </div>
 
-  <!-- TAB BAR -->
-  <nav class="tab-bar">
-    <div class="tab active" data-tab="home">
-      <div class="tab-icon">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-      </div>
-      <span>Главная</span>
+  <!-- ==================== LANGUAGE SCREEN ==================== -->
+  <div class="screen" id="screen-language">
+    <div class="page-header with-back">
+      <button class="back-btn" data-back>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div class="page-title">Язык</div>
     </div>
-    <div class="tab" data-tab="subscription">
-      <div class="tab-icon">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+    <div class="content">
+      <div class="option-list" id="lang-list">
+        <div class="option-item" data-lang="ru">
+          <div class="option-flag">🇷🇺</div>
+          <div class="option-text">Русский</div>
+          <div class="option-check">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+          </div>
+        </div>
+        <div class="option-item" data-lang="be">
+          <div class="option-flag">🇧🇾</div>
+          <div class="option-text">Беларуская</div>
+          <div class="option-check">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+          </div>
+        </div>
+        <div class="option-item" data-lang="en">
+          <div class="option-flag">🇬🇧</div>
+          <div class="option-text">English</div>
+          <div class="option-check">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+          </div>
+        </div>
       </div>
-      <span>Подписка</span>
     </div>
-    <div class="tab" data-tab="settings">
-      <div class="tab-icon">
-        <img id="user-avatar" class="tab-avatar" src="" alt="" style="display:none">
-        <svg id="default-avatar" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+  </div>
+
+  <!-- ==================== THEME SCREEN ==================== -->
+  <div class="screen" id="screen-theme">
+    <div class="page-header with-back">
+      <button class="back-btn" data-back>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div class="page-title">Тема</div>
+    </div>
+    <div class="content">
+      <div class="theme-toggle-wrap">
+        <div class="theme-toggle-label">
+          <span class="ico" id="theme-ico">☀️</span>
+          <span id="theme-label">Светлая</span>
+        </div>
+        <button class="theme-toggle" id="theme-toggle" aria-label="Переключить тему"></button>
       </div>
-      <span>Настройки</span>
     </div>
+  </div>
+
+  <!-- ==================== NAV ISLAND ==================== -->
+  <nav class="nav-island" id="nav-island">
+    <div class="nav-lens" id="nav-lens"></div>
+
+    <button class="nav-btn active" data-tab="home">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 10.5L12 3l9 7.5"/>
+        <path d="M5 9.5V21h14V9.5"/>
+      </svg>
+      <span>Главное</span>
+    </button>
+
+    <button class="nav-btn" data-tab="subscription">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="5" width="20" height="14" rx="2"/>
+        <path d="M2 10h20"/>
+      </svg>
+      <span>Подписки</span>
+    </button>
+
+    <button class="nav-btn" data-tab="settings">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="8" r="4"/>
+        <path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/>
+      </svg>
+      <span>Профиль</span>
+    </button>
   </nav>
 
   <!-- Device action sheet -->
@@ -1339,28 +1356,6 @@
       <div class="sheet-title" id="device-sheet-title">Устройство</div>
       <button class="sheet-btn danger" id="sheet-disconnect">Отключить устройство</button>
       <button class="sheet-btn cancel" id="sheet-cancel">Отмена</button>
-    </div>
-  </div>
-
-  <!-- Language sheet -->
-  <div class="sheet-overlay" id="lang-sheet">
-    <div class="sheet">
-      <div class="sheet-title">Язык</div>
-      <button class="sheet-btn" data-lang="ru">Русский</button>
-      <button class="sheet-btn" data-lang="be">Беларуская</button>
-      <button class="sheet-btn" data-lang="en">English</button>
-      <button class="sheet-btn cancel" data-sheet-close>Отмена</button>
-    </div>
-  </div>
-
-  <!-- Theme sheet -->
-  <div class="sheet-overlay" id="theme-sheet">
-    <div class="sheet">
-      <div class="sheet-title">Тема оформления</div>
-      <button class="sheet-btn" data-theme="light">Светлая</button>
-      <button class="sheet-btn" data-theme="dark">Тёмная</button>
-      <button class="sheet-btn" data-theme="system">Системная</button>
-      <button class="sheet-btn cancel" data-sheet-close>Отмена</button>
     </div>
   </div>
 
@@ -1387,29 +1382,15 @@
   tg.ready();
   tg.expand();
 
-  if (tg.themeParams) {
-    const root = document.documentElement;
-    const map = {
-      bg_color: '--tg-theme-bg-color',
-      secondary_bg_color: '--tg-theme-secondary-bg-color',
-      text_color: '--tg-theme-text-color',
-      hint_color: '--tg-theme-hint-color',
-      button_color: '--tg-theme-button-color',
-      button_text_color: '--tg-theme-button-text-color',
-      link_color: '--tg-theme-link-color',
-      destructive_text_color: '--tg-theme-destructive-text-color'
-    };
-    for (const [k, v] of Object.entries(map)) {
-      if (tg.themeParams[k]) root.style.setProperty(v, tg.themeParams[k]);
-    }
-  }
-
   const user = tg.initDataUnsafe?.user;
   if (user?.photo_url) {
     const img = document.getElementById('user-avatar');
-    img.src = user.photo_url;
-    img.style.display = 'block';
-    document.getElementById('default-avatar').style.display = 'none';
+    if (img) {
+      img.src = user.photo_url;
+      img.style.display = 'block';
+      const def = document.getElementById('default-avatar');
+      if (def) def.style.display = 'none';
+    }
   }
 
   /* ===== Haptics ===== */
@@ -1427,7 +1408,7 @@
     } catch (e) {}
   }
 
-  /* ===== Profile (header внутри настроек) ===== */
+  /* ===== Profile ===== */
   (function renderProfile() {
     const nameEl = document.getElementById('profile-name');
     const usernameEl = document.getElementById('profile-username');
@@ -1460,7 +1441,93 @@
     }
   })();
 
-  /* ===== Navigation stack ===== */
+  /* ===== Theme (светлая/тёмная) ===== */
+  const LIGHT_THEME = {
+    '--tg-theme-bg-color': '#ffffff',
+    '--tg-theme-secondary-bg-color': '#f4f4f5',
+    '--tg-theme-text-color': '#000000',
+    '--tg-theme-hint-color': '#8e8e93',
+    '--tg-theme-button-color': '#3390ec',
+    '--tg-theme-button-text-color': '#ffffff',
+    '--tg-theme-link-color': '#3390ec',
+    '--tg-theme-destructive-text-color': '#ff3b30',
+    '--tg-theme-section-separator-color': 'rgba(0,0,0,0.08)'
+  };
+  const DARK_THEME = {
+    '--tg-theme-bg-color': '#17212b',
+    '--tg-theme-secondary-bg-color': '#232e3c',
+    '--tg-theme-text-color': '#ffffff',
+    '--tg-theme-hint-color': '#7d8b99',
+    '--tg-theme-button-color': '#5288c1',
+    '--tg-theme-button-text-color': '#ffffff',
+    '--tg-theme-link-color': '#6ab3f3',
+    '--tg-theme-destructive-text-color': '#ec3942',
+    '--tg-theme-section-separator-color': 'rgba(255,255,255,0.08)'
+  };
+
+  let currentTheme = localStorage.getItem('dxs_theme') || 'light';
+  if (currentTheme !== 'light' && currentTheme !== 'dark') currentTheme = 'light';
+
+  function applyTheme(theme) {
+    const root = document.documentElement;
+    const palette = theme === 'dark' ? DARK_THEME : LIGHT_THEME;
+    for (const [k, v] of Object.entries(palette)) {
+      root.style.setProperty(k, v);
+    }
+    document.documentElement.setAttribute('data-theme', theme);
+  }
+
+  function updateThemeUI() {
+    const isDark = currentTheme === 'dark';
+    const toggle = document.getElementById('theme-toggle');
+    if (toggle) toggle.classList.toggle('dark', isDark);
+    const ico = document.getElementById('theme-ico');
+    if (ico) ico.textContent = isDark ? '🌙' : '☀️';
+    const lbl = document.getElementById('theme-label');
+    if (lbl) lbl.textContent = isDark ? 'Тёмная' : 'Светлая';
+    const badge = document.getElementById('theme-value');
+    if (badge) badge.textContent = isDark ? 'Тёмная' : 'Светлая';
+  }
+
+  applyTheme(currentTheme);
+  updateThemeUI();
+
+  const themeToggle = document.getElementById('theme-toggle');
+  if (themeToggle) {
+    themeToggle.addEventListener('click', () => {
+      haptic('select');
+      currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      localStorage.setItem('dxs_theme', currentTheme);
+      applyTheme(currentTheme);
+      updateThemeUI();
+    });
+  }
+
+  /* ===== Язык ===== */
+  const LANG_NAMES = { ru: 'Русский', be: 'Беларуская', en: 'English' };
+  let currentLang = localStorage.getItem('dxs_lang') || 'ru';
+  if (!LANG_NAMES[currentLang]) currentLang = 'ru';
+
+  function updateLangUI() {
+    const badge = document.getElementById('lang-value');
+    if (badge) badge.textContent = LANG_NAMES[currentLang];
+    document.querySelectorAll('#lang-list .option-item').forEach(item => {
+      item.classList.toggle('active', item.dataset.lang === currentLang);
+    });
+  }
+  updateLangUI();
+
+  document.querySelectorAll('#lang-list .option-item').forEach(item => {
+    item.addEventListener('click', () => {
+      haptic('select');
+      currentLang = item.dataset.lang;
+      localStorage.setItem('dxs_lang', currentLang);
+      updateLangUI();
+      haptic('success');
+    });
+  });
+
+  /* ===== Navigation ===== */
   const TAB_SCREENS = new Set(['home', 'subscription', 'settings']);
   let historyStack = ['home'];
   let currentScreen = 'home';
@@ -1469,7 +1536,6 @@
   function showScreen(name, direction) {
     const next = document.getElementById('screen-' + name);
     if (!next) return;
-
     const prev = document.querySelector('.screen.active');
 
     if (!prev || !direction) {
@@ -1499,9 +1565,10 @@
     next.scrollTop = 0;
 
     if (TAB_SCREENS.has(name)) {
-      document.querySelectorAll('.tab').forEach(t => {
-        t.classList.toggle('active', t.dataset.tab === name);
+      document.querySelectorAll('.nav-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.tab === name);
       });
+      requestAnimationFrame(() => moveLens());
     }
   }
 
@@ -1548,110 +1615,40 @@
     setTimeout(() => { animating = false; }, 340);
   }
 
-  /* ===== Язык ===== */
-  const I18N = {
-    ru: { name: 'Русский' },
-    be: { name: 'Беларуская' },
-    en: { name: 'English' }
-  };
-  let currentLang = localStorage.getItem('dxs_lang') || 'ru';
+  /* ===== NAV LENS ===== */
+  const navIsland = document.getElementById('nav-island');
+  const navLens = document.getElementById('nav-lens');
 
-  const langSheet  = document.getElementById('lang-sheet');
-  const themeSheet = document.getElementById('theme-sheet');
+  function moveLens(withStretch) {
+    const activeBtn = document.querySelector('.nav-btn.active');
+    if (!activeBtn || !navLens || !navIsland) return;
 
-  function updateLangLabel() {
-    const el = document.querySelector('[data-action="language"] .settings-item-value');
-    if (el) el.textContent = I18N[currentLang].name;
-  }
-  updateLangLabel();
+    const islandRect = navIsland.getBoundingClientRect();
+    const btnRect = activeBtn.getBoundingClientRect();
 
-  document.querySelectorAll('#lang-sheet [data-lang]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      haptic('select');
-      currentLang = btn.dataset.lang;
-      localStorage.setItem('dxs_lang', currentLang);
-      updateLangLabel();
-      langSheet.classList.remove('open');
-      haptic('success');
-    });
-  });
+    const left = btnRect.left - islandRect.left;
+    const width = btnRect.width;
 
-  /* ===== Тема ===== */
-  const LIGHT_THEME = {
-    '--tg-theme-bg-color': '#ffffff',
-    '--tg-theme-secondary-bg-color': '#f4f4f5',
-    '--tg-theme-text-color': '#000000',
-    '--tg-theme-hint-color': '#8e8e93',
-    '--tg-theme-button-color': '#3390ec',
-    '--tg-theme-button-text-color': '#ffffff',
-    '--tg-theme-link-color': '#3390ec',
-    '--tg-theme-destructive-text-color': '#ff3b30',
-    '--tg-theme-section-separator-color': 'rgba(0,0,0,0.08)'
-  };
-  const DARK_THEME = {
-    '--tg-theme-bg-color': '#17212b',
-    '--tg-theme-secondary-bg-color': '#232e3c',
-    '--tg-theme-text-color': '#ffffff',
-    '--tg-theme-hint-color': '#7d8b99',
-    '--tg-theme-button-color': '#5288c1',
-    '--tg-theme-button-text-color': '#ffffff',
-    '--tg-theme-link-color': '#6ab3f3',
-    '--tg-theme-destructive-text-color': '#ec3942',
-    '--tg-theme-section-separator-color': 'rgba(255,255,255,0.08)'
-  };
-
-  let currentTheme = localStorage.getItem('dxs_theme') || 'system';
-
-  function applyTheme(theme) {
-    const root = document.documentElement;
-    let effective = theme;
-
-    if (theme === 'system') {
-      const sysDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches
-        || tg.colorScheme === 'dark';
-      effective = sysDark ? 'dark' : 'light';
+    if (withStretch) {
+      navLens.classList.add('stretch');
+      const stretchW = width + 14;
+      navLens.style.width = stretchW + 'px';
+      navLens.style.transform = `translateX(${left - 7}px)`;
+      setTimeout(() => {
+        navLens.classList.remove('stretch');
+        navLens.style.width = width + 'px';
+        navLens.style.transform = `translateX(${left}px)`;
+        setTimeout(() => navLens.classList.remove('stretch'), 220);
+      }, 180);
+    } else {
+      navLens.style.width = width + 'px';
+      navLens.style.transform = `translateX(${left}px)`;
     }
-
-    const palette = effective === 'dark' ? DARK_THEME : LIGHT_THEME;
-    for (const [k, v] of Object.entries(palette)) {
-      root.style.setProperty(k, v);
-    }
-    document.documentElement.setAttribute('data-theme', effective);
   }
 
-  function updateThemeLabel() {
-    const labels = { light: 'Светлая', dark: 'Тёмная', system: 'Системная' };
-    const el = document.querySelector('[data-action="theme"] .settings-item-value');
-    if (el) el.textContent = labels[currentTheme];
-  }
-  applyTheme(currentTheme);
-  updateThemeLabel();
-
-  document.querySelectorAll('#theme-sheet [data-theme]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      haptic('select');
-      currentTheme = btn.dataset.theme;
-      localStorage.setItem('dxs_theme', currentTheme);
-      applyTheme(currentTheme);
-      updateThemeLabel();
-      themeSheet.classList.remove('open');
-      haptic('success');
-    });
-  });
-
-  if (window.matchMedia) {
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-      if (currentTheme === 'system') applyTheme('system');
-    });
-  }
-
-  document.querySelectorAll('[data-sheet-close]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      haptic('light');
-      langSheet.classList.remove('open');
-      themeSheet.classList.remove('open');
-    });
-  });
+  // Начальная позиция линзы
+  requestAnimationFrame(() => moveLens());
+  window.addEventListener('resize', () => moveLens());
 
   /* ===== Event binding ===== */
   document.querySelectorAll('[data-go]').forEach(el => {
@@ -1666,9 +1663,23 @@
     el.addEventListener('click', goBack);
   });
 
-  document.querySelectorAll('.tab').forEach(tab => {
-    tab.addEventListener('click', () => goTab(tab.dataset.tab));
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = btn.dataset.tab;
+      if (TAB_SCREENS.has(target)) {
+        goTab(target);
+      }
+    });
   });
+
+  // Реакция на переключение табов, чтобы линза ехала с растяжением
+  const _origShowScreen = showScreen;
+  showScreen = function (name, direction) {
+    _origShowScreen(name, direction);
+    if (direction === 'tab') {
+      requestAnimationFrame(() => moveLens(true));
+    }
+  };
 
   document.querySelectorAll('.tariff-card').forEach(card => {
     card.addEventListener('click', () => {
@@ -1802,15 +1813,6 @@
       haptic('light');
       const action = el.dataset.action;
 
-      if (action === 'language') {
-        langSheet.classList.add('open');
-        return;
-      }
-      if (action === 'theme') {
-        themeSheet.classList.add('open');
-        return;
-      }
-
       const map = {
         notifications: 'Настройки уведомлений',
         support: 'Чат поддержки',
@@ -1821,6 +1823,9 @@
       tg.showAlert(map[action] || action);
     });
   });
+
+  /* Первичный рендер линзы после шрифтов */
+  window.addEventListener('load', () => requestAnimationFrame(() => moveLens()));
 })();
 </script>
 </body>
