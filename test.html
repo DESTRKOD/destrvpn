@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Nav Island — прототип v6</title>
+  <title>Nav Island — прототип v7</title>
   <script src="https://telegram.org/js/telegram-web-app.js?56"></script>
   <style>
     :root {
@@ -136,22 +136,19 @@
     .nav-btn svg { display: block; }
 
     .nav-btn .nav-text {
-      background-image: none;
       background-repeat: no-repeat;
       background-size: 100% 100%;
       -webkit-background-clip: text;
       background-clip: text;
       -webkit-text-fill-color: transparent;
       color: transparent;
-      /* fallback: если background-clip не сработает — серый */
-      background-color: var(--island-gray);
     }
 
     /* ЛИНЗА */
     .nav-lens {
       position: absolute;
       top: var(--island-pad);
-      left: 0;
+      left: var(--island-pad);
       height: calc(var(--island-h) - var(--island-pad) * 2);
       border-radius: 50px;
       background: var(--island-lens-bg);
@@ -283,7 +280,6 @@
   const lens = document.getElementById('nav-lens');
   const buttons = Array.from(island.querySelectorAll('.nav-btn'));
 
-  /* ===== SCREEN SWITCH ===== */
   function showScreen(tab) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     const next = document.getElementById('screen-' + tab);
@@ -291,22 +287,37 @@
     currentTab = tab;
   }
 
-  /* ===== GEOMETRY ===== */
+  /* ===== GEOMETRY =====
+     ВАЖНО: всё в системе "padding-box островка".
+     Линза у нас position: absolute; left: var(--island-pad) — значит её
+     natural позиция = padding edge. translate3d(left) двигает её от padding edge.
+     Значит и b.left должна быть в системе padding edge.
+     Считаем через getBoundingClientRect минус padEdge островка. */
   let geo = null;
 
   function rebuildGeometry() {
     const ir = island.getBoundingClientRect();
-    const pad = 6;
+    const cs = getComputedStyle(island);
+    const borderL = parseFloat(cs.borderLeftWidth) || 0;
+    const borderR = parseFloat(cs.borderRightWidth) || 0;
+    const padL = parseFloat(cs.paddingLeft) || 0;
+    const padR = parseFloat(cs.paddingRight) || 0;
+
+    // Координата левого края padding-зоны островка в системе viewport
+    const padEdgeX = ir.left + borderL + padL;
+    // Ширина padding-зоны = куда может ездить линза
+    const innerW = ir.width - borderL - borderR - padL - padR;
+
     const bs = buttons.map(b => {
       const r = b.getBoundingClientRect();
       const svg = b.querySelector('[data-icon]');
       const sr = svg ? svg.getBoundingClientRect() : null;
       return {
         tab: b.dataset.tab,
-        left: r.left - ir.left,
+        left: r.left - padEdgeX,        // в системе padding edge
         width: r.width,
-        center: r.left - ir.left + r.width / 2,
-        svgLeft: sr ? sr.left - ir.left : 0,
+        center: r.left - padEdgeX + r.width / 2,
+        svgLeft: sr ? sr.left - padEdgeX : 0,
         svgWidth: sr ? sr.width : 0
       };
     });
@@ -316,7 +327,7 @@
       mids.push((bs[i].center + bs[i + 1].center) / 2);
     }
 
-    geo = { islandW: ir.width, pad, buttons: bs, mids };
+    geo = { islandW: ir.width, innerW, buttons: bs, mids };
   }
 
   function btnByTab(tab) {
@@ -331,13 +342,12 @@
 
     geo.buttons.forEach((b, i) => {
       const btn = buttons[i];
-      const btnLeft = b.left;
       const btnWidth = b.width;
-
-      const localLensLeft = lensLeft - btnLeft;
+      // lensLeft и b.left — обе в системе padding edge островка
+      const localLensLeft = lensLeft - b.left;
       const localLensRight = localLensLeft + lensWidth;
 
-      // ===== ТЕКСТ =====
+      // ==== ТЕКСТ ====
       const textEl = btn.querySelector('[data-text]');
       if (textEl) {
         const soft = TRANSITION_SOFTNESS;
@@ -351,10 +361,10 @@
         textEl.style.backgroundImage = g;
       }
 
-      // ===== SVG =====
+      // ==== SVG ====
       const svg = btn.querySelector('[data-icon]');
       if (svg && b.svgWidth > 0) {
-        const svgOffsetX = b.svgLeft - btnLeft;
+        const svgOffsetX = b.svgLeft - b.left;         // SVG относительно кнопки
         const svgWidthPx = b.svgWidth;
         const scale = 24 / svgWidthPx;
 
@@ -364,17 +374,15 @@
 
         const grad = svg.querySelector('linearGradient');
         if (grad) {
-          const clamp = (v) => Math.max(-10, Math.min(34, v));
+          const clampV = (v) => Math.max(-10, Math.min(34, v));
           const stops = [
             { off: -10, color: 'var(--island-gray)' },
-            { off: clamp(svgLensLeft - svgSoft), color: 'var(--island-gray)' },
-            { off: clamp(svgLensLeft), color: 'var(--island-accent)' },
-            { off: clamp(svgLensRight), color: 'var(--island-accent)' },
-            { off: clamp(svgLensRight + svgSoft), color: 'var(--island-gray)' },
+            { off: clampV(svgLensLeft - svgSoft), color: 'var(--island-gray)' },
+            { off: clampV(svgLensLeft), color: 'var(--island-accent)' },
+            { off: clampV(svgLensRight), color: 'var(--island-accent)' },
+            { off: clampV(svgLensRight + svgSoft), color: 'var(--island-gray)' },
             { off: 34, color: 'var(--island-gray)' }
           ];
-
-          // Сортировка и дедупликация для корректности SVG
           stops.sort((a, b) => a.off - b.off);
 
           while (grad.firstChild) grad.removeChild(grad.firstChild);
@@ -384,7 +392,6 @@
             stop.setAttribute('stop-color', s.color);
             grad.appendChild(stop);
           });
-
           grad.setAttribute('x1', '-10');
           grad.setAttribute('x2', '34');
         }
@@ -447,7 +454,11 @@
 
   function pointerToLocal(clientX) {
     const ir = island.getBoundingClientRect();
-    return clientX - ir.left;
+    const cs = getComputedStyle(island);
+    const borderL = parseFloat(cs.borderLeftWidth) || 0;
+    const padL = parseFloat(cs.paddingLeft) || 0;
+    // В системе padding edge
+    return clientX - ir.left - borderL - padL;
   }
 
   function onPointerDown(e) {
@@ -511,8 +522,9 @@
     const width = baseWidth + stretch;
 
     let left = x - width / 2;
-    const minLeft = geo.pad;
-    const maxLeft = geo.islandW - geo.pad - width;
+    // Границы — по padding-зоне островка
+    const minLeft = 0;
+    const maxLeft = geo.innerW - width;
     left = clamp(left, minLeft, maxLeft);
 
     applyLens(left, width, false);
@@ -562,7 +574,7 @@
     }
   }
 
-  /* ===== GRADIENT TRACKING (только во время commit-анимации) ===== */
+  /* ===== GRADIENT TRACKING (только на время commit-анимации) ===== */
   let tracking = false;
   let trackEnd = 0;
 
