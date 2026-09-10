@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Nav Island — прототип (линза на месте)</title>
+  <title>Nav Island — прототип v10 (система координат как в v2)</title>
   <script src="https://telegram.org/js/telegram-web-app.js?56"></script>
   <style>
     :root {
@@ -77,7 +77,6 @@
       z-index: 5;
     }
 
-    /* ===== ОСТРОВОК ===== */
     .nav-island {
       position: fixed;
       left: 50%;
@@ -133,14 +132,11 @@
     }
     .nav-btn svg { display: block; }
 
-    /* ЛИНЗА — left: var(--island-pad).
-       Натуральная позиция = padding edge островка = где начинается первая кнопка.
-       translate3d(left) сдвигает оттуда, left = b.left из geo (тоже от padding edge).
-       Совпадение точное. */
+    /* Линза как в v2 */
     .nav-lens {
       position: absolute;
       top: var(--island-pad);
-      left: var(--island-pad);
+      left: 0;
       height: calc(var(--island-h) - var(--island-pad) * 2);
       border-radius: 50px;
       background: var(--island-lens-bg);
@@ -248,27 +244,19 @@
     currentTab = tab;
   }
 
-  /* ===== GEOMETRY (от padding edge островка) ===== */
+  /* ===== GEOMETRY — точно как в v2, от border-box островка, без вычетов padding ===== */
   let geo = null;
 
   function rebuildGeometry() {
     const ir = island.getBoundingClientRect();
-    const cs = getComputedStyle(island);
-    const borderL = parseFloat(cs.borderLeftWidth) || 0;
-    const borderR = parseFloat(cs.borderRightWidth) || 0;
-    const padL = parseFloat(cs.paddingLeft) || 0;
-    const padR = parseFloat(cs.paddingRight) || 0;
-
-    const padEdgeX = ir.left + borderL + padL;
-    const innerW = ir.width - borderL - borderR - padL - padR;
 
     const bs = buttons.map(b => {
       const r = b.getBoundingClientRect();
       return {
         tab: b.dataset.tab,
-        left: r.left - padEdgeX,
+        left: r.left - ir.left,       // от border-box островка
         width: r.width,
-        center: r.left - padEdgeX + r.width / 2
+        center: r.left - ir.left + r.width / 2
       };
     });
 
@@ -277,7 +265,7 @@
       mids.push((bs[i].center + bs[i + 1].center) / 2);
     }
 
-    geo = { islandW: ir.width, innerW, buttons: bs, mids };
+    geo = { islandW: ir.width, buttons: bs, mids };
   }
 
   function btnByTab(tab) {
@@ -336,10 +324,7 @@
 
   function pointerToLocal(clientX) {
     const ir = island.getBoundingClientRect();
-    const cs = getComputedStyle(island);
-    const borderL = parseFloat(cs.borderLeftWidth) || 0;
-    const padL = parseFloat(cs.paddingLeft) || 0;
-    return clientX - ir.left - borderL - padL;
+    return clientX - ir.left;      // от border-box островка, как в v2
   }
 
   function onPointerDown(e) {
@@ -404,7 +389,7 @@
 
     let left = x - width / 2;
     const minLeft = 0;
-    const maxLeft = geo.innerW - width;
+    const maxLeft = geo.islandW - width;
     left = clamp(left, minLeft, maxLeft);
 
     applyLens(left, width, false);
