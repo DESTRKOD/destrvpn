@@ -78,7 +78,6 @@
       visibility: hidden;
     }
 
-    /* ===== LOTTIE (уменьшено в 2 раза) ===== */
     .lottie-wrap {
       display: flex;
       justify-content: center;
@@ -295,6 +294,63 @@
       font-weight: 500;
     }
 
+    /* 2FA — поля пароля */
+    .password-row {
+      display: flex;
+      align-items: center;
+      background: var(--tg-theme-section-bg-color);
+      border-radius: 12px;
+      padding: 4px 16px;
+      height: 52px;
+      margin-bottom: 12px;
+    }
+    .password-row:last-of-type {
+      margin-bottom: 8px;
+    }
+    .password-input {
+      flex: 1;
+      border: none;
+      outline: none;
+      background: transparent;
+      font-size: 17px;
+      color: var(--tg-theme-text-color);
+      height: 100%;
+      font-family: inherit;
+      min-width: 0;
+      letter-spacing: 0.5px;
+    }
+    .password-input::placeholder {
+      color: var(--tg-theme-hint-color);
+      letter-spacing: 0;
+    }
+    .password-input:focus {
+      /* мягкое выделение строки при фокусе */
+    }
+    .password-row:focus-within {
+      box-shadow: 0 0 0 2px var(--tg-theme-button-color);
+    }
+
+    /* Заглушка "Меню" */
+    .menu-placeholder {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 24px;
+    }
+    .menu-placeholder h1 {
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+    .menu-placeholder p {
+      font-size: 15px;
+      color: var(--tg-theme-hint-color);
+    }
+
     /* Modal */
     .modal-overlay {
       position: fixed;
@@ -469,6 +525,56 @@
     </div>
   </div>
 
+  <!-- SCREEN 3: 2FA setup -->
+  <div class="screen" id="screen-2fa">
+    <div class="lottie-wrap">
+      <div class="lottie-anim" id="lottie-2fa"></div>
+    </div>
+
+    <div class="header">
+      <h1>Защитите аккаунт</h1>
+      <p>Придумайте пароль для двухфакторной аутентификации. Он понадобится при следующем входе.</p>
+    </div>
+
+    <div class="password-row">
+      <input
+        type="password"
+        class="password-input"
+        id="password-1"
+        placeholder="Придумайте пароль"
+        autocomplete="new-password"
+      >
+    </div>
+
+    <div class="password-row">
+      <input
+        type="password"
+        class="password-input"
+        id="password-2"
+        placeholder="Повторите пароль"
+        autocomplete="new-password"
+      >
+    </div>
+
+    <div class="error-text" id="password-error" style="text-align:center"></div>
+
+    <div class="bottom">
+      <button class="btn" id="btn-2fa-continue" disabled>
+        <span class="btn-text">Продолжить</span>
+        <div class="spinner"></div>
+      </button>
+      <button class="link-back" id="btn-2fa-skip">Пропустить</button>
+    </div>
+  </div>
+
+  <!-- SCREEN 4: Menu (заглушка) -->
+  <div class="screen" id="screen-menu">
+    <div class="menu-placeholder">
+      <h1>Меню</h1>
+      <p>Здесь будет главный экран</p>
+    </div>
+  </div>
+
   <!-- Country Modal -->
   <div class="modal-overlay" id="modal">
     <div class="modal">
@@ -524,7 +630,7 @@
   }
 })();
 
-/* ===== Haptic Feedback ===== */
+/* ===== Haptic ===== */
 function haptic(type, style) {
   try {
     const hf = window.Telegram?.WebApp?.HapticFeedback;
@@ -579,12 +685,27 @@ async function initLottie(containerId, path, key, opts = {}) {
   }
 }
 
+// redphone — играет сразу, без loop
 initLottie('lottie-redphone', 'redphone.json', 'redphone', {
   loop: false,
   autoplay: true
 });
 
+// message — играет при переходе на экран кода
 initLottie('lottie-message', 'message.json', 'message', {
+  loop: false,
+  autoplay: false
+}).then(anim => {
+  if (!anim) return;
+  if (anim.isLoaded) {
+    anim.goToAndStop(0, true);
+  } else {
+    anim.addEventListener('DOMLoaded', () => anim.goToAndStop(0, true));
+  }
+});
+
+// 2fa — играет при переходе на экран 2FA
+initLottie('lottie-2fa', '2fa.json', '2fa', {
   loop: false,
   autoplay: false
 }).then(anim => {
@@ -620,9 +741,12 @@ function switchScreen(fromEl, toEl, direction = 'forward') {
 
   setTimeout(() => fromEl.classList.remove("leaving-left", "leaving-right"), 350);
 
-  // Проигрываем message Lottie при входе на экран кода
+  // Проигрываем Lottie на новом экране
   if (toEl.id === 'screen-code' && lottieAnims.message) {
     lottieAnims.message.goToAndPlay(0, true);
+  }
+  if (toEl.id === 'screen-2fa' && lottieAnims['2fa']) {
+    lottieAnims['2fa'].goToAndPlay(0, true);
   }
 }
 
@@ -670,7 +794,6 @@ function setCountry(country) {
   phoneError.classList.remove("visible");
 }
 
-/* ===== Mask-based formatting ===== */
 function formatPhone(digits, mask) {
   if (!digits) return "";
   let result = "";
@@ -690,8 +813,6 @@ function maskCapacity(mask) {
   return (mask.match(/9/g) || []).length;
 }
 
-/* Отрезает код страны в начале строки (для автозаполнения)
-   Пример: "79999999999" + код "+7" → "9999999999" */
 function stripCountryCode(digits, countryCode) {
   const code = (countryCode || "").replace(/\D/g, "");
   if (!code) return digits;
@@ -701,11 +822,6 @@ function stripCountryCode(digits, countryCode) {
   return digits;
 }
 
-/* Обработка ввода с защитой от автозаполнения полного номера.
-   Триггерим strip только когда:
-   - пришло сразу много цифр (paste/autofill)
-   - до этого было мало (< 3 цифр)
-   Это защищает от ложного срезания, когда юзер вводит +7 вручную */
 phoneInput.addEventListener("input", (e) => {
   const maxDigits = Math.min(requiredLength, maskCapacity(currentMask));
   let raw = e.target.value.replace(/\D/g, "");
@@ -727,14 +843,12 @@ phoneInput.addEventListener("input", (e) => {
   updateButton();
   phoneError.classList.remove("visible");
 
-  // Лёгкая вибрация — когда номер впервые стал полным
   const nowComplete = phoneDigits.length >= requiredLength;
   if (nowComplete && !wasComplete) {
     hapticImpact('light');
   }
 });
 
-/* Явный paste-обработчик — надёжнее для ручной вставки из буфера */
 phoneInput.addEventListener("paste", (e) => {
   e.preventDefault();
   const pasted = (e.clipboardData || window.clipboardData).getData("text") || "";
@@ -815,7 +929,7 @@ modal.addEventListener("click", (e) => {
 });
 searchInput.addEventListener("input", () => renderCountries(searchInput.value));
 
-/* Continue */
+/* Continue (phone) */
 btnContinue.addEventListener("click", async () => {
   if (btnContinue.disabled || btnContinue.classList.contains("loading")) return;
 
@@ -826,7 +940,6 @@ btnContinue.addEventListener("click", async () => {
   phoneError.classList.remove("visible");
 
   try {
-    // MOCK
     await new Promise(r => setTimeout(r, 1500));
 
     $("sent-phone").textContent = fullPhone;
@@ -865,7 +978,6 @@ codeDigits.forEach((input, idx) => {
     checkCodeComplete();
     const nowComplete = Array.from(codeDigits).every(d => d.value);
 
-    // Вибрация — только когда все 6 цифр введены
     if (nowComplete && !wasComplete) {
       hapticImpact('light');
     }
@@ -908,8 +1020,9 @@ btnVerify.addEventListener("click", async () => {
     await new Promise(r => setTimeout(r, 1200));
     if (code !== "123456") throw new Error("Неверный код подтверждения");
 
+    // Успех — переходим на экран 2FA
     hapticNotify('success');
-    Telegram.WebApp.showAlert("Успешно! Код подтверждён.");
+    switchScreen($("screen-code"), $("screen-2fa"), 'forward');
 
   } catch (err) {
     hapticNotify('error');
@@ -943,7 +1056,7 @@ function startTimer() {
   }, 1000);
 }
 
-/* ===== Back to phone ===== */
+/* Back to phone */
 $("btn-back-phone").addEventListener("click", () => {
   hapticImpact("light");
 
@@ -955,6 +1068,100 @@ $("btn-back-phone").addEventListener("click", () => {
   switchScreen($("screen-code"), $("screen-phone"), 'back');
 
   setTimeout(() => phoneInput.focus(), 320);
+});
+
+/* ===== 2FA screen ===== */
+const password1 = $("password-1");
+const password2 = $("password-2");
+const btn2faContinue = $("btn-2fa-continue");
+const passwordError = $("password-error");
+
+const MIN_PASSWORD_LENGTH = 6;
+
+function isPasswordValid() {
+  const p1 = password1.value;
+  const p2 = password2.value;
+  if (p1.length < MIN_PASSWORD_LENGTH || p2.length < MIN_PASSWORD_LENGTH) return false;
+  if (p1 !== p2) return false;
+  return true;
+}
+
+function update2faButton() {
+  const wasDisabled = btn2faContinue.disabled;
+  btn2faContinue.disabled = !isPasswordValid();
+  // Лёгкая вибрация в момент, когда кнопка «ожила»
+  if (wasDisabled && !btn2faContinue.disabled) {
+    hapticImpact('light');
+  }
+}
+
+function updatePasswordError() {
+  const p1 = password1.value;
+  const p2 = password2.value;
+
+  // Показываем ошибку только если оба поля не пустые и что-то не так
+  if (!p1 || !p2) {
+    passwordError.classList.remove("visible");
+    return;
+  }
+  if (p1.length < MIN_PASSWORD_LENGTH) {
+    passwordError.textContent = `Пароль должен быть не короче ${MIN_PASSWORD_LENGTH} символов`;
+    passwordError.classList.add("visible");
+    return;
+  }
+  if (p1 !== p2) {
+    passwordError.textContent = "Пароли не совпадают";
+    passwordError.classList.add("visible");
+    return;
+  }
+  passwordError.classList.remove("visible");
+}
+
+password1.addEventListener("input", () => {
+  update2faButton();
+  updatePasswordError();
+});
+
+password2.addEventListener("input", () => {
+  update2faButton();
+  updatePasswordError();
+});
+
+/* Продолжить на 2FA */
+btn2faContinue.addEventListener("click", async () => {
+  if (btn2faContinue.disabled || btn2faContinue.classList.contains("loading")) return;
+
+  hapticImpact("medium");
+
+  if (!isPasswordValid()) {
+    hapticNotify('error');
+    updatePasswordError();
+    return;
+  }
+
+  btn2faContinue.classList.add("loading");
+  passwordError.classList.remove("visible");
+
+  try {
+    // MOCK: сохранение 2FA на сервере
+    await new Promise(r => setTimeout(r, 1200));
+
+    hapticNotify('success');
+    switchScreen($("screen-2fa"), $("screen-menu"), 'forward');
+
+  } catch (err) {
+    hapticNotify('error');
+    passwordError.textContent = err.message || "Не удалось сохранить пароль";
+    passwordError.classList.add("visible");
+  } finally {
+    btn2faContinue.classList.remove("loading");
+  }
+});
+
+/* Пропустить 2FA */
+$("btn-2fa-skip").addEventListener("click", () => {
+  hapticImpact("medium");
+  switchScreen($("screen-2fa"), $("screen-menu"), 'forward');
 });
 </script>
 </body>
