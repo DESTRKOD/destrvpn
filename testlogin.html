@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>DxS Connect</title>
   <script src="https://telegram.org/js/telegram-web-app.js?56"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie_light.min.js"></script>
   <style>
     :root {
       --tg-theme-bg-color: #ffffff;
@@ -58,28 +59,48 @@
                   opacity 0.32s cubic-bezier(0.32, 0.72, 0, 1),
                   visibility 0.32s;
       will-change: transform, opacity;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
     }
     .screen.active {
       transform: translateX(0);
       opacity: 1;
       visibility: visible;
     }
-    /* Класс для возврата вправо (назад) */
     .screen.leaving-right {
       transform: translateX(100%);
       opacity: 0;
       visibility: hidden;
     }
-    /* Класс для ухода влево (вперёд) */
     .screen.leaving-left {
       transform: translateX(-30%);
       opacity: 0;
       visibility: hidden;
     }
 
+    /* ===== LOTTIE ===== */
+    .lottie-wrap {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px 0 4px;
+      flex-shrink: 0;
+    }
+    .lottie-anim {
+      width: 200px;
+      height: 200px;
+    }
+    /* Пока Lottie не загрузился — контейнер не схлопывается */
+    .lottie-anim:empty::before {
+      content: "";
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
     .header {
       text-align: center;
-      padding: 28px 8px 20px;
+      padding: 8px 8px 20px;
     }
     .header h1 {
       font-size: 24px;
@@ -154,6 +175,7 @@
       letter-spacing: 0.3px;
       height: 100%;
       font-family: inherit;
+      min-width: 0;
     }
     .phone-input::placeholder {
       color: var(--tg-theme-hint-color);
@@ -219,7 +241,6 @@
       to { transform: rotate(360deg); }
     }
 
-    /* Синяя ссылка "Назад" под кнопкой */
     .link-back {
       display: block;
       width: 100%;
@@ -238,12 +259,11 @@
       opacity: 0.6;
     }
 
-    /* Code screen - 6 digits */
     .code-inputs {
       display: flex;
       justify-content: center;
       gap: 8px;
-      margin: 24px 0 16px;
+      margin: 16px 0;
     }
     .code-digit {
       width: 42px;
@@ -258,6 +278,7 @@
       outline: none;
       caret-color: var(--tg-theme-button-color);
       font-family: inherit;
+      min-width: 0;
     }
     .code-digit:focus {
       background: var(--tg-theme-section-bg-color);
@@ -379,6 +400,10 @@
 
   <!-- SCREEN 1: Phone -->
   <div class="screen active" id="screen-phone">
+    <div class="lottie-wrap">
+      <div class="lottie-anim" id="lottie-redphone"></div>
+    </div>
+
     <div class="header">
       <h1>Ваш номер телефона</h1>
       <p>Пожалуйста, подтвердите код вашей страны и введите свой номер телефона.</p>
@@ -411,8 +436,12 @@
     </div>
   </div>
 
-  <!-- SCREEN 2: Code (6 digits) -->
+  <!-- SCREEN 2: Code -->
   <div class="screen" id="screen-code">
+    <div class="lottie-wrap">
+      <div class="lottie-anim" id="lottie-message"></div>
+    </div>
+
     <div class="header">
       <h1>Введите код</h1>
       <p id="code-subtitle">Мы отправили SMS с кодом подтверждения на номер <b id="sent-phone"></b></p>
@@ -453,7 +482,7 @@
   </div>
 
 <script>
-/* Telegram WebApp + mock */
+/* ===== Telegram WebApp + mock ===== */
 (function() {
   if (!window.Telegram || !window.Telegram.WebApp) {
     window.Telegram = {
@@ -496,6 +525,64 @@
   }
 })();
 
+/* ===== Lottie animations ===== */
+/* Обе анимации: loop=false, autoplay=true. Сыграли — стоят на последнем кадре. */
+const lottieAnims = {};
+
+function initLottie(containerId, path, key) {
+  const container = document.getElementById(containerId);
+  if (!container || typeof lottie === 'undefined') return;
+
+  try {
+    lottieAnims[key] = lottie.loadAnimation({
+      container: container,
+      renderer: 'svg',
+      loop: false,
+      autoplay: true,
+      path: path,
+      rendererSettings: {
+        preserveAspectRatio: 'xMidYMid meet',
+        progressiveLoad: false
+      }
+    });
+  } catch (err) {
+    console.warn('Lottie init failed for', key, err);
+  }
+}
+
+// redphone — на экране телефона
+initLottie('lottie-redphone', 'redphone.json', 'redphone');
+
+// message — на экране кода. Появится когда переключимся на экран (autoplay сработает).
+// Но т.к. экран изначально скрыт через visibility — анимация может "открутиться" в фоне.
+// Поэтому сначала ставим на паузу, а при показе экрана — проигрываем с нуля.
+(function() {
+  const container = document.getElementById('lottie-message');
+  if (!container || typeof lottie === 'undefined') return;
+
+  try {
+    const anim = lottie.loadAnimation({
+      container: container,
+      renderer: 'svg',
+      loop: false,
+      autoplay: false,
+      path: 'message.json',
+      rendererSettings: {
+        preserveAspectRatio: 'xMidYMid meet',
+        progressiveLoad: false
+      }
+    });
+    lottieAnims.message = anim;
+
+    // Когда данные загрузятся — остановим на первом кадре
+    anim.addEventListener('DOMLoaded', () => {
+      anim.goToAndStop(0, true);
+    });
+  } catch (err) {
+    console.warn('Lottie init failed for message', err);
+  }
+})();
+
 /* ===== Haptic Feedback ===== */
 function haptic(type, style) {
   try {
@@ -509,7 +596,6 @@ function haptic(type, style) {
 const hapticImpact = (s) => haptic("impact", s);
 
 /* ===== Screen transition ===== */
-/* direction: 'forward' (влево, вперёд) | 'back' (вправо, назад) */
 function switchScreen(fromEl, toEl, direction = 'forward') {
   if (!fromEl || !toEl) return;
 
@@ -518,7 +604,6 @@ function switchScreen(fromEl, toEl, direction = 'forward') {
 
   toEl.classList.remove("leaving-left", "leaving-right");
 
-  // Если возвращаемся назад — toEl должен въезжать справа
   if (direction === 'back') {
     toEl.style.transition = 'none';
     toEl.style.transform = 'translateX(-30%)';
@@ -533,16 +618,21 @@ function switchScreen(fromEl, toEl, direction = 'forward') {
   toEl.classList.add("active");
 
   setTimeout(() => fromEl.classList.remove("leaving-left", "leaving-right"), 350);
+
+  // Проигрываем Lottie на новом экране с нуля
+  if (toEl.id === 'screen-code' && lottieAnims.message) {
+    lottieAnims.message.goToAndPlay(0, true);
+  }
 }
 
-/* ===== Countries (загружаются из numbers.json) ===== */
+/* ===== Countries ===== */
 let COUNTRIES = [];
 let currentCountry = null;
 let phoneDigits = "";
 let requiredLength = 10;
 let currentMask = "";
 
-const countriesReady = fetch("numbers.json")
+fetch("numbers.json")
   .then(r => {
     if (!r.ok) throw new Error("Не удалось загрузить numbers.json");
     return r.json();
@@ -556,7 +646,6 @@ const countriesReady = fetch("numbers.json")
     console.error(err);
   });
 
-/* DOM */
 const $ = (id) => document.getElementById(id);
 const phoneInput = $("phone-input");
 const btnContinue = $("btn-continue");
@@ -565,7 +654,6 @@ const modal = $("modal");
 const countryList = $("country-list");
 const searchInput = $("search");
 
-/* Country */
 function setCountry(country) {
   currentCountry = country;
   $("current-flag").textContent = country.флаг;
@@ -580,8 +668,6 @@ function setCountry(country) {
   phoneError.classList.remove("visible");
 }
 
-/* ===== Mask-based phone formatting ===== */
-/* Символ '9' в маске = цифра, остальные символы — литералы */
 function formatPhone(digits, mask) {
   if (!digits) return "";
   let result = "";
@@ -598,7 +684,6 @@ function formatPhone(digits, mask) {
   return result;
 }
 
-/* Возвращает количество цифр, которые реально помещаются в маску */
 function maskCapacity(mask) {
   return (mask.match(/9/g) || []).length;
 }
@@ -614,7 +699,6 @@ phoneInput.addEventListener("input", (e) => {
   phoneError.classList.remove("visible");
 });
 
-// Правильная обработка Backspace
 phoneInput.addEventListener("keydown", (e) => {
   if (e.key === "Backspace") {
     e.preventDefault();
@@ -630,7 +714,6 @@ function updateButton() {
   btnContinue.disabled = phoneDigits.length < requiredLength;
 }
 
-/* Country modal */
 function renderCountries(filter = "") {
   const q = filter.toLowerCase().trim();
   const filtered = COUNTRIES.filter(c =>
@@ -691,14 +774,6 @@ btnContinue.addEventListener("click", async () => {
   phoneError.classList.remove("visible");
 
   try {
-    // const res = await fetch("/api/send_sms", {
-    //   method: "POST",
-    //   headers: { "Content-Type": "application/json" },
-    //   body: JSON.stringify({ phone: fullPhone })
-    // });
-    // const data = await res.json();
-    // if (!res.ok) throw new Error(data.error || "Ошибка отправки");
-
     // MOCK
     await new Promise(r => setTimeout(r, 1500));
 
@@ -717,7 +792,7 @@ btnContinue.addEventListener("click", async () => {
   }
 });
 
-/* ===== Code screen (6 digits) ===== */
+/* ===== Code screen ===== */
 const codeDigits = document.querySelectorAll(".code-digit");
 const btnVerify = $("btn-verify");
 const codeError = $("code-error");
@@ -769,7 +844,6 @@ btnVerify.addEventListener("click", async () => {
   codeError.classList.remove("visible");
 
   try {
-    // MOCK
     await new Promise(r => setTimeout(r, 1200));
     if (code !== "123456") throw new Error("Неверный код подтверждения");
 
@@ -805,11 +879,10 @@ function startTimer() {
   }, 1000);
 }
 
-/* ===== Back to phone screen ===== */
+/* ===== Back to phone ===== */
 $("btn-back-phone").addEventListener("click", () => {
   hapticImpact("light");
 
-  // Сброс кода
   codeDigits.forEach(d => d.value = "");
   checkCodeComplete();
   codeError.classList.remove("visible");
@@ -817,7 +890,6 @@ $("btn-back-phone").addEventListener("click", () => {
 
   switchScreen($("screen-code"), $("screen-phone"), 'back');
 
-  // Фокус обратно на телефон
   setTimeout(() => phoneInput.focus(), 320);
 });
 </script>
