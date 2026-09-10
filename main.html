@@ -23,14 +23,20 @@
       --island-bottom: calc(var(--island-gap) + env(safe-area-inset-bottom));
       --island-pad: 6px;
 
-      /* Тема островка — обновляется через JS */
+      /* Отступ контента под островок */
+      --content-bottom-gap: calc(var(--island-h) + var(--island-gap) + 32px + env(safe-area-inset-bottom));
+
+      /* Акцент островка — голубой Telegram */
+      --island-accent: #6AB3F3;
+
+      /* Цвета островка (по умолчанию светлая тема) */
       --island-bg: rgba(36, 123, 192, 0.18);
-      --island-border: rgba(36, 123, 192, 0.28);
-      --island-inset: rgba(255, 255, 255, 0.5);
-      --island-text: rgba(20, 60, 100, 0.85);
-      --island-text-active: #143b64;
-      --island-lens-bg: rgba(255, 255, 255, 0.55);
-      --island-lens-inset: rgba(255, 255, 255, 0.9);
+      --island-border: rgba(36, 123, 192, 0.32);
+      --island-inset: rgba(255, 255, 255, 0.6);
+      --island-text: rgba(20, 60, 100, 0.75);
+      --island-text-active: var(--island-accent);
+      --island-lens-bg: rgba(255, 255, 255, 0.6);
+      --island-lens-inset: rgba(255, 255, 255, 0.95);
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -60,23 +66,10 @@
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
       background: var(--tg-theme-bg-color);
-      padding-bottom: calc(var(--island-h) + var(--island-bottom) + 32px);
+      padding-bottom: var(--content-bottom-gap);
       overscroll-behavior: contain;
     }
     .screen.active { display: flex; }
-
-    /* Профиль-хедер — убираем оверскролл-фон */
-    #screen-settings {
-      background: #242D34;
-    }
-    #screen-settings .content {
-      background: var(--tg-theme-bg-color);
-      border-radius: 20px 20px 0 0;
-      margin-top: -20px;
-      position: relative;
-      z-index: 1;
-      padding-top: 24px;
-    }
 
     .page-header {
       padding: 16px 16px 8px;
@@ -164,7 +157,7 @@
     .stats-grid::after  { left: 66.666%; }
 
     .menu-section {
-      margin: 0 16px 40px;
+      margin: 0 16px 24px;
       background: var(--tg-theme-secondary-bg-color);
       border-radius: 14px;
       overflow: hidden;
@@ -407,6 +400,10 @@
     .sub-info-label { color: var(--tg-theme-hint-color); }
     .sub-info-value { font-weight: 500; }
 
+    #btn-cancel-sub {
+      margin-bottom: 24px;
+    }
+
     .settings-group { margin-bottom: 24px; }
     .settings-group-title {
       font-size: 13px; font-weight: 600;
@@ -440,7 +437,7 @@
     .settings-item-value { font-size: 15px; color: var(--tg-theme-hint-color); }
     .settings-item-arrow { color: var(--tg-theme-hint-color); opacity: 0.7; display: flex; }
 
-    /* Тумблер темы прямо в строке «Тема» */
+    /* Тумблер темы */
     .theme-toggle {
       position: relative;
       width: 48px; height: 28px;
@@ -602,7 +599,7 @@
     }
     .option-item.active .option-check { display: flex; }
 
-    /* ===== NAV ISLAND (Liquid Glass) ===== */
+    /* ===== NAV ISLAND ===== */
     .nav-island {
       position: fixed;
       left: 50%;
@@ -610,7 +607,7 @@
       transform: translateX(-50%);
       height: var(--island-h);
       padding: var(--island-pad);
-      display: flex;
+      display: none;
       align-items: center;
       justify-content: space-around;
       gap: 2px;
@@ -626,7 +623,11 @@
       z-index: 60;
       min-width: 280px;
       max-width: calc(100vw - 32px);
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
     }
+    .nav-island.visible { display: flex; }
 
     .nav-btn {
       position: relative;
@@ -649,13 +650,11 @@
       border-radius: 50px;
       transition: color 0.25s;
       white-space: nowrap;
-      -webkit-tap-highlight-color: transparent;
+      pointer-events: none;
     }
     .nav-btn svg { display: block; }
     .nav-btn.active { color: var(--island-text-active); }
-    .nav-btn:active { opacity: 0.85; }
 
-    /* Линза */
     .nav-lens {
       position: absolute;
       top: var(--island-pad);
@@ -675,10 +674,7 @@
       backdrop-filter: blur(6px);
       -webkit-backdrop-filter: blur(6px);
     }
-    .nav-lens.stretch {
-      transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1),
-                  width 0.2s cubic-bezier(0.25, 1, 0.5, 1);
-    }
+    .nav-island.dragging .nav-lens { transition: none; }
 
     /* Modal sheet (device) */
     .sheet-overlay {
@@ -1169,7 +1165,6 @@
 
   <!-- ==================== SETTINGS ==================== -->
   <div class="screen" id="screen-settings">
-    <!-- PROFILE HEADER -->
     <div class="profile-header">
       <div class="profile-glow"></div>
       <div class="profile-pattern"></div>
@@ -1296,7 +1291,7 @@
   </div>
 
   <!-- ==================== NAV ISLAND ==================== -->
-  <nav class="nav-island" id="nav-island">
+  <nav class="nav-island visible" id="nav-island">
     <div class="nav-lens" id="nav-lens"></div>
 
     <button class="nav-btn active" data-tab="home">
@@ -1382,12 +1377,11 @@
     '--tg-theme-link-color': '#3390ec',
     '--tg-theme-destructive-text-color': '#ff3b30',
     '--tg-theme-section-separator-color': 'rgba(0,0,0,0.08)',
-    /* Островок — светлая тема, синий Telegram */
     '--island-bg': 'rgba(36, 123, 192, 0.18)',
     '--island-border': 'rgba(36, 123, 192, 0.32)',
     '--island-inset': 'rgba(255, 255, 255, 0.6)',
     '--island-text': 'rgba(20, 60, 100, 0.75)',
-    '--island-text-active': '#143b64',
+    '--island-text-active': '#6AB3F3',
     '--island-lens-bg': 'rgba(255, 255, 255, 0.6)',
     '--island-lens-inset': 'rgba(255, 255, 255, 0.95)'
   };
@@ -1401,12 +1395,11 @@
     '--tg-theme-link-color': '#6ab3f3',
     '--tg-theme-destructive-text-color': '#ec3942',
     '--tg-theme-section-separator-color': 'rgba(255,255,255,0.08)',
-    /* Островок — тёмная тема, стекло на тёмном */
     '--island-bg': 'rgba(82, 136, 193, 0.22)',
     '--island-border': 'rgba(255, 255, 255, 0.22)',
     '--island-inset': 'rgba(255, 255, 255, 0.3)',
     '--island-text': 'rgba(255, 255, 255, 0.72)',
-    '--island-text-active': '#ffffff',
+    '--island-text-active': '#6AB3F3',
     '--island-lens-bg': 'rgba(255, 255, 255, 0.2)',
     '--island-lens-inset': 'rgba(255, 255, 255, 0.55)'
   };
@@ -1503,10 +1496,14 @@
     }
   })();
 
-  /* ===== Navigation (без анимаций) ===== */
+  /* ===== Navigation ===== */
   const TAB_SCREENS = new Set(['home', 'subscription', 'settings']);
   let historyStack = ['home'];
   let currentScreen = 'home';
+
+  const island = document.getElementById('nav-island');
+  const lens = document.getElementById('nav-lens');
+  const buttons = Array.from(island.querySelectorAll('.nav-btn'));
 
   function showScreen(name) {
     const next = document.getElementById('screen-' + name);
@@ -1517,10 +1514,12 @@
     next.scrollTop = 0;
 
     if (TAB_SCREENS.has(name)) {
-      document.querySelectorAll('.nav-btn').forEach(b => {
-        b.classList.toggle('active', b.dataset.tab === name);
-      });
-      requestAnimationFrame(() => moveLens(true));
+      island.classList.add('visible');
+      buttons.forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+      hoverTab = name;
+      requestAnimationFrame(() => snapLensTo(name));
+    } else {
+      island.classList.remove('visible');
     }
   }
 
@@ -1560,43 +1559,205 @@
     showScreen(name);
   }
 
-  /* ===== NAV LENS ===== */
-  const navIsland = document.getElementById('nav-island');
-  const navLens = document.getElementById('nav-lens');
+  /* ===== NAV ISLAND: DRAG-TO-SELECT ===== */
+  let hoverTab = 'home';
+  let pointerId = null;
+  let startX = 0;
+  let startY = 0;
+  let lastX = 0;
+  let lastMoveTime = 0;
+  let velocity = 0;
+  let didDrag = false;
+  const DRAG_THRESHOLD = 8;
+  const PAD = 6;
+  const MAX_STRETCH = 16;
 
-  function moveLens(withStretch) {
-    const activeBtn = document.querySelector('.nav-btn.active');
-    if (!activeBtn || !navLens || !navIsland) return;
+  function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
 
-    const islandRect = navIsland.getBoundingClientRect();
-    const btnRect = activeBtn.getBoundingClientRect();
-    const pad = 6;
+  function buttonRect(btn) {
+    return { left: btn.offsetLeft, width: btn.offsetWidth };
+  }
 
-    // Позиция линзы относительно внутренней области островка (с учётом padding)
-    const left = (btnRect.left - islandRect.left);
-    const width = btnRect.width;
+  function setLens(left, width, useTransition) {
+    lens.style.transition = useTransition ? '' : 'none';
+    lens.style.transform = `translateX(${left}px)`;
+    lens.style.width = width + 'px';
+  }
 
-    if (withStretch) {
-      navLens.classList.add('stretch');
-      const stretchW = width + 12;
-      const stretchLeft = left - 6;
-      navLens.style.width = stretchW + 'px';
-      navLens.style.transform = `translateX(${stretchLeft}px)`;
-      setTimeout(() => {
-        navLens.classList.remove('stretch');
-        navLens.style.width = width + 'px';
-        navLens.style.transform = `translateX(${left}px)`;
-      }, 200);
+  function snapLensTo(tab) {
+    const btn = buttons.find(b => b.dataset.tab === tab);
+    if (!btn) return;
+    const r = buttonRect(btn);
+    setLens(r.left, r.width, true);
+  }
+
+  function setHover(tab) {
+    if (hoverTab === tab) return;
+    hoverTab = tab;
+    buttons.forEach(b => {
+      b.classList.toggle('active', b.dataset.tab === tab);
+    });
+    haptic('select');
+  }
+
+  function islandInnerRect() {
+    const ir = island.getBoundingClientRect();
+    return { left: PAD, right: ir.width - PAD };
+  }
+
+  function pointerXToIslandLocal(clientX) {
+    const ir = island.getBoundingClientRect();
+    return clientX - ir.left;
+  }
+
+  function tabUnderLensCenter(lensCenterX) {
+    for (const b of buttons) {
+      const r = buttonRect(b);
+      if (lensCenterX >= r.left && lensCenterX <= r.left + r.width) {
+        return b.dataset.tab;
+      }
+    }
+    let best = buttons[0], bestDist = Infinity;
+    for (const b of buttons) {
+      const r = buttonRect(b);
+      const c = r.left + r.width / 2;
+      const d = Math.abs(c - lensCenterX);
+      if (d < bestDist) { bestDist = d; best = b; }
+    }
+    return best.dataset.tab;
+  }
+
+  function onPointerDown(e) {
+    if (pointerId !== null) return;
+    if (!TAB_SCREENS.has(currentScreen)) return;
+    pointerId = e.pointerId;
+    try { island.setPointerCapture(pointerId); } catch (_) {}
+
+    const localX = pointerXToIslandLocal(e.clientX);
+    startX = localX;
+    startY = e.clientY;
+    lastX = localX;
+    lastMoveTime = performance.now();
+    velocity = 0;
+    didDrag = false;
+
+    const btn = buttons.find(b => b.dataset.tab === hoverTab);
+    const r = buttonRect(btn);
+
+    island.classList.add('dragging');
+    setLens(r.left, r.width, false);
+  }
+
+  function onPointerMove(e) {
+    if (e.pointerId !== pointerId) return;
+
+    const localX = pointerXToIslandLocal(e.clientX);
+    const dxTotal = Math.abs(localX - startX);
+    const dyTotal = Math.abs(e.clientY - startY);
+
+    if (!didDrag && (dxTotal > DRAG_THRESHOLD || dyTotal > DRAG_THRESHOLD)) {
+      didDrag = true;
+    }
+    if (!didDrag) return;
+
+    const now = performance.now();
+    const dt = Math.max(1, now - lastMoveTime);
+    const dx = localX - lastX;
+    velocity = dx / dt;
+    lastX = localX;
+    lastMoveTime = now;
+
+    const currentHoverBtn = buttons.find(b => b.dataset.tab === hoverTab);
+    const targetWidth = currentHoverBtn ? currentHoverBtn.offsetWidth : 60;
+
+    const bounds = islandInnerRect();
+    let left = localX - targetWidth / 2;
+    left = clamp(left, bounds.left, bounds.right - targetWidth);
+
+    const stretch = clamp(Math.abs(velocity) * 120, 0, MAX_STRETCH);
+    const stretchedWidth = targetWidth + stretch;
+    const stretchOffset = (stretchedWidth - targetWidth) / 2;
+    let finalLeft = left - stretchOffset;
+    finalLeft = clamp(finalLeft, bounds.left, bounds.right - stretchedWidth);
+
+    setLens(finalLeft, stretchedWidth, false);
+
+    const lensCenter = finalLeft + stretchedWidth / 2;
+    const tabUnder = tabUnderLensCenter(lensCenter);
+    setHover(tabUnder);
+  }
+
+  function onPointerUp(e) {
+    if (e.pointerId !== pointerId) return;
+    try { island.releasePointerCapture(pointerId); } catch (_) {}
+    island.classList.remove('dragging');
+    pointerId = null;
+
+    if (!didDrag) {
+      const localX = pointerXToIslandLocal(e.clientX);
+      commit(tabUnderLensCenter(localX));
+      return;
+    }
+    commit(hoverTab);
+  }
+
+  function onPointerCancel(e) {
+    if (e.pointerId !== pointerId) return;
+    island.classList.remove('dragging');
+    pointerId = null;
+    commit(currentScreen);
+  }
+
+  function commit(tab) {
+    if (!TAB_SCREENS.has(tab)) tab = currentScreen;
+
+    buttons.forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+    hoverTab = tab;
+
+    requestAnimationFrame(() => {
+      const btn = buttons.find(b => b.dataset.tab === tab);
+      if (!btn) return;
+      const r = buttonRect(btn);
+      lens.style.transition = '';
+      lens.style.transform = `translateX(${r.left}px)`;
+      lens.style.width = r.width + 'px';
+    });
+
+    if (tab !== currentScreen) {
+      showScreen(tab);
+      haptic('light');
     } else {
-      navLens.style.width = width + 'px';
-      navLens.style.transform = `translateX(${left}px)`;
+      haptic('light');
     }
   }
 
-  // Первичная установка после рендера шрифтов
-  requestAnimationFrame(() => moveLens(false));
-  window.addEventListener('load', () => requestAnimationFrame(() => moveLens(false)));
-  window.addEventListener('resize', () => moveLens(false));
+  island.addEventListener('pointerdown', onPointerDown);
+  island.addEventListener('pointermove', onPointerMove);
+  island.addEventListener('pointerup', onPointerUp);
+  island.addEventListener('pointercancel', onPointerCancel);
+
+  buttons.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+    });
+  });
+
+  island.addEventListener('touchstart', (e) => { e.preventDefault(); }, { passive: false });
+
+  function initLens() {
+    if (!TAB_SCREENS.has(currentScreen)) return;
+    snapLensTo(currentScreen);
+  }
+
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(() => requestAnimationFrame(initLens));
+  }
+  requestAnimationFrame(initLens);
+  window.addEventListener('load', () => requestAnimationFrame(initLens));
+  window.addEventListener('resize', () => {
+    if (pointerId === null) initLens();
+  });
 
   /* ===== Event binding ===== */
   document.querySelectorAll('[data-go]').forEach(el => {
@@ -1609,15 +1770,6 @@
 
   document.querySelectorAll('[data-back]').forEach(el => {
     el.addEventListener('click', goBack);
-  });
-
-  document.querySelectorAll('.nav-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const target = btn.dataset.tab;
-      if (TAB_SCREENS.has(target)) {
-        goTab(target);
-      }
-    });
   });
 
   document.querySelectorAll('.tariff-card').forEach(card => {
@@ -1635,7 +1787,6 @@
     tg.showAlert('Переход к оплате тарифа: ' + plan + ' мес.');
   });
 
-  /* Devices sheet */
   const deviceSheet = document.getElementById('device-sheet');
   let activeDevice = null;
 
@@ -1668,7 +1819,6 @@
     }
   });
 
-  /* Connection platforms */
   document.querySelectorAll('[data-platform]').forEach(item => {
     item.addEventListener('click', () => {
       haptic('light');
@@ -1688,7 +1838,6 @@
     tg.showAlert('Конфигурация отправлена');
   });
 
-  /* Promo */
   document.getElementById('btn-promo').addEventListener('click', () => {
     const val = document.getElementById('promo-input').value.trim();
     if (!val) {
@@ -1700,7 +1849,6 @@
     document.getElementById('promo-success').classList.add('visible');
   });
 
-  /* FAQ */
   document.querySelectorAll('.faq-question').forEach(q => {
     q.addEventListener('click', () => {
       haptic('select');
@@ -1725,7 +1873,6 @@
     tg.showAlert('Открываем чат поддержки...');
   });
 
-  /* Subscription actions */
   let autorenew = true;
   document.querySelectorAll('#screen-subscription [data-action]').forEach(el => {
     el.addEventListener('click', () => {
@@ -1746,7 +1893,6 @@
     tg.showAlert('Отменить подписку?');
   });
 
-  /* Settings actions */
   document.querySelectorAll('#screen-settings [data-action]').forEach(el => {
     el.addEventListener('click', () => {
       haptic('light');
@@ -1762,6 +1908,9 @@
       tg.showAlert(map[action] || action);
     });
   });
+
+  /* Островок невидим по умолчанию на внутренних экранах — при загрузке home активен */
+  island.classList.add('visible');
 })();
 </script>
 </body>
