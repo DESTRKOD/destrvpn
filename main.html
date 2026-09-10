@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Nav Island — прототип v9</title>
+  <title>Nav Island — прототип (линза на месте)</title>
   <script src="https://telegram.org/js/telegram-web-app.js?56"></script>
   <style>
     :root {
@@ -16,12 +16,10 @@
       --island-bottom: calc(var(--island-gap) + env(safe-area-inset-bottom));
       --island-pad: 6px;
 
-      --island-accent: #6AB3F3;
-      --island-gray: rgba(20, 60, 100, 0.75);
-
       --island-bg: rgba(36, 123, 192, 0.18);
       --island-border: rgba(36, 123, 192, 0.32);
       --island-inset: rgba(255, 255, 255, 0.6);
+      --island-text: rgba(20, 60, 100, 0.75);
       --island-lens-bg: rgba(255, 255, 255, 0.6);
       --island-lens-inset: rgba(255, 255, 255, 0.95);
     }
@@ -79,6 +77,7 @@
       z-index: 5;
     }
 
+    /* ===== ОСТРОВОК ===== */
     .nav-island {
       position: fixed;
       left: 50%;
@@ -108,16 +107,15 @@
       contain: layout paint;
     }
 
-    /* Кнопки: без горизонтального padding. Ширина = вся ширина,
-       отведённая flex-ом. Это даёт точное совпадение .nav-text с кнопкой. */
     .nav-btn {
       position: relative;
       z-index: 2;
       flex: 1;
       height: 100%;
-      padding: 0;
+      padding: 0 14px;
       border: none;
       background: transparent;
+      color: var(--island-text);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -135,29 +133,14 @@
     }
     .nav-btn svg { display: block; }
 
-    /* Текст: блочный, на всю ширину кнопки, текст по центру.
-       Тогда background-size: 100% 100% = ширина кнопки.
-       Пиксельные стопы градиента совпадают с координатами кнопки. */
-    .nav-btn .nav-text {
-      display: block;
-      width: 100%;
-      text-align: center;
-      background-repeat: no-repeat;
-      background-size: 100% 100%;
-      background-position: 0 0;
-      -webkit-background-clip: text;
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
-      color: transparent;
-    }
-
-    /* Линза: left 0 — натуральная позиция = левый край padding-box островка.
-       translate3d(left) двигает её оттуда, left берётся из b.left,
-       которая считается от того же padding edge. Совпадение. */
+    /* ЛИНЗА — left: var(--island-pad).
+       Натуральная позиция = padding edge островка = где начинается первая кнопка.
+       translate3d(left) сдвигает оттуда, left = b.left из geo (тоже от padding edge).
+       Совпадение точное. */
     .nav-lens {
       position: absolute;
       top: var(--island-pad);
-      left: 0;
+      left: var(--island-pad);
       height: calc(var(--island-h) - var(--island-pad) * 2);
       border-radius: 50px;
       background: var(--island-lens-bg);
@@ -178,7 +161,8 @@
 <body>
 
   <div class="hint">
-    Тапни или потяни линзу — буквы голубеют ровно под стеклом
+    Тапни или потяни линзу по островку —<br>
+    экран переключится при отпускании
   </div>
 
   <div class="screen active" id="screen-home">
@@ -198,57 +182,27 @@
     <div class="nav-lens" id="nav-lens"></div>
 
     <button class="nav-btn" data-tab="home">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-icon>
-        <defs>
-          <linearGradient id="iconGrad-home" gradientUnits="userSpaceOnUse" x1="-10" y1="0" x2="34" y2="0">
-            <stop offset="-10" stop-color="var(--island-gray)"/>
-            <stop offset="0" stop-color="var(--island-gray)"/>
-            <stop offset="10" stop-color="var(--island-accent)"/>
-            <stop offset="14" stop-color="var(--island-accent)"/>
-            <stop offset="24" stop-color="var(--island-gray)"/>
-            <stop offset="34" stop-color="var(--island-gray)"/>
-          </linearGradient>
-        </defs>
-        <path d="M3 10.5L12 3l9 7.5" stroke="url(#iconGrad-home)"/>
-        <path d="M5 9.5V21h14V9.5" stroke="url(#iconGrad-home)"/>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 10.5L12 3l9 7.5"/>
+        <path d="M5 9.5V21h14V9.5"/>
       </svg>
-      <span class="nav-text" data-text>Главное</span>
+      <span>Главное</span>
     </button>
 
     <button class="nav-btn" data-tab="subscription">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-icon>
-        <defs>
-          <linearGradient id="iconGrad-sub" gradientUnits="userSpaceOnUse" x1="-10" y1="0" x2="34" y2="0">
-            <stop offset="-10" stop-color="var(--island-gray)"/>
-            <stop offset="0" stop-color="var(--island-gray)"/>
-            <stop offset="10" stop-color="var(--island-accent)"/>
-            <stop offset="14" stop-color="var(--island-accent)"/>
-            <stop offset="24" stop-color="var(--island-gray)"/>
-            <stop offset="34" stop-color="var(--island-gray)"/>
-          </linearGradient>
-        </defs>
-        <rect x="2" y="5" width="20" height="14" rx="2" stroke="url(#iconGrad-sub)"/>
-        <path d="M2 10h20" stroke="url(#iconGrad-sub)"/>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="5" width="20" height="14" rx="2"/>
+        <path d="M2 10h20"/>
       </svg>
-      <span class="nav-text" data-text>Подписки</span>
+      <span>Подписки</span>
     </button>
 
     <button class="nav-btn" data-tab="settings">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-icon>
-        <defs>
-          <linearGradient id="iconGrad-set" gradientUnits="userSpaceOnUse" x1="-10" y1="0" x2="34" y2="0">
-            <stop offset="-10" stop-color="var(--island-gray)"/>
-            <stop offset="0" stop-color="var(--island-gray)"/>
-            <stop offset="10" stop-color="var(--island-accent)"/>
-            <stop offset="14" stop-color="var(--island-accent)"/>
-            <stop offset="24" stop-color="var(--island-gray)"/>
-            <stop offset="34" stop-color="var(--island-gray)"/>
-          </linearGradient>
-        </defs>
-        <circle cx="12" cy="8" r="4" stroke="url(#iconGrad-set)"/>
-        <path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8" stroke="url(#iconGrad-set)"/>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="8" r="4"/>
+        <path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/>
       </svg>
-      <span class="nav-text" data-text>Профиль</span>
+      <span>Профиль</span>
     </button>
   </nav>
 
@@ -294,7 +248,7 @@
     currentTab = tab;
   }
 
-  /* ===== GEOMETRY (в системе padding edge островка) ===== */
+  /* ===== GEOMETRY (от padding edge островка) ===== */
   let geo = null;
 
   function rebuildGeometry() {
@@ -310,15 +264,11 @@
 
     const bs = buttons.map(b => {
       const r = b.getBoundingClientRect();
-      const svg = b.querySelector('[data-icon]');
-      const sr = svg ? svg.getBoundingClientRect() : null;
       return {
         tab: b.dataset.tab,
-        left: r.left - padEdgeX,        // от padding edge островка
+        left: r.left - padEdgeX,
         width: r.width,
-        center: r.left - padEdgeX + r.width / 2,
-        svgLeft: sr ? sr.left - padEdgeX : 0,
-        svgWidth: sr ? sr.width : 0
+        center: r.left - padEdgeX + r.width / 2
       };
     });
 
@@ -334,72 +284,7 @@
     return geo.buttons.find(b => b.tab === tab);
   }
 
-  /* ===== GRADIENT =====
-     Считаем всё в системе кнопки. У .nav-btn теперь padding: 0,
-     значит .nav-text шириной 100% = ширине кнопки, background-size: 100% 100%
-     = ровно размеру кнопки. Пиксельные стопы градиента соответствуют
-     пиксельным координатам кнопки один в один. */
-  const TRANSITION_SOFTNESS = 2;
-
-  function updateGradients(lensLeft, lensWidth) {
-    if (!geo) return;
-
-    geo.buttons.forEach((b, i) => {
-      const btn = buttons[i];
-      const btnWidth = b.width;
-      const localLensLeft = lensLeft - b.left;
-      const localLensRight = localLensLeft + lensWidth;
-
-      const textEl = btn.querySelector('[data-text]');
-      if (textEl) {
-        const soft = TRANSITION_SOFTNESS;
-        const g = `linear-gradient(90deg,
-          var(--island-gray) 0px,
-          var(--island-gray) ${localLensLeft - soft}px,
-          var(--island-accent) ${localLensLeft}px,
-          var(--island-accent) ${localLensRight}px,
-          var(--island-gray) ${localLensRight + soft}px,
-          var(--island-gray) ${btnWidth}px)`;
-        textEl.style.backgroundImage = g;
-      }
-
-      const svg = btn.querySelector('[data-icon]');
-      if (svg && b.svgWidth > 0) {
-        const svgOffsetX = b.svgLeft - b.left;
-        const svgWidthPx = b.svgWidth;
-        const scale = 24 / svgWidthPx;
-
-        const svgLensLeft = (localLensLeft - svgOffsetX) * scale;
-        const svgLensRight = (localLensRight - svgOffsetX) * scale;
-        const svgSoft = TRANSITION_SOFTNESS * scale;
-
-        const grad = svg.querySelector('linearGradient');
-        if (grad) {
-          const clampV = (v) => Math.max(-10, Math.min(34, v));
-          const stops = [
-            { off: -10, color: 'var(--island-gray)' },
-            { off: clampV(svgLensLeft - svgSoft), color: 'var(--island-gray)' },
-            { off: clampV(svgLensLeft), color: 'var(--island-accent)' },
-            { off: clampV(svgLensRight), color: 'var(--island-accent)' },
-            { off: clampV(svgLensRight + svgSoft), color: 'var(--island-gray)' },
-            { off: 34, color: 'var(--island-gray)' }
-          ];
-          stops.sort((a, b) => a.off - b.off);
-
-          while (grad.firstChild) grad.removeChild(grad.firstChild);
-          stops.forEach(s => {
-            const stop = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
-            stop.setAttribute('offset', s.off + '');
-            stop.setAttribute('stop-color', s.color);
-            grad.appendChild(stop);
-          });
-          grad.setAttribute('x1', '-10');
-          grad.setAttribute('x2', '34');
-        }
-      }
-    });
-  }
-
+  /* ===== LENS ===== */
   const MIN_STRETCH = 0;
   const MAX_STRETCH = 10;
   const STRETCH_K = 60;
@@ -408,7 +293,6 @@
     lens.style.transition = useTransition ? '' : 'none';
     lens.style.transform = `translate3d(${left}px, 0, 0)`;
     lens.style.width = width + 'px';
-    updateGradients(left, width);
   }
 
   function snapTo(tab, useTransition) {
@@ -559,7 +443,6 @@
     if (b) {
       lens.style.transition = '';
       applyLens(b.left, b.width, true);
-      startGradientTracking();
     }
 
     if (tab !== currentTab) {
@@ -567,35 +450,6 @@
       haptic('light');
     } else {
       haptic('light');
-    }
-  }
-
-  let tracking = false;
-  let trackEnd = 0;
-
-  function startGradientTracking() {
-    if (tracking) return;
-    tracking = true;
-    trackEnd = performance.now() + 400;
-    requestAnimationFrame(trackFrame);
-  }
-
-  function trackFrame() {
-    if (!tracking) return;
-    const now = performance.now();
-
-    const cs = getComputedStyle(lens);
-    const m = new DOMMatrixReadOnly(cs.transform);
-    const tx = m.m41;
-    const w = parseFloat(cs.width);
-    if (!isNaN(tx) && !isNaN(w)) {
-      updateGradients(tx, w);
-    }
-
-    if (now < trackEnd) {
-      requestAnimationFrame(trackFrame);
-    } else {
-      tracking = false;
     }
   }
 
