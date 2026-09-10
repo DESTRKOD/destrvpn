@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Nav Island — прототип v8</title>
+  <title>Nav Island — прототип v9</title>
   <script src="https://telegram.org/js/telegram-web-app.js?56"></script>
   <style>
     :root {
@@ -108,12 +108,14 @@
       contain: layout paint;
     }
 
+    /* Кнопки: без горизонтального padding. Ширина = вся ширина,
+       отведённая flex-ом. Это даёт точное совпадение .nav-text с кнопкой. */
     .nav-btn {
       position: relative;
       z-index: 2;
       flex: 1;
       height: 100%;
-      padding: 0 14px;
+      padding: 0;
       border: none;
       background: transparent;
       display: flex;
@@ -133,17 +135,24 @@
     }
     .nav-btn svg { display: block; }
 
+    /* Текст: блочный, на всю ширину кнопки, текст по центру.
+       Тогда background-size: 100% 100% = ширина кнопки.
+       Пиксельные стопы градиента совпадают с координатами кнопки. */
     .nav-btn .nav-text {
+      display: block;
+      width: 100%;
+      text-align: center;
       background-repeat: no-repeat;
       background-size: 100% 100%;
+      background-position: 0 0;
       -webkit-background-clip: text;
       background-clip: text;
       -webkit-text-fill-color: transparent;
       color: transparent;
     }
 
-    /* ЛИНЗА — left: 0, натуральная позиция = левый край padding-зоны.
-       translate3d(left) двигает её оттуда. left приходит из b.left,
+    /* Линза: left 0 — натуральная позиция = левый край padding-box островка.
+       translate3d(left) двигает её оттуда, left берётся из b.left,
        которая считается от того же padding edge. Совпадение. */
     .nav-lens {
       position: absolute;
@@ -305,7 +314,7 @@
       const sr = svg ? svg.getBoundingClientRect() : null;
       return {
         tab: b.dataset.tab,
-        left: r.left - padEdgeX,
+        left: r.left - padEdgeX,        // от padding edge островка
         width: r.width,
         center: r.left - padEdgeX + r.width / 2,
         svgLeft: sr ? sr.left - padEdgeX : 0,
@@ -325,7 +334,11 @@
     return geo.buttons.find(b => b.tab === tab);
   }
 
-  /* ===== GRADIENT ===== */
+  /* ===== GRADIENT =====
+     Считаем всё в системе кнопки. У .nav-btn теперь padding: 0,
+     значит .nav-text шириной 100% = ширине кнопки, background-size: 100% 100%
+     = ровно размеру кнопки. Пиксельные стопы градиента соответствуют
+     пиксельным координатам кнопки один в один. */
   const TRANSITION_SOFTNESS = 2;
 
   function updateGradients(lensLeft, lensWidth) {
@@ -424,7 +437,6 @@
     return best.tab;
   }
 
-  /* ===== DRAG ===== */
   let pointerId = null;
   let startX = 0;
   let startY = 0;
