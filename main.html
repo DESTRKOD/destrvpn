@@ -17,7 +17,6 @@
       --tg-theme-destructive-text-color: #ff3b30;
       --tg-theme-section-separator-color: rgba(0,0,0,0.08);
 
-      /* Островок */
       --island-h: 68px;
       --island-gap: 14px;
       --island-bottom: calc(var(--island-gap) + env(safe-area-inset-bottom));
@@ -50,7 +49,9 @@
       flex-direction: column;
     }
 
-    /* ===== SCREENS ===== */
+    /* ===== SCREENS =====
+       Обычный экран — без встроенного padding-bottom, потому что под островок
+       отступ задаётся адресно у контента (например, .menu-section). */
     .screen {
       position: absolute;
       inset: 0;
@@ -60,12 +61,17 @@
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
       background: var(--tg-theme-bg-color);
-      padding-bottom: calc(var(--island-h) + var(--island-bottom) + 40px);
       overscroll-behavior: contain;
     }
     .screen.active { display: flex; }
 
-    /* На внутренних экранах (без островка) нижний отступ меньше */
+    /* Экраны-табы (с островком) — реальный отступ под островок через padding-bottom.
+       Он даёт скролл-контейнеру место, чтобы последний блок не уезжал под островок. */
+    .screen.tab-screen {
+      padding-bottom: calc(var(--island-h) + var(--island-bottom) + 40px);
+    }
+
+    /* Внутренние экраны — небольшой нижний отступ */
     .screen.no-island {
       padding-bottom: calc(24px + env(safe-area-inset-bottom));
     }
@@ -155,8 +161,11 @@
     .stats-grid::before { left: 33.333%; }
     .stats-grid::after  { left: 66.666%; }
 
+    /* menu-section — реальный нижний отступ, который выходит за островок.
+       Это ключевое место: именно здесь мы даём место под «Помощь». */
     .menu-section {
-      margin: 0 16px 24px;
+      margin: 0 16px;
+      margin-bottom: calc(var(--island-h) + var(--island-bottom) + 32px);
       background: var(--tg-theme-secondary-bg-color);
       border-radius: 14px;
       overflow: hidden;
@@ -434,7 +443,6 @@
     .settings-item-value { font-size: 15px; color: var(--tg-theme-hint-color); }
     .settings-item-arrow { color: var(--tg-theme-hint-color); opacity: 0.7; display: flex; }
 
-    /* Тумблер темы */
     .theme-toggle {
       position: relative;
       width: 48px; height: 28px;
@@ -457,12 +465,8 @@
       box-shadow: 0 2px 4px rgba(0,0,0,0.25);
       transition: transform 0.25s cubic-bezier(0.32, 0.72, 0, 1);
     }
-    .theme-toggle.dark {
-      background: var(--tg-theme-button-color);
-    }
-    .theme-toggle.dark::after {
-      transform: translateX(20px);
-    }
+    .theme-toggle.dark { background: var(--tg-theme-button-color); }
+    .theme-toggle.dark::after { transform: translateX(20px); }
 
     /* PROFILE HEADER */
     .profile-header {
@@ -534,10 +538,7 @@
       box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
       margin-bottom: 20px;
     }
-    .profile-avatar img {
-      width: 100%; height: 100%;
-      object-fit: cover; display: block;
-    }
+    .profile-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .profile-avatar-fallback {
       width: 100%; height: 100%;
       display: flex; align-items: center; justify-content: center;
@@ -724,7 +725,7 @@
 <body>
 
   <!-- ==================== HOME ==================== -->
-  <div class="screen active" id="screen-home">
+  <div class="screen tab-screen active" id="screen-home">
     <header class="brand-header">
       <div class="shield-icon">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1116,7 +1117,7 @@
   </div>
 
   <!-- ==================== SUBSCRIPTION ==================== -->
-  <div class="screen" id="screen-subscription">
+  <div class="screen tab-screen" id="screen-subscription">
     <div class="page-header">
       <div class="page-title">Ваша подписка</div>
     </div>
@@ -1167,7 +1168,7 @@
   </div>
 
   <!-- ==================== SETTINGS ==================== -->
-  <div class="screen" id="screen-settings">
+  <div class="screen tab-screen" id="screen-settings">
     <div class="profile-header">
       <div class="profile-glow"></div>
       <div class="profile-pattern"></div>
@@ -1362,7 +1363,6 @@
 
 <script>
 (function () {
-  /* ===== Telegram init ===== */
   if (!window.Telegram || !window.Telegram.WebApp) {
     window.Telegram = {
       WebApp: {
@@ -1545,9 +1545,7 @@
 
     if (TAB_SCREENS.has(name)) {
       island.classList.add('visible');
-      // Синхронизируем активную кнопку
       hoverTab = name;
-      // Пересчёт геометрии на случай, если экран только что стал видимым
       requestAnimationFrame(() => {
         rebuildGeometry();
         snapTo(name, false);
@@ -1591,7 +1589,7 @@
 
   function rebuildGeometry() {
     const ir = island.getBoundingClientRect();
-    if (ir.width === 0) return; // островок скрыт
+    if (ir.width === 0) return;
 
     const bs = buttons.map(b => {
       const r = b.getBoundingClientRect();
@@ -1754,9 +1752,9 @@
     didDrag = false;
     pendingX = localX;
 
-    const b = btnByTab(hoverTab) || geo.buttons[0];
-    island.classList.add('dragging');
-    applyLens(b.left, b.width, false);
+    /* ВАЖНО: линзу здесь НЕ двигаем и НЕ сбрасываем transition.
+       Если это тап — линза просто плавно потечёт в commit().
+       Если это drag — renderDragFrame сбросит transition сам. */
   }
 
   function onPointerMove(e) {
@@ -1768,6 +1766,7 @@
 
     if (!didDrag && (dxTotal > DRAG_THRESHOLD || dyTotal > DRAG_THRESHOLD)) {
       didDrag = true;
+      island.classList.add('dragging'); // отключаем transition только когда drag реально начался
     }
     if (!didDrag) return;
 
@@ -1837,6 +1836,7 @@
 
     const b = btnByTab(tab);
     if (b) {
+      /* Включаем transition — линза плавно дотечёт до целевой позиции */
       lens.style.transition = '';
       applyLens(b.left, b.width, true);
       startGradientTracking();
