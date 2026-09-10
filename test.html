@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Nav Island — прототип v7</title>
+  <title>Nav Island — прототип v8</title>
   <script src="https://telegram.org/js/telegram-web-app.js?56"></script>
   <style>
     :root {
@@ -42,7 +42,6 @@
 
     body { position: relative; }
 
-    /* ЭКРАНЫ */
     .screen {
       position: absolute;
       inset: 0;
@@ -80,7 +79,6 @@
       z-index: 5;
     }
 
-    /* ===== ОСТРОВОК ===== */
     .nav-island {
       position: fixed;
       left: 50%;
@@ -144,11 +142,13 @@
       color: transparent;
     }
 
-    /* ЛИНЗА */
+    /* ЛИНЗА — left: 0, натуральная позиция = левый край padding-зоны.
+       translate3d(left) двигает её оттуда. left приходит из b.left,
+       которая считается от того же padding edge. Совпадение. */
     .nav-lens {
       position: absolute;
       top: var(--island-pad);
-      left: var(--island-pad);
+      left: 0;
       height: calc(var(--island-h) - var(--island-pad) * 2);
       border-radius: 50px;
       background: var(--island-lens-bg);
@@ -245,7 +245,6 @@
 
 <script>
 (function () {
-  /* ===== Telegram mock ===== */
   if (!window.Telegram || !window.Telegram.WebApp) {
     window.Telegram = {
       WebApp: {
@@ -271,7 +270,6 @@
     } catch (e) {}
   }
 
-  /* ===== STATE ===== */
   const TABS = ['home', 'subscription', 'settings'];
   let currentTab = 'home';
   let hoverTab = 'home';
@@ -287,12 +285,7 @@
     currentTab = tab;
   }
 
-  /* ===== GEOMETRY =====
-     ВАЖНО: всё в системе "padding-box островка".
-     Линза у нас position: absolute; left: var(--island-pad) — значит её
-     natural позиция = padding edge. translate3d(left) двигает её от padding edge.
-     Значит и b.left должна быть в системе padding edge.
-     Считаем через getBoundingClientRect минус padEdge островка. */
+  /* ===== GEOMETRY (в системе padding edge островка) ===== */
   let geo = null;
 
   function rebuildGeometry() {
@@ -303,9 +296,7 @@
     const padL = parseFloat(cs.paddingLeft) || 0;
     const padR = parseFloat(cs.paddingRight) || 0;
 
-    // Координата левого края padding-зоны островка в системе viewport
     const padEdgeX = ir.left + borderL + padL;
-    // Ширина padding-зоны = куда может ездить линза
     const innerW = ir.width - borderL - borderR - padL - padR;
 
     const bs = buttons.map(b => {
@@ -314,7 +305,7 @@
       const sr = svg ? svg.getBoundingClientRect() : null;
       return {
         tab: b.dataset.tab,
-        left: r.left - padEdgeX,        // в системе padding edge
+        left: r.left - padEdgeX,
         width: r.width,
         center: r.left - padEdgeX + r.width / 2,
         svgLeft: sr ? sr.left - padEdgeX : 0,
@@ -334,7 +325,7 @@
     return geo.buttons.find(b => b.tab === tab);
   }
 
-  /* ===== GRADIENT ENGINE ===== */
+  /* ===== GRADIENT ===== */
   const TRANSITION_SOFTNESS = 2;
 
   function updateGradients(lensLeft, lensWidth) {
@@ -343,11 +334,9 @@
     geo.buttons.forEach((b, i) => {
       const btn = buttons[i];
       const btnWidth = b.width;
-      // lensLeft и b.left — обе в системе padding edge островка
       const localLensLeft = lensLeft - b.left;
       const localLensRight = localLensLeft + lensWidth;
 
-      // ==== ТЕКСТ ====
       const textEl = btn.querySelector('[data-text]');
       if (textEl) {
         const soft = TRANSITION_SOFTNESS;
@@ -361,10 +350,9 @@
         textEl.style.backgroundImage = g;
       }
 
-      // ==== SVG ====
       const svg = btn.querySelector('[data-icon]');
       if (svg && b.svgWidth > 0) {
-        const svgOffsetX = b.svgLeft - b.left;         // SVG относительно кнопки
+        const svgOffsetX = b.svgLeft - b.left;
         const svgWidthPx = b.svgWidth;
         const scale = 24 / svgWidthPx;
 
@@ -399,7 +387,6 @@
     });
   }
 
-  /* ===== LENS ===== */
   const MIN_STRETCH = 0;
   const MAX_STRETCH = 10;
   const STRETCH_K = 60;
@@ -417,7 +404,6 @@
     applyLens(b.left, b.width, useTransition);
   }
 
-  /* ===== HOVER ===== */
   function setHover(tab) {
     if (hoverTab === tab) return;
     hoverTab = tab;
@@ -457,7 +443,6 @@
     const cs = getComputedStyle(island);
     const borderL = parseFloat(cs.borderLeftWidth) || 0;
     const padL = parseFloat(cs.paddingLeft) || 0;
-    // В системе padding edge
     return clientX - ir.left - borderL - padL;
   }
 
@@ -522,7 +507,6 @@
     const width = baseWidth + stretch;
 
     let left = x - width / 2;
-    // Границы — по padding-зоне островка
     const minLeft = 0;
     const maxLeft = geo.innerW - width;
     left = clamp(left, minLeft, maxLeft);
@@ -574,7 +558,6 @@
     }
   }
 
-  /* ===== GRADIENT TRACKING (только на время commit-анимации) ===== */
   let tracking = false;
   let trackEnd = 0;
 
@@ -604,7 +587,6 @@
     }
   }
 
-  /* ===== EVENTS ===== */
   island.addEventListener('pointerdown', onPointerDown);
   island.addEventListener('pointermove', onPointerMove);
   island.addEventListener('pointerup', onPointerUp);
@@ -615,7 +597,6 @@
   });
   island.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
 
-  /* ===== INIT ===== */
   function initAll() {
     rebuildGeometry();
     snapTo(currentTab, false);
