@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Nav Island — прототип v3 (побуквенно)</title>
+  <title>Nav Island — прототип v4</title>
   <script src="https://telegram.org/js/telegram-web-app.js?56"></script>
   <style>
     :root {
@@ -111,6 +111,7 @@
       contain: layout paint;
     }
 
+    /* ===== ОРИГИНАЛЬНЫЕ (серые) кнопки ===== */
     .nav-btn {
       position: relative;
       z-index: 2;
@@ -132,49 +133,10 @@
       border-radius: 50px;
       white-space: nowrap;
       pointer-events: none;
-      /* базовый цвет — серый; голубой слой будет поверх и обрезан */
     }
     .nav-btn svg { display: block; }
 
-    /* Обёртка для двухслойной отрисовки: серый слой + голубой слой под маской */
-    .nav-content {
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 2px;
-      pointer-events: none;
-    }
-
-    .nav-layer-gray,
-    .nav-layer-blue {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 2px;
-      font-size: inherit;
-      font-weight: inherit;
-      letter-spacing: inherit;
-      line-height: inherit;
-      white-space: nowrap;
-    }
-
-    .nav-layer-gray {
-      color: var(--island-text);
-    }
-
-    .nav-layer-blue {
-      position: absolute;
-      inset: 0;
-      color: var(--island-accent);
-      /* Обрезка задаётся через clip-path, который ставит JS в момент движения линзы */
-      clip-path: inset(0 100% 0 0);
-      will-change: clip-path;
-    }
-
-    /* Линза */
+    /* ===== ЛИНЗА ===== */
     .nav-lens {
       position: absolute;
       top: var(--island-pad);
@@ -186,7 +148,7 @@
         inset 0px 3px 6px var(--island-lens-inset),
         inset 0px -1px 2px rgba(255, 255, 255, 0.25),
         0 2px 8px rgba(20, 45, 80, 0.18);
-      z-index: 1;
+      z-index: 3;
       pointer-events: none;
       will-change: transform, width;
       transform: translate3d(0, 0, 0);
@@ -195,22 +157,58 @@
     }
     .nav-island.dragging .nav-lens { transition: none; }
 
-    /* Слой поверх линзы — для голубого текста, чтобы он рисовался над линзой */
-    .nav-blue-overlay {
+    /* ===== ОКНО ГОЛУБОГО СЛОЯ =====
+       Блок размером ровно с линзу. border-radius: 50px, overflow: hidden.
+       Внутри — копии кнопок, сдвинутые на -lensLeft, чтобы окно показывало
+       правильный кусок островка. Двигается вместе с линзой. */
+    .nav-blue-window {
       position: absolute;
-      inset: 0;
-      z-index: 3;
-      pointer-events: none;
-      overflow: hidden;
+      top: var(--island-pad);
+      left: 0;
+      height: calc(var(--island-h) - var(--island-pad) * 2);
       border-radius: 50px;
+      overflow: hidden;
+      z-index: 4; /* над линзой — голубые буквы поверх стекла */
+      pointer-events: none;
+      will-change: transform, width;
+      transform: translate3d(0, 0, 0);
+      transition: transform 0.32s cubic-bezier(0.25, 1, 0.5, 1),
+                  width 0.32s cubic-bezier(0.25, 1, 0.5, 1);
     }
+    .nav-island.dragging .nav-blue-window { transition: none; }
 
-    .nav-blue-overlay .nav-layer-blue {
+    /* Внутренний трек — сдвигается на -lensLeft, чтобы копии кнопок
+       «стояли на месте» в координатах островка */
+    .nav-blue-track {
       position: absolute;
-      /* позиция задаётся JS относительно островка */
-      top: 0; left: 0;
-      will-change: clip-path;
+      top: 0;
+      left: 0;
+      height: 100%;
+      will-change: transform;
+      transform: translate3d(0, 0, 0);
+      transition: transform 0.32s cubic-bezier(0.25, 1, 0.5, 1);
     }
+    .nav-island.dragging .nav-blue-track { transition: none; }
+
+    /* Копии кнопок внутри трека — позиционируются абсолютно,
+       пиксель-в-пиксель по координатам оригинала */
+    .nav-blue-clone {
+      position: absolute;
+      top: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.1px;
+      white-space: nowrap;
+      color: var(--island-accent);
+      pointer-events: none;
+      user-select: none;
+    }
+    .nav-blue-clone svg { display: block; }
   </style>
 </head>
 <body>
@@ -235,47 +233,32 @@
   <nav class="nav-island" id="nav-island">
     <div class="nav-lens" id="nav-lens"></div>
 
-    <!-- Слой голубого текста, обрезаемый по форме линзы -->
-    <div class="nav-blue-overlay" id="nav-blue-overlay">
-      <div class="nav-layer-blue" id="nav-layer-blue">
-        <!-- Содержимое клонируется сюда через JS: SVG + текст для каждой кнопки -->
-      </div>
+    <div class="nav-blue-window" id="nav-blue-window">
+      <div class="nav-blue-track" id="nav-blue-track"></div>
     </div>
 
     <button class="nav-btn" data-tab="home">
-      <div class="nav-content">
-        <div class="nav-layer-gray">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3 10.5L12 3l9 7.5"/>
-            <path d="M5 9.5V21h14V9.5"/>
-          </svg>
-          <span>Главное</span>
-        </div>
-      </div>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 10.5L12 3l9 7.5"/>
+        <path d="M5 9.5V21h14V9.5"/>
+      </svg>
+      <span>Главное</span>
     </button>
 
     <button class="nav-btn" data-tab="subscription">
-      <div class="nav-content">
-        <div class="nav-layer-gray">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="2" y="5" width="20" height="14" rx="2"/>
-            <path d="M2 10h20"/>
-          </svg>
-          <span>Подписки</span>
-        </div>
-      </div>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="5" width="20" height="14" rx="2"/>
+        <path d="M2 10h20"/>
+      </svg>
+      <span>Подписки</span>
     </button>
 
     <button class="nav-btn" data-tab="settings">
-      <div class="nav-content">
-        <div class="nav-layer-gray">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="8" r="4"/>
-            <path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/>
-          </svg>
-          <span>Профиль</span>
-        </div>
-      </div>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="8" r="4"/>
+        <path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/>
+      </svg>
+      <span>Профиль</span>
     </button>
   </nav>
 
@@ -314,8 +297,8 @@
 
   const island = document.getElementById('nav-island');
   const lens = document.getElementById('nav-lens');
-  const blueOverlay = document.getElementById('nav-blue-overlay');
-  const blueLayer = document.getElementById('nav-layer-blue');
+  const blueWindow = document.getElementById('nav-blue-window');
+  const blueTrack = document.getElementById('nav-blue-track');
   const buttons = Array.from(island.querySelectorAll('.nav-btn'));
 
   /* ===== SCREEN SWITCH ===== */
@@ -326,46 +309,33 @@
     currentTab = tab;
   }
 
-  /* ===== BUILD BLUE LAYER =====
-     Дублируем все три кнопки в один слой, чтобы можно было обрезать целиком
-     по форме линзы. Позиционируем по факту layout через offsetLeft/offsetTop. */
-  let blueClones = [];
-
-  function buildBlueLayer() {
-    blueLayer.innerHTML = '';
-    blueClones = [];
-
+  /* ===== BUILD BLUE CLONES =====
+     Копии кнопок, покрашенные в голубой. Позиционируются абсолютно
+     по координатам, снятым с оригиналов. Кладём в blue-track. */
+  function buildBlueClones() {
+    blueTrack.innerHTML = '';
     const islandRect = island.getBoundingClientRect();
 
     buttons.forEach(btn => {
       const btnRect = btn.getBoundingClientRect();
-      const gray = btn.querySelector('.nav-layer-gray');
-      const clone = gray.cloneNode(true);
-      // убираем технический класс, оставляем структуру
-      clone.classList.remove('nav-layer-gray');
-
-      // Позиционируем клон внутри blueLayer так, чтобы он совпал с оригиналом
       const left = btnRect.left - islandRect.left;
-      const top = btnRect.top - islandRect.top;
+      const width = btnRect.width;
+      const height = btnRect.height;
 
-      clone.style.position = 'absolute';
+      const clone = document.createElement('div');
+      clone.className = 'nav-blue-clone';
       clone.style.left = left + 'px';
-      clone.style.top = top + 'px';
-      clone.style.width = btnRect.width + 'px';
-      clone.style.height = btnRect.height + 'px';
-      clone.style.display = 'flex';
-      clone.style.flexDirection = 'column';
-      clone.style.alignItems = 'center';
-      clone.style.justifyContent = 'center';
-      clone.style.gap = '2px';
-      clone.style.color = 'var(--island-accent)';
-      clone.style.fontSize = '10px';
-      clone.style.fontWeight = '600';
-      clone.style.letterSpacing = '0.1px';
-      clone.style.whiteSpace = 'nowrap';
+      clone.style.top = '0';
+      clone.style.width = width + 'px';
+      clone.style.height = height + 'px';
 
-      blueLayer.appendChild(clone);
-      blueClones.push(clone);
+      // Копируем иконку и текст
+      const svg = btn.querySelector('svg');
+      const span = btn.querySelector('span');
+      if (svg) clone.appendChild(svg.cloneNode(true));
+      if (span) clone.appendChild(span.cloneNode(true));
+
+      blueTrack.appendChild(clone);
     });
   }
 
@@ -381,7 +351,8 @@
         tab: b.dataset.tab,
         left: r.left - ir.left,
         width: r.width,
-        center: r.left - ir.left + r.width / 2
+        center: r.left - ir.left + r.width / 2,
+        height: r.height
       };
     });
 
@@ -397,59 +368,39 @@
     return geo.buttons.find(b => b.tab === tab);
   }
 
-  /* ===== LENS ===== */
+  /* ===== LENS + BLUE WINDOW =====
+     Оба элемента двигаются одним и тем же transform и width.
+     Внутренний трек сдвигается на -lensLeft, чтобы копии кнопок
+     «стояли на месте» в координатах островка. */
   const MIN_STRETCH = 0;
   const MAX_STRETCH = 10;
   const STRETCH_K = 60;
 
-  let lensLeft = 0;
-  let lensWidth = 60;
-  let lensHeight = 56;
+  function applyLens(left, width, useTransition) {
+    const t = useTransition ? '' : 'none';
+    lens.style.transition = useTransition
+      ? ''
+      : 'none';
+    blueWindow.style.transition = useTransition ? '' : 'none';
+    blueTrack.style.transition = useTransition ? '' : 'none';
 
-  function applyLensTransform(left, width, useTransition) {
-    lensLeft = left;
-    lensWidth = width;
-    if (!useTransition) {
-      lens.style.transition = 'none';
-    } else {
-      lens.style.transition = '';
-    }
     lens.style.transform = `translate3d(${left}px, 0, 0)`;
     lens.style.width = width + 'px';
-    updateBlueMask();
+
+    blueWindow.style.transform = `translate3d(${left}px, 0, 0)`;
+    blueWindow.style.width = width + 'px';
+
+    // Трек смещаем на -left, чтобы копии кнопок визуально «стояли на месте»
+    blueTrack.style.transform = `translate3d(${-left}px, 0, 0)`;
   }
 
-  function snapLensTo(tab, useTransition) {
+  function snapTo(tab, useTransition) {
     const b = btnByTab(tab);
     if (!b) return;
-    applyLensTransform(b.left, b.width, useTransition);
+    applyLens(b.left, b.width, useTransition);
   }
 
-  /* ===== BLUE MASK =====
-     Линза — капсула с border-radius: 50px. Её высота = island-h - pad*2 = 56px.
-     Радиус = 28px. Форма — прямоугольник с полностью скруглёнными углами.
-     Через clip-path с path() рисуем эту форму в координатах blueLayer,
-     затем обрезаем слои клонов. Всё за один проход. */
-  function updateBlueMask() {
-    if (!blueOverlay) return;
-
-    const padTop = 6; // island-pad
-    const h = lensHeight;
-    const r = h / 2; // 28
-    const x = lensLeft;
-    const y = padTop;
-    const w = lensWidth;
-
-    // path строится через дуги, полностью скруглённые углы
-    const path = `path("M ${x + r},${y} L ${x + w - r},${y} A ${r},${r} 0 0 1 ${x + w - r},${y + h} L ${x + r},${y + h} A ${r},${r} 0 0 1 ${x + r},${y} Z")`;
-
-    blueOverlay.style.clipPath = path;
-    blueOverlay.style.webkitClipPath = path;
-  }
-
-  /* ===== HOVER (подсветка активной кнопки) =====
-     Визуально весь эффект делает маска — hover нужен только чтобы
-     правильно переключать экран при отпускании. */
+  /* ===== HOVER (для haptic и commit) ===== */
   function setHover(tab) {
     if (hoverTab === tab) return;
     hoverTab = tab;
@@ -507,7 +458,7 @@
 
     const b = btnByTab(hoverTab) || geo.buttons[0];
     island.classList.add('dragging');
-    applyLensTransform(b.left, b.width, false);
+    applyLens(b.left, b.width, false);
   }
 
   function onPointerMove(e) {
@@ -554,7 +505,7 @@
     const maxLeft = geo.islandW - geo.pad - width;
     left = clamp(left, minLeft, maxLeft);
 
-    applyLensTransform(left, width, false);
+    applyLens(left, width, false);
     setHover(targetTab);
   }
 
@@ -586,16 +537,14 @@
     if (!TABS.includes(tab)) tab = currentTab;
     hoverTab = tab;
 
-    requestAnimationFrame(() => {
-      const b = btnByTab(tab);
-      if (!b) return;
+    // Плавная доводка: включаем transition, применяем финальные координаты
+    const b = btnByTab(tab);
+    if (b) {
       lens.style.transition = '';
-      lens.style.transform = `translate3d(${b.left}px, 0, 0)`;
-      lens.style.width = b.width + 'px';
-      lensLeft = b.left;
-      lensWidth = b.width;
-      updateBlueMask();
-    });
+      blueWindow.style.transition = '';
+      blueTrack.style.transition = '';
+      applyLens(b.left, b.width, true);
+    }
 
     if (tab !== currentTab) {
       showScreen(tab);
@@ -619,13 +568,8 @@
   /* ===== INIT ===== */
   function initAll() {
     rebuildGeometry();
-    buildBlueLayer();
-
-    const b = btnByTab(currentTab);
-    if (b) {
-      lensHeight = b.width ? 56 : 56;
-      applyLensTransform(b.left, b.width, false);
-    }
+    buildBlueClones();
+    snapTo(currentTab, false);
   }
 
   if (document.fonts && document.fonts.ready) {
@@ -636,32 +580,10 @@
   window.addEventListener('resize', () => {
     if (pointerId === null) {
       rebuildGeometry();
-      buildBlueLayer();
-      const b = btnByTab(currentTab);
-      if (b) applyLensTransform(b.left, b.width, false);
+      buildBlueClones();
+      snapTo(currentTab, false);
     }
   });
-
-  /* rAF-луп для плавной доводки во время transition commit — обновляем маску */
-  function tick() {
-    // если трансформа линзы сейчас анимируется через transition (после commit),
-    // вытаскиваем её актуальную позицию из computedStyle
-    if (pointerId === null) {
-      const cs = getComputedStyle(lens);
-      const m = new DOMMatrixReadOnly(cs.transform);
-      const tx = m.m41;
-      const w = parseFloat(cs.width);
-      if (!isNaN(tx) && !isNaN(w)) {
-        if (Math.abs(tx - lensLeft) > 0.1 || Math.abs(w - lensWidth) > 0.1) {
-          lensLeft = tx;
-          lensWidth = w;
-          updateBlueMask();
-        }
-      }
-    }
-    requestAnimationFrame(tick);
-  }
-  requestAnimationFrame(tick);
 
 })();
 </script>
