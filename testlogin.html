@@ -294,7 +294,7 @@
       font-weight: 500;
     }
 
-    /* 2FA — поля пароля */
+    /* ===== 2FA — поля пароля с голубой обводкой ===== */
     .password-row {
       display: flex;
       align-items: center;
@@ -303,9 +303,15 @@
       padding: 4px 16px;
       height: 52px;
       margin-bottom: 12px;
+      border: 1.5px solid var(--tg-theme-button-color);
+      transition: border-color 0.15s, box-shadow 0.15s;
     }
     .password-row:last-of-type {
       margin-bottom: 8px;
+    }
+    .password-row:focus-within {
+      border-color: var(--tg-theme-button-color);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--tg-theme-button-color) 18%, transparent);
     }
     .password-input {
       flex: 1;
@@ -322,12 +328,6 @@
     .password-input::placeholder {
       color: var(--tg-theme-hint-color);
       letter-spacing: 0;
-    }
-    .password-input:focus {
-      /* мягкое выделение строки при фокусе */
-    }
-    .password-row:focus-within {
-      box-shadow: 0 0 0 2px var(--tg-theme-button-color);
     }
 
     /* Заглушка "Меню" */
@@ -685,13 +685,11 @@ async function initLottie(containerId, path, key, opts = {}) {
   }
 }
 
-// redphone — играет сразу, без loop
 initLottie('lottie-redphone', 'redphone.json', 'redphone', {
   loop: false,
   autoplay: true
 });
 
-// message — играет при переходе на экран кода
 initLottie('lottie-message', 'message.json', 'message', {
   loop: false,
   autoplay: false
@@ -704,7 +702,6 @@ initLottie('lottie-message', 'message.json', 'message', {
   }
 });
 
-// 2fa — играет при переходе на экран 2FA
 initLottie('lottie-2fa', '2fa.json', '2fa', {
   loop: false,
   autoplay: false
@@ -741,7 +738,6 @@ function switchScreen(fromEl, toEl, direction = 'forward') {
 
   setTimeout(() => fromEl.classList.remove("leaving-left", "leaving-right"), 350);
 
-  // Проигрываем Lottie на новом экране
   if (toEl.id === 'screen-code' && lottieAnims.message) {
     lottieAnims.message.goToAndPlay(0, true);
   }
@@ -1020,7 +1016,6 @@ btnVerify.addEventListener("click", async () => {
     await new Promise(r => setTimeout(r, 1200));
     if (code !== "123456") throw new Error("Неверный код подтверждения");
 
-    // Успех — переходим на экран 2FA
     hapticNotify('success');
     switchScreen($("screen-code"), $("screen-2fa"), 'forward');
 
@@ -1089,7 +1084,6 @@ function isPasswordValid() {
 function update2faButton() {
   const wasDisabled = btn2faContinue.disabled;
   btn2faContinue.disabled = !isPasswordValid();
-  // Лёгкая вибрация в момент, когда кнопка «ожила»
   if (wasDisabled && !btn2faContinue.disabled) {
     hapticImpact('light');
   }
@@ -1099,7 +1093,6 @@ function updatePasswordError() {
   const p1 = password1.value;
   const p2 = password2.value;
 
-  // Показываем ошибку только если оба поля не пустые и что-то не так
   if (!p1 || !p2) {
     passwordError.classList.remove("visible");
     return;
@@ -1127,7 +1120,6 @@ password2.addEventListener("input", () => {
   updatePasswordError();
 });
 
-/* Продолжить на 2FA */
 btn2faContinue.addEventListener("click", async () => {
   if (btn2faContinue.disabled || btn2faContinue.classList.contains("loading")) return;
 
@@ -1143,7 +1135,6 @@ btn2faContinue.addEventListener("click", async () => {
   passwordError.classList.remove("visible");
 
   try {
-    // MOCK: сохранение 2FA на сервере
     await new Promise(r => setTimeout(r, 1200));
 
     hapticNotify('success');
@@ -1158,7 +1149,6 @@ btn2faContinue.addEventListener("click", async () => {
   }
 });
 
-/* Пропустить 2FA */
 $("btn-2fa-skip").addEventListener("click", () => {
   hapticImpact("medium");
   switchScreen($("screen-2fa"), $("screen-menu"), 'forward');
