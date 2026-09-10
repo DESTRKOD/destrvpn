@@ -21,6 +21,16 @@
       --island-h: 68px;
       --island-gap: 14px;
       --island-bottom: calc(var(--island-gap) + env(safe-area-inset-bottom));
+      --island-pad: 6px;
+
+      /* Тема островка — обновляется через JS */
+      --island-bg: rgba(36, 123, 192, 0.18);
+      --island-border: rgba(36, 123, 192, 0.28);
+      --island-inset: rgba(255, 255, 255, 0.5);
+      --island-text: rgba(20, 60, 100, 0.85);
+      --island-text-active: #143b64;
+      --island-lens-bg: rgba(255, 255, 255, 0.55);
+      --island-lens-inset: rgba(255, 255, 255, 0.9);
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -31,43 +41,41 @@
       background: var(--tg-theme-bg-color);
       color: var(--tg-theme-text-color);
       overflow: hidden;
+      overscroll-behavior: none;
     }
 
     body {
       position: relative;
       display: flex;
       flex-direction: column;
-      padding-bottom: calc(var(--island-h) + var(--island-bottom) + 8px);
     }
 
-    /* ===== SCREENS + SLIDE TRANSITION ===== */
+    /* ===== SCREENS (без анимаций) ===== */
     .screen {
       position: absolute;
       inset: 0;
-      display: flex;
+      display: none;
       flex-direction: column;
       height: 100%;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
       background: var(--tg-theme-bg-color);
-      transform: translateX(100%);
-      opacity: 0;
-      visibility: hidden;
-      transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1),
-                  opacity 0.32s cubic-bezier(0.32, 0.72, 0, 1),
-                  visibility 0.32s;
-      will-change: transform, opacity;
-      padding-bottom: calc(var(--island-h) + var(--island-bottom) + 8px);
+      padding-bottom: calc(var(--island-h) + var(--island-bottom) + 32px);
+      overscroll-behavior: contain;
     }
-    .screen.active {
-      transform: translateX(0);
-      opacity: 1;
-      visibility: visible;
+    .screen.active { display: flex; }
+
+    /* Профиль-хедер — убираем оверскролл-фон */
+    #screen-settings {
+      background: #242D34;
     }
-    .screen.leaving-left  { transform: translateX(-30%);  opacity: 0; visibility: hidden; }
-    .screen.leaving-right { transform: translateX(100%);  opacity: 0; visibility: hidden; }
-    .screen.entering-left {
-      transform: translateX(-100%); opacity: 0; visibility: hidden; transition: none;
+    #screen-settings .content {
+      background: var(--tg-theme-bg-color);
+      border-radius: 20px 20px 0 0;
+      margin-top: -20px;
+      position: relative;
+      z-index: 1;
+      padding-top: 24px;
     }
 
     .page-header {
@@ -156,7 +164,7 @@
     .stats-grid::after  { left: 66.666%; }
 
     .menu-section {
-      margin: 0 16px 24px;
+      margin: 0 16px 40px;
       background: var(--tg-theme-secondary-bg-color);
       border-radius: 14px;
       overflow: hidden;
@@ -432,19 +440,48 @@
     .settings-item-value { font-size: 15px; color: var(--tg-theme-hint-color); }
     .settings-item-arrow { color: var(--tg-theme-hint-color); opacity: 0.7; display: flex; }
 
-    /* ===== PROFILE HEADER (внутри настроек) ===== */
+    /* Тумблер темы прямо в строке «Тема» */
+    .theme-toggle {
+      position: relative;
+      width: 48px; height: 28px;
+      border-radius: 14px;
+      background: #d1d1d6;
+      border: none;
+      cursor: pointer;
+      transition: background 0.25s;
+      flex-shrink: 0;
+      padding: 0;
+      margin-left: 4px;
+    }
+    .theme-toggle::after {
+      content: "";
+      position: absolute;
+      top: 2px; left: 2px;
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.25);
+      transition: transform 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+    }
+    .theme-toggle.dark {
+      background: var(--tg-theme-button-color);
+    }
+    .theme-toggle.dark::after {
+      transform: translateX(20px);
+    }
+
+    /* PROFILE HEADER */
     .profile-header {
       position: relative;
       width: 100%;
-      padding: calc(28px + env(safe-area-inset-top)) 16px 28px;
+      padding: calc(28px + env(safe-area-inset-top)) 16px 48px;
       background: #242D34;
       color: #FFFFFF;
       overflow: hidden;
       display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 300px;
-      margin-bottom: 24px;
+      min-height: 320px;
     }
 
     .profile-glow {
@@ -534,13 +571,13 @@
     }
 
     @media (max-height: 600px) {
-      .profile-header { min-height: 220px; padding: 20px 16px 20px; margin-bottom: 16px; }
+      .profile-header { min-height: 240px; padding: 20px 16px 40px; }
       .profile-avatar { width: 100px; height: 100px; margin-bottom: 14px; }
       .profile-name { font-size: 26px; }
       .profile-username { font-size: 16px; }
     }
 
-    /* ===== LANGUAGE / THEME SCREENS ===== */
+    /* LANGUAGE OPTION LIST */
     .option-list {
       background: var(--tg-theme-secondary-bg-color);
       border-radius: 14px;
@@ -565,48 +602,6 @@
     }
     .option-item.active .option-check { display: flex; }
 
-    /* Тумблер темы */
-    .theme-toggle-wrap {
-      display: flex; align-items: center;
-      gap: 12px;
-      background: var(--tg-theme-secondary-bg-color);
-      border-radius: 14px;
-      padding: 16px;
-    }
-    .theme-toggle-label {
-      flex: 1;
-      font-size: 16px;
-      display: flex; align-items: center; gap: 10px;
-    }
-    .theme-toggle-label .ico { font-size: 20px; }
-    .theme-toggle {
-      position: relative;
-      width: 56px; height: 32px;
-      border-radius: 16px;
-      background: #d1d1d6;
-      border: none;
-      cursor: pointer;
-      transition: background 0.25s;
-      flex-shrink: 0;
-      padding: 0;
-    }
-    .theme-toggle::after {
-      content: "";
-      position: absolute;
-      top: 3px; left: 3px;
-      width: 26px; height: 26px;
-      border-radius: 50%;
-      background: #fff;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.25);
-      transition: transform 0.25s cubic-bezier(0.32, 0.72, 0, 1);
-    }
-    .theme-toggle.dark {
-      background: var(--tg-theme-button-color);
-    }
-    .theme-toggle.dark::after {
-      transform: translateX(24px);
-    }
-
     /* ===== NAV ISLAND (Liquid Glass) ===== */
     .nav-island {
       position: fixed;
@@ -614,22 +609,22 @@
       bottom: var(--island-bottom);
       transform: translateX(-50%);
       height: var(--island-h);
-      padding: 6px;
+      padding: var(--island-pad);
       display: flex;
       align-items: center;
       justify-content: space-around;
       gap: 2px;
       border-radius: 50px;
-      background: rgba(36, 123, 192, 0.12);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.25);
+      background: var(--island-bg);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border: 1px solid var(--island-border);
       box-shadow:
-        inset 0px 2px 4px rgba(255, 255, 255, 0.4),
-        0 8px 24px rgba(20, 45, 80, 0.28),
-        0 2px 6px rgba(20, 45, 80, 0.18);
+        inset 0px 2px 4px var(--island-inset),
+        0 8px 24px rgba(20, 45, 80, 0.22),
+        0 2px 6px rgba(20, 45, 80, 0.14);
       z-index: 60;
-      min-width: 260px;
+      min-width: 280px;
       max-width: calc(100vw - 32px);
     }
 
@@ -638,10 +633,10 @@
       z-index: 2;
       flex: 1;
       height: 100%;
-      padding: 0 18px;
+      padding: 0 14px;
       border: none;
       background: transparent;
-      color: rgba(255, 255, 255, 0.7);
+      color: var(--island-text);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -657,35 +652,35 @@
       -webkit-tap-highlight-color: transparent;
     }
     .nav-btn svg { display: block; }
-    .nav-btn.active { color: #FFFFFF; }
+    .nav-btn.active { color: var(--island-text-active); }
     .nav-btn:active { opacity: 0.85; }
 
-    /* Линза, которая ездит за активной кнопкой */
+    /* Линза */
     .nav-lens {
       position: absolute;
-      top: 6px;
-      left: 6px;
-      height: calc(var(--island-h) - 12px);
+      top: var(--island-pad);
+      left: 0;
+      height: calc(var(--island-h) - var(--island-pad) * 2);
       border-radius: 50px;
-      background: rgba(255, 255, 255, 0.2);
+      background: var(--island-lens-bg);
       box-shadow:
-        inset 0px 3px 6px rgba(255, 255, 255, 0.6),
-        inset 0px -1px 2px rgba(255, 255, 255, 0.2),
-        0 2px 8px rgba(20, 45, 80, 0.25);
+        inset 0px 3px 6px var(--island-lens-inset),
+        inset 0px -1px 2px rgba(255, 255, 255, 0.25),
+        0 2px 8px rgba(20, 45, 80, 0.18);
       transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1),
-                  width 0.4s cubic-bezier(0.25, 1, 0.5, 1),
-                  left 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+                  width 0.4s cubic-bezier(0.25, 1, 0.5, 1);
       z-index: 1;
       pointer-events: none;
       will-change: transform, width;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
     }
     .nav-lens.stretch {
       transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1),
-                  width 0.2s cubic-bezier(0.25, 1, 0.5, 1),
-                  left 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+                  width 0.2s cubic-bezier(0.25, 1, 0.5, 1);
     }
 
-    /* Modal sheet (для device-sheet — оставляем) */
+    /* Modal sheet (device) */
     .sheet-overlay {
       position: fixed; inset: 0;
       background: rgba(0,0,0,0.4);
@@ -816,7 +811,6 @@
       </div>
       <div class="menu-item" data-go="help" data-from="home">
         <div class="menu-icon gray">
-          <!-- Помощь: знак вопроса в круге -->
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="9"/>
             <path d="M9.5 9.2a2.5 2.5 0 0 1 4.86.83c0 1.67-2.5 2.14-2.5 3.6"/>
@@ -1210,13 +1204,13 @@
             <div class="settings-item-value" id="lang-value">Русский</div>
             <div class="settings-item-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
           </div>
-          <div class="settings-item" data-go="theme" data-from="settings">
+          <div class="settings-item" id="theme-item">
             <div class="settings-item-icon" style="background:#af52de">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
             </div>
             <div class="settings-item-text">Тема</div>
             <div class="settings-item-value" id="theme-value">Светлая</div>
-            <div class="settings-item-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+            <button class="theme-toggle" id="theme-toggle" aria-label="Переключить тему"></button>
           </div>
         </div>
       </div>
@@ -1226,7 +1220,6 @@
         <div class="settings-list">
           <div class="settings-item" data-go="help" data-from="settings">
             <div class="settings-item-icon" style="background:#8e8e93">
-              <!-- Помощь: знак вопроса в круге -->
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="9"/>
                 <path d="M9.5 9.2a2.5 2.5 0 0 1 4.86.83c0 1.67-2.5 2.14-2.5 3.6"/>
@@ -1302,25 +1295,6 @@
     </div>
   </div>
 
-  <!-- ==================== THEME SCREEN ==================== -->
-  <div class="screen" id="screen-theme">
-    <div class="page-header with-back">
-      <button class="back-btn" data-back>
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
-      </button>
-      <div class="page-title">Тема</div>
-    </div>
-    <div class="content">
-      <div class="theme-toggle-wrap">
-        <div class="theme-toggle-label">
-          <span class="ico" id="theme-ico">☀️</span>
-          <span id="theme-label">Светлая</span>
-        </div>
-        <button class="theme-toggle" id="theme-toggle" aria-label="Переключить тему"></button>
-      </div>
-    </div>
-  </div>
-
   <!-- ==================== NAV ISLAND ==================== -->
   <nav class="nav-island" id="nav-island">
     <div class="nav-lens" id="nav-lens"></div>
@@ -1382,17 +1356,6 @@
   tg.ready();
   tg.expand();
 
-  const user = tg.initDataUnsafe?.user;
-  if (user?.photo_url) {
-    const img = document.getElementById('user-avatar');
-    if (img) {
-      img.src = user.photo_url;
-      img.style.display = 'block';
-      const def = document.getElementById('default-avatar');
-      if (def) def.style.display = 'none';
-    }
-  }
-
   /* ===== Haptics ===== */
   function haptic(type) {
     try {
@@ -1407,6 +1370,105 @@
       else if (type === 'select') hf.selectionChanged();
     } catch (e) {}
   }
+
+  /* ===== THEME ===== */
+  const LIGHT_THEME = {
+    '--tg-theme-bg-color': '#ffffff',
+    '--tg-theme-secondary-bg-color': '#f4f4f5',
+    '--tg-theme-text-color': '#000000',
+    '--tg-theme-hint-color': '#8e8e93',
+    '--tg-theme-button-color': '#3390ec',
+    '--tg-theme-button-text-color': '#ffffff',
+    '--tg-theme-link-color': '#3390ec',
+    '--tg-theme-destructive-text-color': '#ff3b30',
+    '--tg-theme-section-separator-color': 'rgba(0,0,0,0.08)',
+    /* Островок — светлая тема, синий Telegram */
+    '--island-bg': 'rgba(36, 123, 192, 0.18)',
+    '--island-border': 'rgba(36, 123, 192, 0.32)',
+    '--island-inset': 'rgba(255, 255, 255, 0.6)',
+    '--island-text': 'rgba(20, 60, 100, 0.75)',
+    '--island-text-active': '#143b64',
+    '--island-lens-bg': 'rgba(255, 255, 255, 0.6)',
+    '--island-lens-inset': 'rgba(255, 255, 255, 0.95)'
+  };
+  const DARK_THEME = {
+    '--tg-theme-bg-color': '#17212b',
+    '--tg-theme-secondary-bg-color': '#232e3c',
+    '--tg-theme-text-color': '#ffffff',
+    '--tg-theme-hint-color': '#7d8b99',
+    '--tg-theme-button-color': '#5288c1',
+    '--tg-theme-button-text-color': '#ffffff',
+    '--tg-theme-link-color': '#6ab3f3',
+    '--tg-theme-destructive-text-color': '#ec3942',
+    '--tg-theme-section-separator-color': 'rgba(255,255,255,0.08)',
+    /* Островок — тёмная тема, стекло на тёмном */
+    '--island-bg': 'rgba(82, 136, 193, 0.22)',
+    '--island-border': 'rgba(255, 255, 255, 0.22)',
+    '--island-inset': 'rgba(255, 255, 255, 0.3)',
+    '--island-text': 'rgba(255, 255, 255, 0.72)',
+    '--island-text-active': '#ffffff',
+    '--island-lens-bg': 'rgba(255, 255, 255, 0.2)',
+    '--island-lens-inset': 'rgba(255, 255, 255, 0.55)'
+  };
+
+  let currentTheme = localStorage.getItem('dxs_theme') || 'light';
+  if (currentTheme !== 'light' && currentTheme !== 'dark') currentTheme = 'light';
+
+  function applyTheme(theme) {
+    const root = document.documentElement;
+    const palette = theme === 'dark' ? DARK_THEME : LIGHT_THEME;
+    for (const [k, v] of Object.entries(palette)) {
+      root.style.setProperty(k, v);
+    }
+    document.documentElement.setAttribute('data-theme', theme);
+  }
+
+  function updateThemeUI() {
+    const isDark = currentTheme === 'dark';
+    const toggle = document.getElementById('theme-toggle');
+    if (toggle) toggle.classList.toggle('dark', isDark);
+    const badge = document.getElementById('theme-value');
+    if (badge) badge.textContent = isDark ? 'Тёмная' : 'Светлая';
+  }
+
+  applyTheme(currentTheme);
+  updateThemeUI();
+
+  const themeToggle = document.getElementById('theme-toggle');
+  if (themeToggle) {
+    themeToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      haptic('select');
+      currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      localStorage.setItem('dxs_theme', currentTheme);
+      applyTheme(currentTheme);
+      updateThemeUI();
+    });
+  }
+
+  /* ===== Язык ===== */
+  const LANG_NAMES = { ru: 'Русский', be: 'Беларуская', en: 'English' };
+  let currentLang = localStorage.getItem('dxs_lang') || 'ru';
+  if (!LANG_NAMES[currentLang]) currentLang = 'ru';
+
+  function updateLangUI() {
+    const badge = document.getElementById('lang-value');
+    if (badge) badge.textContent = LANG_NAMES[currentLang];
+    document.querySelectorAll('#lang-list .option-item').forEach(item => {
+      item.classList.toggle('active', item.dataset.lang === currentLang);
+    });
+  }
+  updateLangUI();
+
+  document.querySelectorAll('#lang-list .option-item').forEach(item => {
+    item.addEventListener('click', () => {
+      haptic('select');
+      currentLang = item.dataset.lang;
+      localStorage.setItem('dxs_lang', currentLang);
+      updateLangUI();
+      haptic('success');
+    });
+  });
 
   /* ===== Profile ===== */
   (function renderProfile() {
@@ -1441,126 +1503,16 @@
     }
   })();
 
-  /* ===== Theme (светлая/тёмная) ===== */
-  const LIGHT_THEME = {
-    '--tg-theme-bg-color': '#ffffff',
-    '--tg-theme-secondary-bg-color': '#f4f4f5',
-    '--tg-theme-text-color': '#000000',
-    '--tg-theme-hint-color': '#8e8e93',
-    '--tg-theme-button-color': '#3390ec',
-    '--tg-theme-button-text-color': '#ffffff',
-    '--tg-theme-link-color': '#3390ec',
-    '--tg-theme-destructive-text-color': '#ff3b30',
-    '--tg-theme-section-separator-color': 'rgba(0,0,0,0.08)'
-  };
-  const DARK_THEME = {
-    '--tg-theme-bg-color': '#17212b',
-    '--tg-theme-secondary-bg-color': '#232e3c',
-    '--tg-theme-text-color': '#ffffff',
-    '--tg-theme-hint-color': '#7d8b99',
-    '--tg-theme-button-color': '#5288c1',
-    '--tg-theme-button-text-color': '#ffffff',
-    '--tg-theme-link-color': '#6ab3f3',
-    '--tg-theme-destructive-text-color': '#ec3942',
-    '--tg-theme-section-separator-color': 'rgba(255,255,255,0.08)'
-  };
-
-  let currentTheme = localStorage.getItem('dxs_theme') || 'light';
-  if (currentTheme !== 'light' && currentTheme !== 'dark') currentTheme = 'light';
-
-  function applyTheme(theme) {
-    const root = document.documentElement;
-    const palette = theme === 'dark' ? DARK_THEME : LIGHT_THEME;
-    for (const [k, v] of Object.entries(palette)) {
-      root.style.setProperty(k, v);
-    }
-    document.documentElement.setAttribute('data-theme', theme);
-  }
-
-  function updateThemeUI() {
-    const isDark = currentTheme === 'dark';
-    const toggle = document.getElementById('theme-toggle');
-    if (toggle) toggle.classList.toggle('dark', isDark);
-    const ico = document.getElementById('theme-ico');
-    if (ico) ico.textContent = isDark ? '🌙' : '☀️';
-    const lbl = document.getElementById('theme-label');
-    if (lbl) lbl.textContent = isDark ? 'Тёмная' : 'Светлая';
-    const badge = document.getElementById('theme-value');
-    if (badge) badge.textContent = isDark ? 'Тёмная' : 'Светлая';
-  }
-
-  applyTheme(currentTheme);
-  updateThemeUI();
-
-  const themeToggle = document.getElementById('theme-toggle');
-  if (themeToggle) {
-    themeToggle.addEventListener('click', () => {
-      haptic('select');
-      currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
-      localStorage.setItem('dxs_theme', currentTheme);
-      applyTheme(currentTheme);
-      updateThemeUI();
-    });
-  }
-
-  /* ===== Язык ===== */
-  const LANG_NAMES = { ru: 'Русский', be: 'Беларуская', en: 'English' };
-  let currentLang = localStorage.getItem('dxs_lang') || 'ru';
-  if (!LANG_NAMES[currentLang]) currentLang = 'ru';
-
-  function updateLangUI() {
-    const badge = document.getElementById('lang-value');
-    if (badge) badge.textContent = LANG_NAMES[currentLang];
-    document.querySelectorAll('#lang-list .option-item').forEach(item => {
-      item.classList.toggle('active', item.dataset.lang === currentLang);
-    });
-  }
-  updateLangUI();
-
-  document.querySelectorAll('#lang-list .option-item').forEach(item => {
-    item.addEventListener('click', () => {
-      haptic('select');
-      currentLang = item.dataset.lang;
-      localStorage.setItem('dxs_lang', currentLang);
-      updateLangUI();
-      haptic('success');
-    });
-  });
-
-  /* ===== Navigation ===== */
+  /* ===== Navigation (без анимаций) ===== */
   const TAB_SCREENS = new Set(['home', 'subscription', 'settings']);
   let historyStack = ['home'];
   let currentScreen = 'home';
-  let animating = false;
 
-  function showScreen(name, direction) {
+  function showScreen(name) {
     const next = document.getElementById('screen-' + name);
     if (!next) return;
-    const prev = document.querySelector('.screen.active');
-
-    if (!prev || !direction) {
-      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-      next.classList.add('active');
-    } else if (direction === 'forward') {
-      prev.classList.add('leaving-left');
-      prev.classList.remove('active');
-      next.classList.remove('leaving-left', 'leaving-right', 'entering-left');
-      void next.offsetWidth;
-      next.classList.add('active');
-      setTimeout(() => prev.classList.remove('leaving-left'), 340);
-    } else if (direction === 'back') {
-      prev.classList.add('leaving-right');
-      prev.classList.remove('active');
-      next.classList.add('entering-left');
-      void next.offsetWidth;
-      next.classList.remove('entering-left');
-      next.classList.add('active');
-      setTimeout(() => prev.classList.remove('leaving-right'), 340);
-    } else if (direction === 'tab') {
-      prev.classList.remove('active');
-      next.classList.add('active');
-    }
-
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    next.classList.add('active');
     currentScreen = name;
     next.scrollTop = 0;
 
@@ -1568,12 +1520,12 @@
       document.querySelectorAll('.nav-btn').forEach(b => {
         b.classList.toggle('active', b.dataset.tab === name);
       });
-      requestAnimationFrame(() => moveLens());
+      requestAnimationFrame(() => moveLens(true));
     }
   }
 
   function go(name, from) {
-    if (name === currentScreen || animating) return;
+    if (name === currentScreen) return;
     haptic('light');
     if (from) historyStack.push(currentScreen);
 
@@ -1582,13 +1534,10 @@
       document.getElementById('conn-guide').style.display = 'none';
     }
 
-    animating = true;
-    showScreen(name, 'forward');
-    setTimeout(() => { animating = false; }, 340);
+    showScreen(name);
   }
 
   function goBack() {
-    if (animating) return;
     haptic('light');
 
     if (currentScreen === 'connection') {
@@ -1601,18 +1550,14 @@
     }
 
     const prev = historyStack.pop() || 'home';
-    animating = true;
-    showScreen(prev, 'back');
-    setTimeout(() => { animating = false; }, 340);
+    showScreen(prev);
   }
 
   function goTab(name) {
-    if (name === currentScreen || animating) return;
+    if (name === currentScreen) return;
     haptic('light');
     historyStack = [name];
-    animating = true;
-    showScreen(name, 'tab');
-    setTimeout(() => { animating = false; }, 340);
+    showScreen(name);
   }
 
   /* ===== NAV LENS ===== */
@@ -1625,30 +1570,33 @@
 
     const islandRect = navIsland.getBoundingClientRect();
     const btnRect = activeBtn.getBoundingClientRect();
+    const pad = 6;
 
-    const left = btnRect.left - islandRect.left;
+    // Позиция линзы относительно внутренней области островка (с учётом padding)
+    const left = (btnRect.left - islandRect.left);
     const width = btnRect.width;
 
     if (withStretch) {
       navLens.classList.add('stretch');
-      const stretchW = width + 14;
+      const stretchW = width + 12;
+      const stretchLeft = left - 6;
       navLens.style.width = stretchW + 'px';
-      navLens.style.transform = `translateX(${left - 7}px)`;
+      navLens.style.transform = `translateX(${stretchLeft}px)`;
       setTimeout(() => {
         navLens.classList.remove('stretch');
         navLens.style.width = width + 'px';
         navLens.style.transform = `translateX(${left}px)`;
-        setTimeout(() => navLens.classList.remove('stretch'), 220);
-      }, 180);
+      }, 200);
     } else {
       navLens.style.width = width + 'px';
       navLens.style.transform = `translateX(${left}px)`;
     }
   }
 
-  // Начальная позиция линзы
-  requestAnimationFrame(() => moveLens());
-  window.addEventListener('resize', () => moveLens());
+  // Первичная установка после рендера шрифтов
+  requestAnimationFrame(() => moveLens(false));
+  window.addEventListener('load', () => requestAnimationFrame(() => moveLens(false)));
+  window.addEventListener('resize', () => moveLens(false));
 
   /* ===== Event binding ===== */
   document.querySelectorAll('[data-go]').forEach(el => {
@@ -1671,15 +1619,6 @@
       }
     });
   });
-
-  // Реакция на переключение табов, чтобы линза ехала с растяжением
-  const _origShowScreen = showScreen;
-  showScreen = function (name, direction) {
-    _origShowScreen(name, direction);
-    if (direction === 'tab') {
-      requestAnimationFrame(() => moveLens(true));
-    }
-  };
 
   document.querySelectorAll('.tariff-card').forEach(card => {
     card.addEventListener('click', () => {
@@ -1823,9 +1762,6 @@
       tg.showAlert(map[action] || action);
     });
   });
-
-  /* Первичный рендер линзы после шрифтов */
-  window.addEventListener('load', () => requestAnimationFrame(() => moveLens()));
 })();
 </script>
 </body>
