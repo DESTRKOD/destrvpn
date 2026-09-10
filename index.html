@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Telegram</title>
+  <title>DxS Connect</title>
   <script src="https://telegram.org/js/telegram-web-app.js?56"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js"></script>
   <style>
     :root {
       --tg-theme-bg-color: #ffffff;
@@ -58,21 +59,47 @@
                   opacity 0.32s cubic-bezier(0.32, 0.72, 0, 1),
                   visibility 0.32s;
       will-change: transform, opacity;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
     }
     .screen.active {
       transform: translateX(0);
       opacity: 1;
       visibility: visible;
     }
-    .screen.leaving {
+    .screen.leaving-right {
+      transform: translateX(100%);
+      opacity: 0;
+      visibility: hidden;
+    }
+    .screen.leaving-left {
       transform: translateX(-30%);
       opacity: 0;
       visibility: hidden;
     }
 
+    /* ===== LOTTIE (уменьшено в 2 раза) ===== */
+    .lottie-wrap {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 8px 0 0;
+      flex-shrink: 0;
+    }
+    .lottie-anim {
+      width: 100px;
+      height: 100px;
+    }
+    .lottie-anim:empty::before {
+      content: "";
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
     .header {
       text-align: center;
-      padding: 28px 8px 20px;
+      padding: 12px 8px 20px;
     }
     .header h1 {
       font-size: 24px;
@@ -146,6 +173,8 @@
       color: var(--tg-theme-text-color);
       letter-spacing: 0.3px;
       height: 100%;
+      font-family: inherit;
+      min-width: 0;
     }
     .phone-input::placeholder {
       color: var(--tg-theme-hint-color);
@@ -182,6 +211,7 @@
       justify-content: center;
       transition: opacity 0.2s;
       position: relative;
+      font-family: inherit;
     }
     .btn:disabled {
       opacity: 0.45;
@@ -210,12 +240,29 @@
       to { transform: rotate(360deg); }
     }
 
-    /* Code screen - 6 digits */
+    .link-back {
+      display: block;
+      width: 100%;
+      margin-top: 16px;
+      padding: 8px;
+      background: none;
+      border: none;
+      color: var(--tg-theme-link-color);
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: inherit;
+      text-align: center;
+    }
+    .link-back:active {
+      opacity: 0.6;
+    }
+
     .code-inputs {
       display: flex;
       justify-content: center;
       gap: 8px;
-      margin: 24px 0 16px;
+      margin: 16px 0;
     }
     .code-digit {
       width: 42px;
@@ -229,6 +276,8 @@
       color: var(--tg-theme-text-color);
       outline: none;
       caret-color: var(--tg-theme-button-color);
+      font-family: inherit;
+      min-width: 0;
     }
     .code-digit:focus {
       background: var(--tg-theme-section-bg-color);
@@ -294,6 +343,7 @@
       font-size: 16px;
       color: var(--tg-theme-text-color);
       outline: none;
+      font-family: inherit;
     }
     .modal-search::placeholder {
       color: var(--tg-theme-hint-color);
@@ -306,6 +356,7 @@
       font-weight: 500;
       cursor: pointer;
       padding: 6px 4px;
+      font-family: inherit;
     }
     .modal-list {
       flex: 1;
@@ -348,6 +399,10 @@
 
   <!-- SCREEN 1: Phone -->
   <div class="screen active" id="screen-phone">
+    <div class="lottie-wrap">
+      <div class="lottie-anim" id="lottie-redphone"></div>
+    </div>
+
     <div class="header">
       <h1>Ваш номер телефона</h1>
       <p>Пожалуйста, подтвердите код вашей страны и введите свой номер телефона.</p>
@@ -365,7 +420,7 @@
         type="tel"
         class="phone-input"
         id="phone-input"
-        placeholder="(999) 999-99-99"
+        placeholder=""
         inputmode="numeric"
         autocomplete="tel"
       >
@@ -380,8 +435,12 @@
     </div>
   </div>
 
-  <!-- SCREEN 2: Code (6 digits) -->
+  <!-- SCREEN 2: Code -->
   <div class="screen" id="screen-code">
+    <div class="lottie-wrap">
+      <div class="lottie-anim" id="lottie-message"></div>
+    </div>
+
     <div class="header">
       <h1>Введите код</h1>
       <p id="code-subtitle">Мы отправили SMS с кодом подтверждения на номер <b id="sent-phone"></b></p>
@@ -406,6 +465,7 @@
         <span class="btn-text">Подтвердить</span>
         <div class="spinner"></div>
       </button>
+      <button class="link-back" id="btn-back-phone">Назад</button>
     </div>
   </div>
 
@@ -421,7 +481,7 @@
   </div>
 
 <script>
-/* Telegram WebApp + mock */
+/* ===== Telegram WebApp + mock ===== */
 (function() {
   if (!window.Telegram || !window.Telegram.WebApp) {
     window.Telegram = {
@@ -464,7 +524,7 @@
   }
 })();
 
-/* ===== Haptic Feedback (Telegram Mini App) ===== */
+/* ===== Haptic Feedback ===== */
 function haptic(type, style) {
   try {
     const hf = window.Telegram?.WebApp?.HapticFeedback;
@@ -472,28 +532,108 @@ function haptic(type, style) {
     if (type === "impact") hf.impactOccurred(style || "light");
     else if (type === "notification") hf.notificationOccurred(style || "success");
     else if (type === "selection") hf.selectionChanged();
-  } catch (_) { /* вне Telegram — игнорируем */ }
+  } catch (_) {}
 }
 const hapticImpact = (s) => haptic("impact", s);
+const hapticNotify = (s) => haptic("notification", s);
+const hapticSelect = () => haptic("selection");
 
-/* ===== Screen transition (slide from right) ===== */
-function switchScreen(fromEl, toEl) {
-  if (!fromEl || !toEl) return;
-  fromEl.classList.remove("active");
-  fromEl.classList.add("leaving");
-  toEl.classList.remove("leaving");
-  void toEl.offsetWidth; // reflow, чтобы transition сработал
-  toEl.classList.add("active");
-  setTimeout(() => fromEl.classList.remove("leaving"), 350);
+/* ===== Lottie ===== */
+const lottieAnims = {};
+
+async function fetchLottieData(path) {
+  const res = await fetch(path);
+  if (!res.ok) throw new Error(`Failed to load ${path}: ${res.status}`);
+  const data = await res.json();
+  if (data && typeof data === 'object' && data.lottie && Array.isArray(data.lottie.layers)) {
+    return data.lottie;
+  }
+  if (data && Array.isArray(data.layers)) {
+    return data;
+  }
+  throw new Error(`Invalid Lottie data in ${path}`);
 }
 
-/* Countries (загружаются из numbers.json) */
+async function initLottie(containerId, path, key, opts = {}) {
+  const container = document.getElementById(containerId);
+  if (!container || typeof lottie === 'undefined') return null;
+
+  try {
+    const animData = await fetchLottieData(path);
+    const anim = lottie.loadAnimation({
+      container: container,
+      renderer: 'svg',
+      loop: opts.loop ?? false,
+      autoplay: opts.autoplay ?? true,
+      animationData: animData,
+      rendererSettings: {
+        preserveAspectRatio: 'xMidYMid meet',
+        progressiveLoad: false
+      }
+    });
+    lottieAnims[key] = anim;
+    return anim;
+  } catch (err) {
+    console.warn('Lottie init failed for', key, err);
+    return null;
+  }
+}
+
+initLottie('lottie-redphone', 'redphone.json', 'redphone', {
+  loop: false,
+  autoplay: true
+});
+
+initLottie('lottie-message', 'message.json', 'message', {
+  loop: false,
+  autoplay: false
+}).then(anim => {
+  if (!anim) return;
+  if (anim.isLoaded) {
+    anim.goToAndStop(0, true);
+  } else {
+    anim.addEventListener('DOMLoaded', () => anim.goToAndStop(0, true));
+  }
+});
+
+/* ===== Screen transition ===== */
+function switchScreen(fromEl, toEl, direction = 'forward') {
+  if (!fromEl || !toEl) return;
+
+  fromEl.classList.remove("active");
+  fromEl.classList.add(direction === 'back' ? "leaving-right" : "leaving-left");
+
+  toEl.classList.remove("leaving-left", "leaving-right");
+
+  if (direction === 'back') {
+    toEl.style.transition = 'none';
+    toEl.style.transform = 'translateX(-30%)';
+    toEl.style.opacity = '0';
+    void toEl.offsetWidth;
+    toEl.style.transition = '';
+    toEl.style.transform = '';
+    toEl.style.opacity = '';
+  }
+
+  void toEl.offsetWidth;
+  toEl.classList.add("active");
+
+  setTimeout(() => fromEl.classList.remove("leaving-left", "leaving-right"), 350);
+
+  // Проигрываем message Lottie при входе на экран кода
+  if (toEl.id === 'screen-code' && lottieAnims.message) {
+    lottieAnims.message.goToAndPlay(0, true);
+  }
+}
+
+/* ===== Countries ===== */
 let COUNTRIES = [];
 let currentCountry = null;
 let phoneDigits = "";
 let requiredLength = 10;
+let currentMask = "";
 
-const countriesReady = fetch("numbers.json")
+fetch("numbers.json")
   .then(r => {
     if (!r.ok) throw new Error("Не удалось загрузить numbers.json");
     return r.json();
@@ -505,9 +645,9 @@ const countriesReady = fetch("numbers.json")
   })
   .catch(err => {
     console.error(err);
+    hapticNotify('error');
   });
 
-/* DOM */
 const $ = (id) => document.getElementById(id);
 const phoneInput = $("phone-input");
 const btnContinue = $("btn-continue");
@@ -516,51 +656,104 @@ const modal = $("modal");
 const countryList = $("country-list");
 const searchInput = $("search");
 
-/* Country */
 function setCountry(country) {
   currentCountry = country;
   $("current-flag").textContent = country.флаг;
   $("current-name").textContent = country.страна;
   $("phone-code").textContent = country.индекс;
-  requiredLength = country.индекс === "+888" ? 9 : 10;
+  requiredLength = country.длина;
+  currentMask = country.маска || "";
+  phoneInput.placeholder = currentMask.replace(/9/g, "0");
   phoneDigits = "";
   phoneInput.value = "";
   updateButton();
   phoneError.classList.remove("visible");
 }
 
-/* ===== Improved phone mask ===== */
-function formatPhone(digits) {
+/* ===== Mask-based formatting ===== */
+function formatPhone(digits, mask) {
   if (!digits) return "";
-  // (999) 999-99-99
-  let res = "";
-  if (digits.length > 0) res += "(" + digits.substring(0, Math.min(3, digits.length));
-  if (digits.length >= 3) res += ")";
-  if (digits.length > 3) res += " " + digits.substring(3, Math.min(6, digits.length));
-  if (digits.length > 6) res += "-" + digits.substring(6, Math.min(8, digits.length));
-  if (digits.length > 8) res += "-" + digits.substring(8, Math.min(10, digits.length));
-  return res;
+  let result = "";
+  let digitIdx = 0;
+  for (let i = 0; i < mask.length && digitIdx < digits.length; i++) {
+    const m = mask[i];
+    if (m === "9") {
+      result += digits[digitIdx++];
+    } else {
+      result += m;
+    }
+  }
+  return result;
 }
 
+function maskCapacity(mask) {
+  return (mask.match(/9/g) || []).length;
+}
+
+/* Отрезает код страны в начале строки (для автозаполнения)
+   Пример: "79999999999" + код "+7" → "9999999999" */
+function stripCountryCode(digits, countryCode) {
+  const code = (countryCode || "").replace(/\D/g, "");
+  if (!code) return digits;
+  if (digits.startsWith(code)) {
+    return digits.slice(code.length);
+  }
+  return digits;
+}
+
+/* Обработка ввода с защитой от автозаполнения полного номера.
+   Триггерим strip только когда:
+   - пришло сразу много цифр (paste/autofill)
+   - до этого было мало (< 3 цифр)
+   Это защищает от ложного срезания, когда юзер вводит +7 вручную */
 phoneInput.addEventListener("input", (e) => {
-  // Берём только цифры
-  const raw = e.target.value.replace(/\D/g, "").slice(0, requiredLength);
+  const maxDigits = Math.min(requiredLength, maskCapacity(currentMask));
+  let raw = e.target.value.replace(/\D/g, "");
+
+  const prevLen = phoneDigits.length;
+  const isSuddenFill = raw.length >= maxDigits && prevLen < 3;
+
+  if (isSuddenFill) {
+    raw = stripCountryCode(raw, currentCountry.индекс);
+  }
+
+  raw = raw.slice(0, maxDigits);
+
+  const wasComplete = phoneDigits.length >= requiredLength;
   phoneDigits = raw;
-  e.target.value = formatPhone(raw);
-  // Ставим курсор в конец
+  e.target.value = formatPhone(raw, currentMask);
   const len = e.target.value.length;
   e.target.setSelectionRange(len, len);
   updateButton();
   phoneError.classList.remove("visible");
+
+  // Лёгкая вибрация — когда номер впервые стал полным
+  const nowComplete = phoneDigits.length >= requiredLength;
+  if (nowComplete && !wasComplete) {
+    hapticImpact('light');
+  }
 });
 
-// Правильная обработка Backspace
+/* Явный paste-обработчик — надёжнее для ручной вставки из буфера */
+phoneInput.addEventListener("paste", (e) => {
+  e.preventDefault();
+  const pasted = (e.clipboardData || window.clipboardData).getData("text") || "";
+  let raw = pasted.replace(/\D/g, "");
+  raw = stripCountryCode(raw, currentCountry.индекс);
+  const maxDigits = Math.min(requiredLength, maskCapacity(currentMask));
+  raw = raw.slice(0, maxDigits);
+  phoneDigits = raw;
+  phoneInput.value = formatPhone(raw, currentMask);
+  updateButton();
+  phoneError.classList.remove("visible");
+});
+
 phoneInput.addEventListener("keydown", (e) => {
   if (e.key === "Backspace") {
     e.preventDefault();
     if (phoneDigits.length > 0) {
       phoneDigits = phoneDigits.slice(0, -1);
-      phoneInput.value = formatPhone(phoneDigits);
+      phoneInput.value = formatPhone(phoneDigits, currentMask);
       updateButton();
     }
   }
@@ -595,6 +788,7 @@ function renderCountries(filter = "") {
     el.addEventListener("click", () => {
       const country = COUNTRIES.find(c => c.страна === el.dataset.name);
       if (country) {
+        hapticSelect();
         setCountry(country);
         closeModal();
       }
@@ -603,6 +797,7 @@ function renderCountries(filter = "") {
 }
 
 function openModal() {
+  hapticSelect();
   searchInput.value = "";
   renderCountries();
   modal.classList.add("open");
@@ -624,33 +819,25 @@ searchInput.addEventListener("input", () => renderCountries(searchInput.value));
 btnContinue.addEventListener("click", async () => {
   if (btnContinue.disabled || btnContinue.classList.contains("loading")) return;
 
-  hapticImpact("medium");   // ← вибрация на кнопке
+  hapticImpact("medium");
 
   const fullPhone = currentCountry.индекс + phoneDigits;
   btnContinue.classList.add("loading");
   phoneError.classList.remove("visible");
 
   try {
-    // const res = await fetch("/api/send_sms", {
-    //   method: "POST",
-    //   headers: { "Content-Type": "application/json" },
-    //   body: JSON.stringify({ phone: fullPhone })
-    // });
-    // const data = await res.json();
-    // if (!res.ok) throw new Error(data.error || "Ошибка отправки");
-
     // MOCK
     await new Promise(r => setTimeout(r, 1500));
 
     $("sent-phone").textContent = fullPhone;
 
-    // Анимированный переход: телефон → код (въезжает справа)
-    switchScreen($("screen-phone"), $("screen-code"));
+    switchScreen($("screen-phone"), $("screen-code"), 'forward');
 
     startTimer();
     setTimeout(() => document.querySelectorAll(".code-digit")[0].focus(), 320);
 
   } catch (err) {
+    hapticNotify('error');
     phoneError.textContent = err.message || "Не удалось отправить код. Попробуйте позже.";
     phoneError.classList.add("visible");
   } finally {
@@ -658,7 +845,7 @@ btnContinue.addEventListener("click", async () => {
   }
 });
 
-/* ===== Code screen (6 digits) ===== */
+/* ===== Code screen ===== */
 const codeDigits = document.querySelectorAll(".code-digit");
 const btnVerify = $("btn-verify");
 const codeError = $("code-error");
@@ -670,12 +857,18 @@ codeDigits.forEach((input, idx) => {
     const val = e.target.value.replace(/\D/g, "");
     e.target.value = val.slice(0, 1);
 
-    if (val) hapticImpact("light");   // ← вибрация при вводе цифры
-
     if (val && idx < codeDigits.length - 1) {
       codeDigits[idx + 1].focus();
     }
+
+    const wasComplete = Array.from(codeDigits).every(d => d.value);
     checkCodeComplete();
+    const nowComplete = Array.from(codeDigits).every(d => d.value);
+
+    // Вибрация — только когда все 6 цифр введены
+    if (nowComplete && !wasComplete) {
+      hapticImpact('light');
+    }
   });
 
   input.addEventListener("keydown", (e) => {
@@ -705,29 +898,21 @@ function checkCodeComplete() {
 btnVerify.addEventListener("click", async () => {
   if (btnVerify.disabled || btnVerify.classList.contains("loading")) return;
 
+  hapticImpact("medium");
+
   const code = Array.from(codeDigits).map(i => i.value).join("");
   btnVerify.classList.add("loading");
   codeError.classList.remove("visible");
 
   try {
-    // const res = await fetch("/api/verify_code", {
-    //   method: "POST",
-    //   headers: { "Content-Type": "application/json" },
-    //   body: JSON.stringify({
-    //     phone: currentCountry.индекс + phoneDigits,
-    //     code: code
-    //   })
-    // });
-    // const data = await res.json();
-    // if (!res.ok) throw new Error(data.error || "Неверный код");
-
-    // MOCK
     await new Promise(r => setTimeout(r, 1200));
     if (code !== "123456") throw new Error("Неверный код подтверждения");
 
+    hapticNotify('success');
     Telegram.WebApp.showAlert("Успешно! Код подтверждён.");
 
   } catch (err) {
+    hapticNotify('error');
     codeError.textContent = err.message || "Ошибка проверки кода";
     codeError.classList.add("visible");
   } finally {
@@ -751,11 +936,26 @@ function startTimer() {
       $("resend-block").innerHTML = `<a href="#" id="resend-link">Отправить код повторно</a>`;
       $("resend-link").addEventListener("click", (e) => {
         e.preventDefault();
+        hapticImpact('light');
         startTimer();
       });
     }
   }, 1000);
 }
+
+/* ===== Back to phone ===== */
+$("btn-back-phone").addEventListener("click", () => {
+  hapticImpact("light");
+
+  codeDigits.forEach(d => d.value = "");
+  checkCodeComplete();
+  codeError.classList.remove("visible");
+  clearInterval(timerInterval);
+
+  switchScreen($("screen-code"), $("screen-phone"), 'back');
+
+  setTimeout(() => phoneInput.focus(), 320);
+});
 </script>
 </body>
 </html>
