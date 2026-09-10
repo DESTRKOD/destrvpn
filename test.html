@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Nav Island — прототип v5</title>
+  <title>Nav Island — прототип v6</title>
   <script src="https://telegram.org/js/telegram-web-app.js?56"></script>
   <style>
     :root {
@@ -16,7 +16,6 @@
       --island-bottom: calc(var(--island-gap) + env(safe-area-inset-bottom));
       --island-pad: 6px;
 
-      /* Цвета текста островка */
       --island-accent: #6AB3F3;
       --island-gray: rgba(20, 60, 100, 0.75);
 
@@ -111,10 +110,6 @@
       contain: layout paint;
     }
 
-    /* ===== КНОПКИ =====
-       Текст и иконка — один слой. Цвет — градиент серый→голубой.
-       Позиция градиента задаётся через --gx (координата границы в пикселях
-       относительно островка). Двигается вместе с линзой. */
     .nav-btn {
       position: relative;
       z-index: 2;
@@ -140,46 +135,19 @@
     }
     .nav-btn svg { display: block; }
 
-    /* Внутренний контент кнопки — общий цвет через градиент.
-       Применяем к SVG (через stroke/fill) и к span (через color).
-       Градиент строится в CSS-переменных кнопки, обновляется из JS. */
-    .nav-btn .nav-label {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 2px;
-      /* background-clip: text даёт градиент на тексте. Но у нас ещё SVG,
-         поэтому SVG красим через stroke через currentColor,
-         а цвет currentColor ставим через градиент на SVG-обёртке. */
-    }
-
-    /* ВАЖНО: единый градиент для иконки и текста через CSS-маску.
-       Реализуем так: SVG и span получают один и тот же градиент как "цвет"
-       через background-clip. */
-
-    /* Текст (span) — background-clip: text */
     .nav-btn .nav-text {
-      background-image: var(--btn-gradient);
+      background-image: none;
       background-repeat: no-repeat;
-      background-attachment: local;
+      background-size: 100% 100%;
       -webkit-background-clip: text;
       background-clip: text;
       -webkit-text-fill-color: transparent;
       color: transparent;
+      /* fallback: если background-clip не сработает — серый */
+      background-color: var(--island-gray);
     }
 
-    /* SVG — заливка/обводка через маску, потому что у SVG нельзя background-clip.
-       Трюк: рисуем SVG поверх градиентного блока и используем mask через тот же SVG. */
-
-    /* Более простой способ для SVG: используем SVG-градиент внутри svg.
-       Он задаётся через <linearGradient> и обновляется из JS по X. */
-
-    /* Итого: SVG — через SVG-градиент (gradientUnits="userSpaceOnUse"),
-       текст — через background-clip: text. Оба используют одну и ту же
-       пару границ. Синхронизация — из JS. */
-
-    /* ===== ЛИНЗА ===== */
+    /* ЛИНЗА */
     .nav-lens {
       position: absolute;
       top: var(--island-pad);
@@ -224,11 +192,15 @@
     <div class="nav-lens" id="nav-lens"></div>
 
     <button class="nav-btn" data-tab="home">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-icon>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-icon>
         <defs>
-          <linearGradient id="iconGrad-home" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="24" y2="0">
+          <linearGradient id="iconGrad-home" gradientUnits="userSpaceOnUse" x1="-10" y1="0" x2="34" y2="0">
+            <stop offset="-10" stop-color="var(--island-gray)"/>
             <stop offset="0" stop-color="var(--island-gray)"/>
-            <stop offset="0" stop-color="var(--island-accent)"/>
+            <stop offset="10" stop-color="var(--island-accent)"/>
+            <stop offset="14" stop-color="var(--island-accent)"/>
+            <stop offset="24" stop-color="var(--island-gray)"/>
+            <stop offset="34" stop-color="var(--island-gray)"/>
           </linearGradient>
         </defs>
         <path d="M3 10.5L12 3l9 7.5" stroke="url(#iconGrad-home)"/>
@@ -238,11 +210,15 @@
     </button>
 
     <button class="nav-btn" data-tab="subscription">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-icon>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-icon>
         <defs>
-          <linearGradient id="iconGrad-sub" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="24" y2="0">
+          <linearGradient id="iconGrad-sub" gradientUnits="userSpaceOnUse" x1="-10" y1="0" x2="34" y2="0">
+            <stop offset="-10" stop-color="var(--island-gray)"/>
             <stop offset="0" stop-color="var(--island-gray)"/>
-            <stop offset="0" stop-color="var(--island-accent)"/>
+            <stop offset="10" stop-color="var(--island-accent)"/>
+            <stop offset="14" stop-color="var(--island-accent)"/>
+            <stop offset="24" stop-color="var(--island-gray)"/>
+            <stop offset="34" stop-color="var(--island-gray)"/>
           </linearGradient>
         </defs>
         <rect x="2" y="5" width="20" height="14" rx="2" stroke="url(#iconGrad-sub)"/>
@@ -252,11 +228,15 @@
     </button>
 
     <button class="nav-btn" data-tab="settings">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-icon>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-icon>
         <defs>
-          <linearGradient id="iconGrad-set" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="24" y2="0">
+          <linearGradient id="iconGrad-set" gradientUnits="userSpaceOnUse" x1="-10" y1="0" x2="34" y2="0">
+            <stop offset="-10" stop-color="var(--island-gray)"/>
             <stop offset="0" stop-color="var(--island-gray)"/>
-            <stop offset="0" stop-color="var(--island-accent)"/>
+            <stop offset="10" stop-color="var(--island-accent)"/>
+            <stop offset="14" stop-color="var(--island-accent)"/>
+            <stop offset="24" stop-color="var(--island-gray)"/>
+            <stop offset="34" stop-color="var(--island-gray)"/>
           </linearGradient>
         </defs>
         <circle cx="12" cy="8" r="4" stroke="url(#iconGrad-set)"/>
@@ -311,110 +291,6 @@
     currentTab = tab;
   }
 
-  /* ===== GRADIENT ENGINE =====
-     Для каждой кнопки вычисляем локальную координату левого и правого края
-     линзы. Строим градиент серый→голубой, где переход — 2px.
-     Для текста: background-image: linear-gradient(...).
-     Для SVG: обновляем x1/x2 у <linearGradient>.
-     Всё в координатах элемента (кнопки или svg). */
-
-  const TRANSITION_SOFTNESS = 2; // px
-
-  function updateGradients(lensLeft, lensWidth) {
-    const lensRight = lensLeft + lensWidth;
-
-    buttons.forEach(btn => {
-      const btnLeft = btn.offsetLeft;      // в координатах островка
-      const btnWidth = btn.offsetWidth;
-
-      // Локальные координаты линзы в этой кнопке
-      // (в пикселях от левого края кнопки)
-      const localLensLeft = lensLeft - btnLeft;
-      const localLensRight = lensRight - btnLeft;
-
-      // Градиент для текста — задаём через background-image
-      // Порядок стопов: [gray до localLensLeft-soft],
-      //                 [accent с localLensLeft],
-      //                 [accent до localLensRight],
-      //                 [gray с localLensRight+soft]
-      // Внутри — всё голубое, снаружи — серое.
-      const textEl = btn.querySelector('[data-text]');
-      if (textEl) {
-        // background-size: 100% высоты, но нужен по ширине кнопки — используем
-        // проценты от ширины кнопки. Для этого переводим пиксели в проценты.
-        // Проще: используем px через calc? Нет. Проще — использовать
-        // background-position + статичный градиент заданной ширины.
-
-        // Мы задаём градиент шириной = ширине кнопки (в px), а потом
-        // сдвигаем его через background-position. Но проще всего — задать
-        // градиент с px-координатами через background-image напрямую,
-        // используя calc() и css-переменные.
-
-        // Самый простой путь: linear-gradient(90deg, ...) с точными px —
-        // это работает, потому что background-image принимает любые единицы.
-        const soft = TRANSITION_SOFTNESS;
-        const g = `linear-gradient(90deg,
-          var(--island-gray) 0,
-          var(--island-gray) ${localLensLeft - soft}px,
-          var(--island-accent) ${localLensLeft}px,
-          var(--island-accent) ${localLensRight}px,
-          var(--island-gray) ${localLensRight + soft}px,
-          var(--island-gray) 100%)`;
-
-        textEl.style.backgroundImage = g;
-      }
-
-      // Градиент для SVG — обновляем x1/x2 у linearGradient.
-      // SVG viewBox 24x24, реальный размер 20x20. Локальные координаты
-      // линзы в кнопке нужно перевести в координаты SVG (0..24).
-      // Кнопка шире SVG, SVG по центру. Считаем смещение SVG внутри кнопки.
-      const svg = btn.querySelector('[data-icon]');
-      if (svg) {
-        const svgRect = svg.getBoundingClientRect();
-        const btnRect = btn.getBoundingClientRect();
-        const svgOffsetX = svgRect.left - btnRect.left; // px
-        const svgWidthPx = svgRect.width;               // px (20)
-        const scale = 24 / svgWidthPx;                  // px → SVG units
-
-        // Локальные координаты линзы в системе SVG-координат (0..24)
-        const svgLensLeft = (lensLeft - btnLeft - svgOffsetX) * scale;
-        const svgLensRight = (lensRight - btnLeft - svgOffsetX) * scale;
-        const svgSoft = TRANSITION_SOFTNESS * scale;
-
-        const grad = svg.querySelector('linearGradient');
-        if (grad) {
-          // Один общий переход: серый → голубой на границе линзы слева
-          // и голубой → серый на границе справа.
-          // linearGradient не поддерживает «полосы», но можно использовать
-          // несколько стопов с offset — offset задаётся в 0..1 или в юнитах.
-          // С gradientUnits="userSpaceOnUse" offset — в юнитах (0..24).
-
-          // Зададим стопы в юнитах:
-          const stops = [
-            { off: 0, color: 'var(--island-gray)' },
-            { off: Math.max(0, svgLensLeft - svgSoft), color: 'var(--island-gray)' },
-            { off: Math.max(0, svgLensLeft), color: 'var(--island-accent)' },
-            { off: Math.min(24, svgLensRight), color: 'var(--island-accent)' },
-            { off: Math.min(24, svgLensRight + svgSoft), color: 'var(--island-gray)' },
-            { off: 24, color: 'var(--island-gray)' }
-          ];
-
-          // Пересоздаём стопы
-          while (grad.firstChild) grad.removeChild(grad.firstChild);
-          stops.forEach(s => {
-            const stop = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
-            stop.setAttribute('offset', s.off + '');
-            stop.setAttribute('stop-color', s.color);
-            grad.appendChild(stop);
-          });
-
-          grad.setAttribute('x1', '0');
-          grad.setAttribute('x2', '24');
-        }
-      }
-    });
-  }
-
   /* ===== GEOMETRY ===== */
   let geo = null;
 
@@ -423,11 +299,15 @@
     const pad = 6;
     const bs = buttons.map(b => {
       const r = b.getBoundingClientRect();
+      const svg = b.querySelector('[data-icon]');
+      const sr = svg ? svg.getBoundingClientRect() : null;
       return {
         tab: b.dataset.tab,
         left: r.left - ir.left,
         width: r.width,
-        center: r.left - ir.left + r.width / 2
+        center: r.left - ir.left + r.width / 2,
+        svgLeft: sr ? sr.left - ir.left : 0,
+        svgWidth: sr ? sr.width : 0
       };
     });
 
@@ -443,7 +323,76 @@
     return geo.buttons.find(b => b.tab === tab);
   }
 
-  /* ===== LENS + GRADIENT ===== */
+  /* ===== GRADIENT ENGINE ===== */
+  const TRANSITION_SOFTNESS = 2;
+
+  function updateGradients(lensLeft, lensWidth) {
+    if (!geo) return;
+
+    geo.buttons.forEach((b, i) => {
+      const btn = buttons[i];
+      const btnLeft = b.left;
+      const btnWidth = b.width;
+
+      const localLensLeft = lensLeft - btnLeft;
+      const localLensRight = localLensLeft + lensWidth;
+
+      // ===== ТЕКСТ =====
+      const textEl = btn.querySelector('[data-text]');
+      if (textEl) {
+        const soft = TRANSITION_SOFTNESS;
+        const g = `linear-gradient(90deg,
+          var(--island-gray) 0px,
+          var(--island-gray) ${localLensLeft - soft}px,
+          var(--island-accent) ${localLensLeft}px,
+          var(--island-accent) ${localLensRight}px,
+          var(--island-gray) ${localLensRight + soft}px,
+          var(--island-gray) ${btnWidth}px)`;
+        textEl.style.backgroundImage = g;
+      }
+
+      // ===== SVG =====
+      const svg = btn.querySelector('[data-icon]');
+      if (svg && b.svgWidth > 0) {
+        const svgOffsetX = b.svgLeft - btnLeft;
+        const svgWidthPx = b.svgWidth;
+        const scale = 24 / svgWidthPx;
+
+        const svgLensLeft = (localLensLeft - svgOffsetX) * scale;
+        const svgLensRight = (localLensRight - svgOffsetX) * scale;
+        const svgSoft = TRANSITION_SOFTNESS * scale;
+
+        const grad = svg.querySelector('linearGradient');
+        if (grad) {
+          const clamp = (v) => Math.max(-10, Math.min(34, v));
+          const stops = [
+            { off: -10, color: 'var(--island-gray)' },
+            { off: clamp(svgLensLeft - svgSoft), color: 'var(--island-gray)' },
+            { off: clamp(svgLensLeft), color: 'var(--island-accent)' },
+            { off: clamp(svgLensRight), color: 'var(--island-accent)' },
+            { off: clamp(svgLensRight + svgSoft), color: 'var(--island-gray)' },
+            { off: 34, color: 'var(--island-gray)' }
+          ];
+
+          // Сортировка и дедупликация для корректности SVG
+          stops.sort((a, b) => a.off - b.off);
+
+          while (grad.firstChild) grad.removeChild(grad.firstChild);
+          stops.forEach(s => {
+            const stop = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+            stop.setAttribute('offset', s.off + '');
+            stop.setAttribute('stop-color', s.color);
+            grad.appendChild(stop);
+          });
+
+          grad.setAttribute('x1', '-10');
+          grad.setAttribute('x2', '34');
+        }
+      }
+    });
+  }
+
+  /* ===== LENS ===== */
   const MIN_STRETCH = 0;
   const MAX_STRETCH = 10;
   const STRETCH_K = 60;
@@ -600,13 +549,8 @@
 
     const b = btnByTab(tab);
     if (b) {
-      // Включаем transition — линза плавно доедет, градиент обновится
-      // в rAF-цикле, который читает актуальное положение линзы.
       lens.style.transition = '';
       applyLens(b.left, b.width, true);
-
-      // Запускаем rAF-цикл, который будет обновлять градиенты, пока
-      // линза едет через transition.
       startGradientTracking();
     }
 
@@ -618,10 +562,7 @@
     }
   }
 
-  /* ===== GRADIENT TRACKING =====
-     Пока линза движется через transition, обновляем градиенты из её
-     текущего computedStyle. Это читает стили, но только в момент
-     анимации commit (короткий отрезок ~320мс), не во время drag. */
+  /* ===== GRADIENT TRACKING (только во время commit-анимации) ===== */
   let tracking = false;
   let trackEnd = 0;
 
