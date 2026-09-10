@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Nav Island — прототип</title>
+  <script src="https://telegram.org/js/telegram-web-app.js?56"></script>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --text: #000;
+      --hint: #8e8e93;
+
+      --island-h: 68px;
+      --island-gap: 14px;
+      --island-bottom: calc(var(--island-gap) + env(safe-area-inset-bottom));
+      --island-pad: 6px;
+
+      --island-bg: rgba(36, 123, 192, 0.18);
+      --island-border: rgba(36, 123, 192, 0.32);
+      --island-inset: rgba(255, 255, 255, 0.6);
+      --island-text: rgba(20, 60, 100, 0.75);
+      --island-text-active: #143b64;
+      --island-lens-bg: rgba(255, 255, 255, 0.6);
+      --island-lens-inset: rgba(255, 255, 255, 0.95);
+    }
+
+    * {
+      margin: 0; padding: 0; box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+      overscroll-behavior: none;
+    }
+
+    body { position: relative; }
+
+    /* ===== ЭКРАНЫ ===== */
+    .screen {
+      position: absolute;
+      inset: 0;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      padding-bottom: calc(var(--island-h) + var(--island-bottom) + 32px);
+      background: var(--bg);
+    }
+    .screen.active { display: flex; }
+
+    .screen h1 {
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+    .screen p {
+      font-size: 15px;
+      color: var(--hint);
+    }
+
+    /* ===== ОСТРОВОК ===== */
+    .nav-island {
+      position: fixed;
+      left: 50%;
+      bottom: var(--island-bottom);
+      transform: translateX(-50%);
+      height: var(--island-h);
+      padding: var(--island-pad);
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      gap: 2px;
+      border-radius: 50px;
+      background: var(--island-bg);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border: 1px solid var(--island-border);
+      box-shadow:
+        inset 0 2px 4px var(--island-inset),
+        0 8px 24px rgba(20, 45, 80, 0.22),
+        0 2px 6px rgba(20, 45, 80, 0.14);
+      z-index: 60;
+      min-width: 280px;
+      max-width: calc(100vw - 32px);
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .nav-btn {
+      position: relative;
+      z-index: 2;
+      flex: 1;
+      height: 100%;
+      padding: 0 14px;
+      border: none;
+      background: transparent;
+      color: var(--island-text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.1px;
+      cursor: pointer;
+      border-radius: 50px;
+      transition: color 0.25s;
+      white-space: nowrap;
+      pointer-events: none; /* клики обрабатываем на островке через pointer-events */
+    }
+    .nav-btn svg { display: block; }
+    .nav-btn.active { color: var(--island-text-active); }
+
+    /* Линза */
+    .nav-lens {
+      position: absolute;
+      top: var(--island-pad);
+      left: 0;
+      height: calc(var(--island-h) - var(--island-pad) * 2);
+      border-radius: 50px;
+      background: var(--island-lens-bg);
+      box-shadow:
+        inset 0 3px 6px var(--island-lens-inset),
+        inset 0 -1px 2px rgba(255, 255, 255, 0.25),
+        0 2px 8px rgba(20, 45, 80, 0.18);
+      transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1),
+                  width 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+      z-index: 1;
+      pointer-events: none;
+      will-change: transform, width;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+    /* Во время drag transition отключаем, линза идёт строго за пальцем */
+    .nav-island.dragging .nav-lens {
+      transition: none;
+    }
+
+    /* Подписи-подсказки */
+    .hint {
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      top: calc(env(safe-area-inset-top) + 20px);
+      font-size: 12px;
+      color: var(--hint);
+      text-align: center;
+      max-width: 90vw;
+      line-height: 1.5;
+      padding: 0 16px;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="hint">
+    Тапни или потяни линзу по островку —<br>
+    экран переключится при отпускании
+  </div>
+
+  <!-- ЭКРАНЫ -->
+  <div class="screen active" id="screen-home">
+    <h1>Главная</h1>
+    <p>Это тестовый экран «Главная»</p>
+  </div>
+  <div class="screen" id="screen-subscription">
+    <h1>Подписки</h1>
+    <p>Это тестовый экран «Подписки»</p>
+  </div>
+  <div class="screen" id="screen-profile">
+    <h1>Профиль</h1>
+    <p>Это тестовый экран «Профиль»</p>
+  </div>
+
+  <!-- ОСТРОВОК -->
+  <nav class="nav-island" id="nav-island">
+    <div class="nav-lens" id="nav-lens"></div>
+
+    <button class="nav-btn active" data-tab="home">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 10.5L12 3l9 7.5"/>
+        <path d="M5 9.5V21h14V9.5"/>
+      </svg>
+      <span>Главное</span>
+    </button>
+
+    <button class="nav-btn" data-tab="subscription">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="5" width="20" height="14" rx="2"/>
+        <path d="M2 10h20"/>
+      </svg>
+      <span>Подписки</span>
+    </button>
+
+    <button class="nav-btn" data-tab="profile">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="8" r="4"/>
+        <path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/>
+      </svg>
+      <span>Профиль</span>
+    </button>
+  </nav>
+
+<script>
+(function () {
+  /* ===== Telegram mock ===== */
+  if (!window.Telegram || !window.Telegram.WebApp) {
+    window.Telegram = {
+      WebApp: {
+        ready: () => {}, expand: () => {},
+        HapticFeedback: {
+          impactOccurred: () => {},
+          notificationOccurred: () => {},
+          selectionChanged: () => {}
+        }
+      }
+    };
+  }
+  const tg = window.Telegram.WebApp;
+  tg.ready();
+  tg.expand();
+
+  function haptic(type) {
+    try {
+      const hf = tg.HapticFeedback;
+      if (!hf) return;
+      if (type === 'light') hf.impactOccurred('light');
+      else if (type === 'medium') hf.impactOccurred('medium');
+      else if (type === 'success') hf.notificationOccurred('success');
+      else if (type === 'select') hf.selectionChanged();
+    } catch (e) {}
+  }
+
+  /* ===== STATE ===== */
+  const TABS = ['home', 'subscription', 'profile'];
+  let currentTab = 'home';        // активный экран
+  let hoverTab = 'home';          // кнопка, над которой сейчас линза (может отличаться во время drag)
+
+  const island = document.getElementById('nav-island');
+  const lens = document.getElementById('nav-lens');
+  const buttons = Array.from(island.querySelectorAll('.nav-btn'));
+
+  /* ===== SCREEN SWITCH ===== */
+  function showScreen(tab) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    const next = document.getElementById('screen-' + tab);
+    if (next) next.classList.add('active');
+    currentTab = tab;
+  }
+
+  /* ===== LENS POSITIONING ===== */
+  const PAD = 6;
+  const MIN_STRETCH = 0;
+  const MAX_STRETCH = 16;
+
+  function buttonRect(btn) {
+    return { left: btn.offsetLeft, width: btn.offsetWidth };
+  }
+
+  function setLens(left, width, useTransition) {
+    if (useTransition) {
+      lens.style.transition = '';
+    } else {
+      lens.style.transition = 'none';
+    }
+    lens.style.transform = `translateX(${left}px)`;
+    lens.style.width = width + 'px';
+  }
+
+  function snapLensTo(tab, withStretch) {
+    const btn = buttons.find(b => b.dataset.tab === tab);
+    if (!btn) return;
+    const r = buttonRect(btn);
+
+    if (withStretch) {
+      // лёгкое растяжение при «доводке» — просто вернуть transition
+      lens.style.transition = '';
+      setLens(r.left, r.width, true);
+    } else {
+      setLens(r.left, r.width, false);
+    }
+  }
+
+  /* ===== ACTIVE BUTTON (hover) ===== */
+  function setHover(tab) {
+    if (hoverTab === tab) return;
+    hoverTab = tab;
+    buttons.forEach(b => {
+      b.classList.toggle('active', b.dataset.tab === tab);
+    });
+    haptic('select');
+  }
+
+  /* ===== DRAG-TO-SELECT ===== */
+  let pointerId = null;
+  let startX = 0;
+  let startY = 0;
+  let startLensLeft = 0;
+  let startLensWidth = 0;
+  let lastX = 0;
+  let lastMoveTime = 0;
+  let velocity = 0;
+  let didDrag = false;
+  const DRAG_THRESHOLD = 8;
+
+  function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+
+  function islandInnerRect() {
+    const ir = island.getBoundingClientRect();
+    return {
+      left: PAD,
+      right: ir.width - PAD
+    };
+  }
+
+  function pointerXToIslandLocal(clientX) {
+    const ir = island.getBoundingClientRect();
+    return clientX - ir.left;
+  }
+
+  // Определяем, над какой кнопкой сейчас центр линзы
+  function tabUnderLensCenter(lensCenterX) {
+    for (const b of buttons) {
+      const r = buttonRect(b);
+      if (lensCenterX >= r.left && lensCenterX <= r.left + r.width) {
+        return b.dataset.tab;
+      }
+    }
+    // если не попали точно — берём ближайшую
+    let best = buttons[0], bestDist = Infinity;
+    for (const b of buttons) {
+      const r = buttonRect(b);
+      const c = r.left + r.width / 2;
+      const d = Math.abs(c - lensCenterX);
+      if (d < bestDist) { bestDist = d; best = b; }
+    }
+    return best.dataset.tab;
+  }
+
+  function onPointerDown(e) {
+    if (pointerId !== null) return;
+    pointerId = e.pointerId;
+    island.setPointerCapture(pointerId);
+
+    const localX = pointerXToIslandLocal(e.clientX);
+    startX = localX;
+    startY = e.clientY;
+    lastX = localX;
+    lastMoveTime = performance.now();
+    velocity = 0;
+    didDrag = false;
+
+    // Стопорим линзу по её текущим координатам
+    const btn = buttons.find(b => b.dataset.tab === hoverTab);
+    const r = buttonRect(btn);
+    startLensLeft = r.left;
+    startLensWidth = r.width;
+
+    island.classList.add('dragging');
+    setLens(startLensLeft, startLensWidth, false);
+  }
+
+  function onPointerMove(e) {
+    if (e.pointerId !== pointerId) return;
+
+    const localX = pointerXToIslandLocal(e.clientX);
+    const dxTotal = Math.abs(localX - startX);
+    const dyTotal = Math.abs(e.clientY - startY);
+
+    if (!didDrag && (dxTotal > DRAG_THRESHOLD || dyTotal > DRAG_THRESHOLD)) {
+      didDrag = true;
+    }
+
+    if (!didDrag) return;
+
+    // Скорость для растяжения
+    const now = performance.now();
+    const dt = Math.max(1, now - lastMoveTime);
+    const dx = localX - lastX;
+    velocity = dx / dt; // px/ms
+    lastX = localX;
+    lastMoveTime = now;
+
+    // Позиция линзы: палец — центр линзы
+    const currentHoverBtn = buttons.find(b => b.dataset.tab === hoverTab);
+    const targetWidth = currentHoverBtn ? currentHoverBtn.offsetWidth : startLensWidth;
+
+    const bounds = islandInnerRect();
+    let left = localX - targetWidth / 2;
+    left = clamp(left, bounds.left, bounds.right - targetWidth);
+
+    // Растяжение по скорости
+    const stretch = clamp(Math.abs(velocity) * 120, MIN_STRETCH, MAX_STRETCH);
+    const stretchedWidth = targetWidth + stretch;
+
+    // Сохраняем «центр» на месте при растяжении
+    const stretchOffset = (stretchedWidth - targetWidth) / 2;
+    let finalLeft = left - stretchOffset;
+    finalLeft = clamp(finalLeft, bounds.left, bounds.right - stretchedWidth);
+
+    setLens(finalLeft, stretchedWidth, false);
+
+    // Определяем, над какой кнопкой сейчас центр линзы → меняем hover
+    const lensCenter = finalLeft + stretchedWidth / 2;
+    const tabUnder = tabUnderLensCenter(lensCenter);
+    setHover(tabUnder);
+  }
+
+  function onPointerUp(e) {
+    if (e.pointerId !== pointerId) return;
+
+    try { island.releasePointerCapture(pointerId); } catch (_) {}
+    island.classList.remove('dragging');
+    pointerId = null;
+
+    if (!didDrag) {
+      // Тап: коммитим ту кнопку, что под пальцем
+      const localX = pointerXToIslandLocal(e.clientX);
+      const tappedTab = tabUnderLensCenter(localX);
+      commit(tappedTab);
+      return;
+    }
+
+    // Drag: коммитим тот таб, где сейчас hover
+    commit(hoverTab);
+  }
+
+  function onPointerCancel(e) {
+    if (e.pointerId !== pointerId) return;
+    island.classList.remove('dragging');
+    pointerId = null;
+    // Возвращаем линзу на текущий активный
+    commit(currentTab);
+  }
+
+  function commit(tab) {
+    if (!TABS.includes(tab)) tab = currentTab;
+
+    // Сначала визуально ставим активную кнопку
+    buttons.forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+    hoverTab = tab;
+
+    // Возвращаем линзу на кнопку с плавным переходом
+    requestAnimationFrame(() => {
+      const btn = buttons.find(b => b.dataset.tab === tab);
+      const r = buttonRect(btn);
+      lens.style.transition = '';
+      lens.style.transform = `translateX(${r.left}px)`;
+      lens.style.width = r.width + 'px';
+    });
+
+    // Переключаем экран, если изменился
+    if (tab !== currentTab) {
+      showScreen(tab);
+      haptic('light');
+    } else {
+      haptic('light');
+    }
+  }
+
+  /* ===== EVENTS ===== */
+  island.addEventListener('pointerdown', onPointerDown);
+  island.addEventListener('pointermove', onPointerMove);
+  island.addEventListener('pointerup', onPointerUp);
+  island.addEventListener('pointercancel', onPointerCancel);
+
+  // Глушим click на кнопках, если это был drag
+  buttons.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+    });
+  });
+
+  // Запрет скролла/зума в момент касания островка
+  island.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+  }, { passive: false });
+
+  /* ===== INITIAL LENS POSITION ===== */
+  function initLens() {
+    const btn = buttons.find(b => b.dataset.tab === currentTab);
+    if (!btn) return;
+    const r = buttonRect(btn);
+    setLens(r.left, r.width, false);
+  }
+
+  // Ждём шрифты и layout
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(() => requestAnimationFrame(initLens));
+  }
+  requestAnimationFrame(initLens);
+  window.addEventListener('load', () => requestAnimationFrame(initLens));
+  window.addEventListener('resize', () => {
+    if (pointerId === null) initLens();
+  });
+
+})();
+</script>
+</body>
+</html>
