@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -62,8 +63,6 @@
     }
     .screen.active { display: flex; }
 
-    /* Табы с островком — запас места под островок от самого контента,
-       не через padding-bottom скрина (он ломал flex-сжатие) */
     .screen.tab-screen {
       padding-bottom: calc(var(--island-h) + var(--island-bottom) + 16px);
     }
@@ -158,8 +157,6 @@
     .stats-grid::before { left: 33.333%; }
     .stats-grid::after  { left: 66.666%; }
 
-    /* КЛЮЧЕВОЙ ФИКС: flex-shrink: 0 — контейнер не сжимается, все 5 пунктов видны.
-       margin-bottom даёт место под островок, скролл делает .screen */
     .menu-section {
       margin: 0 16px;
       margin-bottom: calc(var(--island-h) + var(--island-bottom) + 16px);
@@ -466,7 +463,7 @@
     .theme-toggle.dark { background: var(--tg-theme-button-color); }
     .theme-toggle.dark::after { transform: translateX(20px); }
 
-    /* PROFILE HEADER — уменьшен в 2 раза */
+    /* PROFILE HEADER — уменьшен, со скруглёнными нижними углами */
     .profile-header {
       position: relative;
       width: 100%;
@@ -479,6 +476,7 @@
       justify-content: center;
       min-height: 160px;
       flex-shrink: 0;
+      border-radius: 0 0 24px 24px;
     }
     .profile-glow {
       position: absolute;
@@ -519,6 +517,7 @@
 </svg>");
       pointer-events: none;
       z-index: 1;
+      border-radius: 0 0 24px 24px;
     }
     .profile-center {
       position: relative;
@@ -610,8 +609,8 @@
       border: 1px solid var(--island-border);
       box-shadow:
         inset 0px 2px 4px var(--island-inset),
-        0 8px 24px rgba(20, 45, 80, 0.28),
-        0 2px 6px rgba(20, 45, 80, 0.2);
+        0 8px 24px rgba(0, 0, 0, 0.28),
+        0 2px 6px rgba(0, 0, 0, 0.2);
       z-index: 60;
       min-width: 280px;
       max-width: calc(100vw - 32px);
@@ -670,7 +669,7 @@
       box-shadow:
         inset 0px 3px 6px var(--island-lens-inset),
         inset 0px -1px 2px rgba(255, 255, 255, 0.25),
-        0 2px 8px rgba(20, 45, 80, 0.18);
+        0 2px 8px rgba(0, 0, 0, 0.18);
       z-index: 1;
       pointer-events: none;
       will-change: transform, width;
@@ -1397,7 +1396,8 @@
     } catch (e) {}
   }
 
-  /* ===== THEME ===== */
+  /* ===== THEME =====
+     Тёмная тема: островок — светлое матовое стекло на тёмном фоне. */
   const LIGHT_THEME = {
     '--tg-theme-bg-color': '#ffffff',
     '--tg-theme-secondary-bg-color': '#f4f4f5',
@@ -1415,7 +1415,6 @@
     '--island-lens-bg': 'rgba(255, 255, 255, 0.6)',
     '--island-lens-inset': 'rgba(255, 255, 255, 0.95)'
   };
-  /* Тёмная тема — островок плотнее и ярче, чтобы был виден на тёмном фоне */
   const DARK_THEME = {
     '--tg-theme-bg-color': '#17212b',
     '--tg-theme-secondary-bg-color': '#232e3c',
@@ -1426,12 +1425,13 @@
     '--tg-theme-link-color': '#6ab3f3',
     '--tg-theme-destructive-text-color': '#ec3942',
     '--tg-theme-section-separator-color': 'rgba(255,255,255,0.08)',
-    '--island-bg': 'rgba(58, 110, 170, 0.55)',
-    '--island-border': 'rgba(255, 255, 255, 0.35)',
-    '--island-inset': 'rgba(255, 255, 255, 0.45)',
-    '--island-text': 'rgba(255, 255, 255, 0.8)',
-    '--island-lens-bg': 'rgba(255, 255, 255, 0.32)',
-    '--island-lens-inset': 'rgba(255, 255, 255, 0.7)'
+    /* Светлое матовое стекло в тёмной теме */
+    '--island-bg': 'rgba(255, 255, 255, 0.12)',
+    '--island-border': 'rgba(255, 255, 255, 0.28)',
+    '--island-inset': 'rgba(255, 255, 255, 0.35)',
+    '--island-text': 'rgba(255, 255, 255, 0.7)',
+    '--island-lens-bg': 'rgba(255, 255, 255, 0.22)',
+    '--island-lens-inset': 'rgba(255, 255, 255, 0.55)'
   };
 
   let currentTheme = localStorage.getItem('dxs_theme') || 'light';
@@ -1549,7 +1549,7 @@
       hoverTab = name;
       requestAnimationFrame(() => {
         rebuildGeometry();
-        snapTo(name, false);
+        snapTo(name, true);
       });
     } else {
       island.classList.remove('visible');
@@ -1752,9 +1752,6 @@
     velocity = 0;
     didDrag = false;
     pendingX = localX;
-
-    /* Линзу НЕ двигаем здесь — она плавно дотечёт в commit при тапе,
-       или пойдёт за пальцем при drag */
   }
 
   function onPointerMove(e) {
@@ -1836,7 +1833,12 @@
 
     const b = btnByTab(tab);
     if (b) {
+      /* КРИТИЧНО ДЛЯ АНИМАЦИИ:
+         1. Сбрасываем inline transition (если был 'none' от drag) — возвращаем CSS-значение.
+         2. Форсируем reflow, чтобы браузер зафиксировал «старое» положение.
+         3. И только теперь применяем новое — transition сработает. */
       lens.style.transition = '';
+      void lens.offsetWidth;
       applyLens(b.left, b.width, true);
       startGradientTracking();
     }
