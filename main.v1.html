@@ -5,41 +5,40 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>DxS Connect</title>
   <script src="https://telegram.org/js/telegram-web-app.js?56"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js"></script>
   <style>
-    /* ===== TELEGRAM THEME TOKENS ===== */
     :root {
-      /* Core Telegram colors (auto-mapped from tg.themeParams) */
       --tg-theme-bg-color: #ffffff;
       --tg-theme-secondary-bg-color: #f4f4f5;
       --tg-theme-text-color: #000000;
       --tg-theme-hint-color: #8e8e93;
-      --tg-theme-link-color: #3390ec;
       --tg-theme-button-color: #3390ec;
       --tg-theme-button-text-color: #ffffff;
-      --tg-theme-destructive-text-color: #ff3b30;
       --tg-theme-section-bg-color: #ffffff;
       --tg-theme-section-header-text-color: #6d6d72;
       --tg-theme-section-separator-color: #c8c7cc;
-      --tg-theme-accent-text-color: #3390ec;
+      --tg-theme-link-color: #3390ec;
+      --tg-theme-destructive-text-color: #ff3b30;
 
-      /* Telegram layout tokens */
-      --tg-section-padding: 16px;
-      --tg-list-item-padding: 11px 16px;
-      --tg-radius: 12px;
-      --tg-radius-sm: 8px;
-      --tg-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      /* Island */
+      --island-h: 68px;
+      --island-gap: 14px;
+      --island-bottom: calc(var(--island-gap) + env(safe-area-inset-bottom));
+      --island-pad: 6px;
+      --island-accent: #6AB3F3;
+      --island-gray: rgba(20, 60, 100, 0.75);
+      --island-bg: rgba(36, 123, 192, 0.18);
+      --island-border: rgba(36, 123, 192, 0.32);
+      --island-inset: rgba(255, 255, 255, 0.6);
+      --island-lens-bg: rgba(255, 255, 255, 0.6);
+      --island-lens-inset: rgba(255, 255, 255, 0.95);
     }
 
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
     html, body {
       height: 100%;
-      font-family: var(--tg-font-family);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       background: var(--tg-theme-bg-color);
       color: var(--tg-theme-text-color);
       overflow: hidden;
@@ -50,40 +49,112 @@
       position: relative;
       display: flex;
       flex-direction: column;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+      overflow: hidden;
     }
 
     /* ===== SCREENS ===== */
+    /* Табы — резко через display */
     .screen {
       position: absolute;
       inset: 0;
       display: none;
       flex-direction: column;
       height: 100%;
+      padding: 0 16px;
+      background: var(--tg-theme-bg-color);
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
-      background: var(--tg-theme-bg-color);
       overscroll-behavior: contain;
     }
     .screen.active { display: flex; }
 
-    /* ===== TELEGRAM-STYLE HEADER ===== */
-    .tg-header {
-      padding: 16px var(--tg-section-padding) 8px;
+    /* Push-экраны — слайд */
+    .screen.slide {
+      display: flex;
+      visibility: hidden;
+      opacity: 0;
+      transform: translateX(100%);
+      transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1),
+                  opacity 0.32s cubic-bezier(0.32, 0.72, 0, 1),
+                  visibility 0.32s;
+      will-change: transform, opacity;
+    }
+    .screen.slide.active {
+      visibility: visible;
+      opacity: 1;
+      transform: translateX(0);
+    }
+    .screen.slide.leaving-right {
+      visibility: hidden;
+      opacity: 0;
+      transform: translateX(100%);
+    }
+    .screen.slide.leaving-left {
+      visibility: hidden;
+      opacity: 0;
+      transform: translateX(-30%);
+    }
+
+    .screen.tab-screen {
+      padding-bottom: calc(var(--island-h) + var(--island-bottom) + 16px);
+    }
+
+    /* ===== LOTTIE ===== */
+    .lottie-wrap {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 8px 0 0;
+      flex-shrink: 0;
+    }
+    .lottie-anim {
+      width: 100px;
+      height: 100px;
+    }
+    .lottie-anim:empty::before {
+      content: "";
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* ===== AUTH HEADER ===== */
+    .header {
+      text-align: center;
+      padding: 12px 8px 20px;
+    }
+    .header h1 {
+      font-size: 24px;
+      font-weight: 700;
+      line-height: 1.25;
+      margin-bottom: 10px;
+      letter-spacing: -0.3px;
+    }
+    .header p {
+      font-size: 15px;
+      line-height: 1.35;
+      color: var(--tg-theme-hint-color);
+      max-width: 320px;
+      margin: 0 auto;
+    }
+
+    /* ===== PAGE HEADER (push screens) ===== */
+    .page-header {
+      padding: 16px 0 8px;
       position: sticky;
       top: 0;
       background: var(--tg-theme-bg-color);
       z-index: 10;
     }
-
-    .tg-header.with-back {
+    .page-header.with-back {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 4px;
     }
-
-    .tg-back-btn {
-      width: 36px;
-      height: 36px;
+    .back-btn {
+      width: 40px;
+      height: 40px;
       border: none;
       background: none;
       color: var(--tg-theme-button-color);
@@ -92,225 +163,758 @@
       align-items: center;
       justify-content: center;
       margin-left: -8px;
-      border-radius: var(--tg-radius-sm);
-    }
-    .tg-back-btn:active { background: rgba(0,0,0,0.05); }
-
-    .tg-title {
-      font-size: 24px;
-      font-weight: 700;
-      letter-spacing: -0.3px;
-      line-height: 1.2;
-    }
-
-    .tg-subtitle {
-      font-size: 14px;
-      color: var(--tg-theme-hint-color);
-      margin-top: 4px;
-      line-height: 1.3;
-    }
-
-    /* ===== TELEGRAM-STYLE SECTIONS ===== */
-    .tg-section {
-      margin-bottom: 20px;
-    }
-
-    .tg-section-header {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--tg-theme-section-header-text-color);
-      text-transform: uppercase;
-      letter-spacing: 0.3px;
-      padding: 0 var(--tg-section-padding) 6px;
-    }
-
-    .tg-section-body {
-      background: var(--tg-theme-section-bg-color);
-      border-radius: var(--tg-radius);
-      margin: 0 var(--tg-section-padding);
-      overflow: hidden;
-    }
-
-    /* ===== TELEGRAM-STYLE LIST ITEMS ===== */
-    .tg-list-item {
-      display: flex;
-      align-items: center;
-      padding: var(--tg-list-item-padding);
-      gap: 12px;
-      cursor: pointer;
-      position: relative;
-      transition: background 0.12s;
-      min-height: 44px;
-    }
-    .tg-list-item:active { background: var(--tg-theme-secondary-bg-color); }
-
-    .tg-list-item:not(:last-child)::after {
-      content: "";
-      position: absolute;
-      left: 16px;
-      right: 0;
-      bottom: 0;
-      height: 0.5px;
-      background: var(--tg-theme-section-separator-color);
-    }
-
-    /* Иконки — однотонные, в стиле Telegram */
-    .tg-list-icon {
-      width: 28px;
-      height: 28px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      border-radius: 10px;
       flex-shrink: 0;
-      color: var(--tg-theme-hint-color);
     }
+    .back-btn:active { background: rgba(0,0,0,0.05); }
+    .page-title { font-size: 24px; font-weight: 700; letter-spacing: -0.3px; }
+    .page-subtitle { font-size: 14px; color: var(--tg-theme-hint-color); margin-top: 4px; }
 
-    .tg-list-text {
+    .content { padding: 8px 0 24px; }
+
+    /* ===== COUNTRY / PHONE ===== */
+    .country-row {
+      display: flex;
+      align-items: center;
+      background: var(--tg-theme-section-bg-color);
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: background 0.15s;
+      user-select: none;
+    }
+    .country-row:active { background: var(--tg-theme-secondary-bg-color); }
+    .country-flag {
+      font-size: 28px;
+      line-height: 1;
+      margin-right: 14px;
+      width: 32px;
+      text-align: center;
+    }
+    .country-name { flex: 1; font-size: 17px; }
+    .country-arrow { color: var(--tg-theme-hint-color); font-size: 18px; font-weight: 300; }
+
+    .phone-row {
+      display: flex;
+      align-items: center;
+      background: var(--tg-theme-section-bg-color);
+      border-radius: 12px;
+      padding: 4px 16px;
+      height: 52px;
+      margin-bottom: 8px;
+    }
+    .phone-code {
+      font-size: 20px;
+      min-width: 42px;
+      margin-right: 8px;
+      color: var(--tg-theme-text-color);
+    }
+    .phone-input {
       flex: 1;
+      border: none;
+      outline: none;
+      background: transparent;
+      font-size: 20px;
+      color: var(--tg-theme-text-color);
+      letter-spacing: 0.3px;
+      height: 100%;
+      font-family: inherit;
       min-width: 0;
     }
+    .phone-input::placeholder { color: var(--tg-theme-hint-color); letter-spacing: 0; }
 
-    .tg-list-title {
-      font-size: 17px;
-      font-weight: 400;
-      line-height: 1.25;
-    }
-
-    .tg-list-subtitle {
+    .error-text {
       font-size: 14px;
-      color: var(--tg-theme-hint-color);
-      margin-top: 1px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      line-height: 1.3;
+      color: var(--tg-theme-destructive-text-color);
+      padding: 4px 4px 0;
+      min-height: 22px;
+      display: none;
     }
+    .error-text.visible { display: block; }
 
-    .tg-list-value {
-      font-size: 16px;
-      color: var(--tg-theme-hint-color);
-      margin-left: auto;
-      padding-left: 8px;
-      flex-shrink: 0;
+    /* ===== BOTTOM / BUTTONS ===== */
+    .bottom {
+      margin-top: auto;
+      padding: 16px 0 calc(16px + env(safe-area-inset-bottom));
     }
-
-    .tg-list-arrow {
-      color: var(--tg-theme-hint-color);
-      opacity: 0.5;
-      display: flex;
-      flex-shrink: 0;
-    }
-
-    /* ===== TELEGRAM-STYLE STATS ===== */
-    .tg-stats {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      padding: 16px 0;
-      position: relative;
-    }
-
-    .tg-stats::before,
-    .tg-stats::after {
-      content: "";
-      position: absolute;
-      top: 20%;
-      bottom: 20%;
-      width: 0.5px;
-      background: var(--tg-theme-section-separator-color);
-    }
-    .tg-stats::before { left: 33.333%; }
-    .tg-stats::after  { left: 66.666%; }
-
-    .tg-stat {
-      text-align: center;
-      padding: 0 6px;
-    }
-
-    .tg-stat-label {
-      font-size: 13px;
-      color: var(--tg-theme-hint-color);
-      margin-bottom: 4px;
-    }
-
-    .tg-stat-value {
-      font-size: 16px;
-      font-weight: 600;
-      line-height: 1.2;
-    }
-
-    /* ===== TELEGRAM-STYLE BUTTONS ===== */
-    .tg-btn {
+    .btn {
       width: 100%;
       height: 50px;
       border: none;
-      border-radius: var(--tg-radius);
+      border-radius: 12px;
+      background: var(--tg-theme-button-color);
+      color: var(--tg-theme-button-text-color);
       font-size: 17px;
       font-weight: 600;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: opacity 0.15s;
+      transition: opacity 0.2s;
+      position: relative;
       font-family: inherit;
     }
-    .tg-btn:active { opacity: 0.8; }
-
-    .tg-btn-primary {
-      background: var(--tg-theme-button-color);
-      color: var(--tg-theme-button-text-color);
+    .btn:disabled { opacity: 0.45; cursor: default; }
+    .btn:not(:disabled):active { opacity: 0.85; }
+    .btn .spinner {
+      display: none;
+      width: 22px;
+      height: 22px;
+      border: 2.5px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
     }
+    .btn.loading .btn-text { visibility: hidden; }
+    .btn.loading .spinner { display: block; position: absolute; }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
-    .tg-btn-secondary {
+    .btn-secondary {
       background: var(--tg-theme-secondary-bg-color);
       color: var(--tg-theme-button-color);
     }
-
-    .tg-btn-destructive {
+    .btn-destructive {
       background: transparent;
       color: var(--tg-theme-destructive-text-color);
       font-weight: 500;
     }
 
-    /* ===== STATUS DOT ===== */
-    .tg-status-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #34c759;
-      box-shadow: 0 0 0 3px rgba(52,199,89,0.2);
+    .link-back {
+      display: block;
+      width: 100%;
+      margin-top: 16px;
+      padding: 8px;
+      background: none;
+      border: none;
+      color: var(--tg-theme-link-color);
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: inherit;
+      text-align: center;
+    }
+    .link-back:active { opacity: 0.6; }
+
+    /* ===== CODE INPUT ===== */
+    .code-inputs {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin: 16px 0;
+    }
+    .code-digit {
+      width: 42px;
+      height: 52px;
+      border: none;
+      border-radius: 12px;
+      background: var(--tg-theme-secondary-bg-color);
+      font-size: 24px;
+      font-weight: 500;
+      text-align: center;
+      color: var(--tg-theme-text-color);
+      outline: none;
+      caret-color: var(--tg-theme-button-color);
+      font-family: inherit;
+      min-width: 0;
+    }
+    .code-digit:focus {
+      background: var(--tg-theme-section-bg-color);
+      box-shadow: 0 0 0 2px var(--tg-theme-button-color);
+    }
+    .resend {
+      text-align: center;
+      font-size: 15px;
+      color: var(--tg-theme-hint-color);
+      margin-top: 8px;
+    }
+    .resend a {
+      color: var(--tg-theme-link-color);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    /* ===== PASSWORD ROW ===== */
+    .password-row {
+      display: flex;
+      align-items: center;
+      background: var(--tg-theme-section-bg-color);
+      border-radius: 12px;
+      padding: 4px 16px;
+      height: 52px;
+      margin-bottom: 12px;
+      border: 1.5px solid var(--tg-theme-button-color);
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .password-row:last-of-type { margin-bottom: 8px; }
+    .password-row:focus-within {
+      border-color: var(--tg-theme-button-color);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--tg-theme-button-color) 18%, transparent);
+    }
+    .password-input {
+      flex: 1;
+      border: none;
+      outline: none;
+      background: transparent;
+      font-size: 17px;
+      color: var(--tg-theme-text-color);
+      height: 100%;
+      font-family: inherit;
+      min-width: 0;
+      letter-spacing: 0.5px;
+    }
+    .password-input::placeholder { color: var(--tg-theme-hint-color); letter-spacing: 0; }
+
+    /* ===== MENU SECTIONS (для табов) ===== */
+    .menu-section {
+      margin: 8px 0 20px;
+      background: var(--tg-theme-secondary-bg-color);
+      border-radius: 14px;
+      overflow: hidden;
       flex-shrink: 0;
     }
+    .menu-item {
+      display: flex; align-items: center;
+      padding: 12px 14px; gap: 14px;
+      cursor: pointer; position: relative;
+    }
+    .menu-item:active { background: rgba(0,0,0,0.04); }
+    .menu-item:not(:last-child)::after {
+      content: ""; position: absolute;
+      left: 62px; right: 0; bottom: 0;
+      height: 0.5px; background: var(--tg-theme-section-separator-color);
+    }
+    .menu-icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; color: #fff;
+    }
+    .menu-icon.blue   { background: #3390ec; }
+    .menu-icon.purple { background: #af52de; }
+    .menu-icon.green  { background: #34c759; }
+    .menu-icon.orange { background: #ff9500; }
+    .menu-icon.gray   { background: #8e8e93; }
+    .menu-icon.red    { background: #ff3b30; }
+    .menu-text { flex: 1; min-width: 0; }
+    .menu-title { font-size: 16px; font-weight: 500; }
+    .menu-desc {
+      font-size: 13px; color: var(--tg-theme-hint-color);
+      margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .menu-arrow { color: var(--tg-theme-hint-color); opacity: 0.7; display: flex; }
 
-    /* ===== CONTENT PADDING ===== */
-    .tg-content {
-      padding: 8px var(--tg-section-padding) 24px;
+    /* ===== HOME ===== */
+    .brand-header { display: flex; align-items: center; gap: 12px; padding: 16px 0 12px; }
+    .shield-icon {
+      width: 44px; height: 44px; border-radius: 12px;
+      background: var(--tg-theme-button-color);
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .brand-title { font-size: 20px; font-weight: 700; line-height: 1.2; }
+    .brand-subtitle { font-size: 13px; color: var(--tg-theme-hint-color); margin-top: 2px; }
+
+    .sub-card {
+      margin: 8px 0 20px;
+      background: var(--tg-theme-secondary-bg-color);
+      border-radius: 16px;
+      padding: 16px;
+      flex-shrink: 0;
+    }
+    .sub-card.blocked {
+      background: color-mix(in srgb, var(--tg-theme-destructive-text-color) 8%, var(--tg-theme-secondary-bg-color));
+    }
+    .status-row { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 500; margin-bottom: 16px; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #34c759; box-shadow: 0 0 0 3px rgba(52,199,89,0.25); }
+    .status-dot.red { background: var(--tg-theme-destructive-text-color); box-shadow: 0 0 0 3px rgba(255,59,48,0.25); }
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; margin-bottom: 16px; position: relative; }
+    .stat-item { text-align: center; padding: 0 6px; }
+    .stat-label { font-size: 12px; color: var(--tg-theme-hint-color); margin-bottom: 4px; }
+    .stat-value { font-size: 15px; font-weight: 600; }
+    .stats-grid::before, .stats-grid::after {
+      content: ""; position: absolute; top: 10%; bottom: 10%;
+      width: 1px; background: var(--tg-theme-section-separator-color);
+    }
+    .stats-grid::before { left: 33.333%; }
+    .stats-grid::after  { left: 66.666%; }
+
+    /* ===== TARIFFS ===== */
+    .tariff-card {
+      background: var(--tg-theme-secondary-bg-color);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 12px;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      position: relative;
+    }
+    .tariff-card.selected {
+      border-color: var(--tg-theme-button-color);
+      background: color-mix(in srgb, var(--tg-theme-button-color) 8%, var(--tg-theme-secondary-bg-color));
+    }
+    .tariff-card.disabled {
+      opacity: 0.55;
+      cursor: default;
+    }
+    .tariff-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+    .tariff-name { font-size: 17px; font-weight: 600; }
+    .tariff-price { font-size: 18px; font-weight: 700; color: var(--tg-theme-button-color); }
+    .tariff-badge {
+      display: inline-block;
+      font-size: 12px; font-weight: 600;
+      color: #34c759;
+      background: rgba(52,199,89,0.12);
+      padding: 2px 8px; border-radius: 6px;
+      margin-bottom: 6px;
+    }
+    .tariff-badge.gray {
+      color: var(--tg-theme-hint-color);
+      background: var(--tg-theme-secondary-bg-color);
+    }
+    .tariff-desc { font-size: 14px; color: var(--tg-theme-hint-color); line-height: 1.4; }
+    .tariff-features { margin-top: 10px; font-size: 14px; }
+    .tariff-feature {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 4px;
+      color: var(--tg-theme-hint-color);
+    }
+    .tariff-feature svg { flex-shrink: 0; color: #34c759; }
+
+    /* ===== DEVICES ===== */
+    .device-card {
+      background: var(--tg-theme-secondary-bg-color);
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .device-icon {
+      width: 40px; height: 40px; border-radius: 10px;
+      background: var(--tg-theme-bg-color);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      color: var(--tg-theme-text-color);
+    }
+    .device-info { flex: 1; min-width: 0; }
+    .device-name { font-size: 16px; font-weight: 500; }
+    .device-meta { font-size: 13px; color: var(--tg-theme-hint-color); margin-top: 2px; }
+    .device-badge { font-size: 12px; font-weight: 500; color: #34c759; }
+    .device-more {
+      width: 36px; height: 36px;
+      border: none; background: none;
+      color: var(--tg-theme-hint-color);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 8px;
+    }
+    .device-more:active { background: rgba(0,0,0,0.05); }
+
+    /* ===== CONNECTION ===== */
+    .conn-item {
+      display: flex; align-items: center;
+      background: var(--tg-theme-secondary-bg-color);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 10px;
+      gap: 14px;
+      cursor: pointer;
+    }
+    .conn-item:active { opacity: 0.85; }
+    .conn-icon {
+      width: 44px; height: 44px; border-radius: 12px;
+      background: var(--tg-theme-bg-color);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      color: var(--tg-theme-text-color);
+    }
+    .conn-text { flex: 1; }
+    .conn-title { font-size: 16px; font-weight: 600; }
+    .conn-desc { font-size: 13px; color: var(--tg-theme-hint-color); margin-top: 2px; }
+
+    .steps { margin-top: 8px; }
+    .step { display: flex; gap: 14px; margin-bottom: 20px; }
+    .step-num {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--tg-theme-button-color);
+      color: #fff; font-size: 14px; font-weight: 600;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .step-body { flex: 1; padding-top: 3px; }
+    .step-title { font-size: 16px; font-weight: 500; margin-bottom: 4px; }
+    .step-desc { font-size: 14px; color: var(--tg-theme-hint-color); line-height: 1.4; }
+
+    /* ===== PROMO ===== */
+    .promo-center {
+      display: flex; flex-direction: column;
+      align-items: center; text-align: center;
+      padding: 32px 0 24px;
+    }
+    .promo-icon-wrap {
+      width: 64px; height: 64px; border-radius: 16px;
+      background: rgba(255,149,0,0.12);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 16px;
+      color: #ff9500;
+    }
+    .promo-title { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+    .promo-desc { font-size: 15px; color: var(--tg-theme-hint-color); max-width: 280px; line-height: 1.4; margin-bottom: 28px; }
+    .promo-input {
+      width: 100%; height: 50px;
+      border: none; border-radius: 12px;
+      background: var(--tg-theme-secondary-bg-color);
+      padding: 0 16px; font-size: 17px;
+      color: var(--tg-theme-text-color);
+      text-align: center; letter-spacing: 1px;
+      outline: none; margin-bottom: 12px;
+      font-family: inherit;
+    }
+    .promo-input::placeholder { color: var(--tg-theme-hint-color); letter-spacing: 0; }
+    .promo-success {
+      display: none;
+      background: rgba(52,199,89,0.12);
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-top: 16px;
+      text-align: center;
+      width: 100%;
+    }
+    .promo-success.visible { display: block; }
+    .promo-success-title {
+      font-size: 16px; font-weight: 600; color: #34c759;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .promo-success-desc { font-size: 14px; color: var(--tg-theme-hint-color); margin-top: 4px; }
+
+    /* ===== HELP ===== */
+    .search-box { margin-bottom: 16px; }
+    .search-input {
+      width: 100%; height: 40px;
+      border: none; border-radius: 10px;
+      background: var(--tg-theme-secondary-bg-color);
+      padding: 0 14px 0 40px;
+      font-size: 16px; color: var(--tg-theme-text-color);
+      outline: none;
+      font-family: inherit;
+    }
+    .search-wrap { position: relative; }
+    .search-wrap svg {
+      position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+      color: var(--tg-theme-hint-color); pointer-events: none;
+    }
+    .faq-group { margin-bottom: 20px; }
+    .faq-group-title {
+      font-size: 13px; font-weight: 600;
+      color: var(--tg-theme-hint-color);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      margin-bottom: 8px; padding-left: 4px;
+    }
+    .faq-item {
+      background: var(--tg-theme-secondary-bg-color);
+      border-radius: 12px;
+      margin-bottom: 6px;
+      overflow: hidden;
+    }
+    .faq-question {
+      padding: 14px 16px;
+      font-size: 15px; font-weight: 500;
+      cursor: pointer;
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 12px;
+    }
+    .faq-chevron { color: var(--tg-theme-hint-color); transition: transform 0.2s; flex-shrink: 0; }
+    .faq-item.open .faq-chevron { transform: rotate(90deg); }
+    .faq-answer {
+      display: none;
+      padding: 0 16px 14px;
+      font-size: 14px; color: var(--tg-theme-hint-color);
+      line-height: 1.45;
+    }
+    .faq-item.open .faq-answer { display: block; }
+
+    .help-footer { margin-top: 24px; text-align: center; }
+    .help-footer-text { font-size: 14px; color: var(--tg-theme-hint-color); margin-bottom: 12px; }
+
+    /* ===== SUBSCRIPTION ===== */
+    .sub-status-card {
+      background: var(--tg-theme-secondary-bg-color);
+      border-radius: 16px;
+      padding: 20px 16px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .sub-status-card.blocked {
+      background: color-mix(in srgb, var(--tg-theme-destructive-text-color) 8%, var(--tg-theme-secondary-bg-color));
+    }
+    .sub-status-icon {
+      width: 48px; height: 48px; border-radius: 50%;
+      background: rgba(52,199,89,0.12);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 10px;
+      color: #34c759;
+    }
+    .sub-status-icon.red {
+      background: rgba(255,59,48,0.12);
+      color: var(--tg-theme-destructive-text-color);
+    }
+    .sub-status-title { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+    .sub-status-plan { font-size: 15px; color: var(--tg-theme-hint-color); }
+
+    .sub-info-row {
+      display: flex; justify-content: space-between;
+      padding: 14px 0;
+      border-bottom: 0.5px solid var(--tg-theme-section-separator-color);
+      font-size: 15px;
+    }
+    .sub-info-row:last-child { border-bottom: none; }
+    .sub-info-label { color: var(--tg-theme-hint-color); }
+    .sub-info-value { font-weight: 500; }
+
+    .settings-group { margin-bottom: 24px; }
+    .settings-group-title {
+      font-size: 13px; font-weight: 600;
+      color: var(--tg-theme-hint-color);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      margin-bottom: 8px; padding-left: 4px;
+    }
+    .settings-list {
+      background: var(--tg-theme-secondary-bg-color);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .settings-item {
+      display: flex; align-items: center;
+      padding: 13px 16px; gap: 12px;
+      cursor: pointer; position: relative;
+    }
+    .settings-item:active { background: rgba(0,0,0,0.04); }
+    .settings-item:not(:last-child)::after {
+      content: ""; position: absolute;
+      left: 16px; right: 0; bottom: 0;
+      height: 0.5px; background: var(--tg-theme-section-separator-color);
+    }
+    .settings-item-icon {
+      width: 28px; height: 28px; border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; color: #fff;
+    }
+    .settings-item-text { flex: 1; font-size: 16px; }
+    .settings-item-value { font-size: 15px; color: var(--tg-theme-hint-color); }
+    .settings-item-arrow { color: var(--tg-theme-hint-color); opacity: 0.7; display: flex; }
+
+    /* ===== PROFILE ===== */
+    .profile-header {
+      position: relative;
+      width: calc(100% + 32px);
+      margin: 0 -16px;
+      padding: calc(16px + env(safe-area-inset-top)) 16px 24px;
+      background: #242D34;
+      color: #FFFFFF;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 160px;
+      flex-shrink: 0;
+      border-radius: 0 0 24px 24px;
+    }
+    .profile-glow {
+      position: absolute;
+      top: 50%; left: 50%;
+      width: 300px; height: 300px;
+      max-width: 90vw; max-height: 90vw;
+      transform: translate(-50%, -50%);
+      background: radial-gradient(
+        circle at center,
+        rgba(120, 150, 180, 0.38) 0%,
+        rgba(80, 110, 140, 0.18) 35%,
+        rgba(36, 45, 52, 0) 70%
+      );
+      pointer-events: none;
+      z-index: 0;
+    }
+    .profile-pattern {
+      position: absolute;
+      inset: 0;
+      opacity: 0.05;
+      background-repeat: repeat;
+      background-size: 260px 260px;
+      background-image: url("data:image/svg+xml;utf8,\
+<svg xmlns='http://www.w3.org/2000/svg' width='260' height='260' viewBox='0 0 260 260'>\
+<g fill='none' stroke='%23ffffff' stroke-width='1.2'>\
+<path d='M30 40 h22 v26 h-22 z' transform='rotate(-15 41 53)'/>\
+<path d='M41 40 l-6-8 l6 3 l6-3 z' transform='rotate(-15 41 53)'/>\
+<circle cx='180' cy='60' r='9'/>\
+<path d='M175 60 l5-6 l5 6 l-5 6 z'/>\
+<path d='M90 150 c10-10 26-10 36 0 c-10 10-26 10-36 0 z'/>\
+<path d='M108 150 l-4 12 l4-4 l4 4 z'/>\
+<path d='M200 180 l10-14 l10 14 l-10 14 z'/>\
+<path d='M40 210 l8-3 l3-8 l3 8 l8 3 l-8 3 l-3 8 l-3-8 z'/>\
+<path d='M150 30 l6-10 l6 10 l-6 10 z'/>\
+<circle cx='60' cy='120' r='6'/>\
+<circle cx='230' cy='120' r='6'/>\
+</g>\
+</svg>");
+      pointer-events: none;
+      z-index: 1;
+      border-radius: 0 0 24px 24px;
+    }
+    .profile-center {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .profile-avatar {
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: #3a4650;
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
+      margin-bottom: 12px;
+    }
+    .profile-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .profile-avatar-fallback {
+      width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 34px; font-weight: 700; color: #fff;
+      background: linear-gradient(135deg, #6b8ba4, #3a4d5c);
+      text-transform: lowercase;
+    }
+    .profile-name {
+      font-size: 22px; font-weight: 700;
+      color: #FFFFFF; text-align: center;
+      line-height: 1.1; letter-spacing: -0.3px;
+      text-transform: lowercase;
+      margin-bottom: 3px;
+      word-break: break-word; max-width: 90vw;
+    }
+    .profile-username {
+      font-size: 14px; font-weight: 400;
+      color: #A2B5C3; text-align: center;
+      word-break: break-word; max-width: 90vw;
     }
 
-    .screen.no-nav {
-      padding-bottom: calc(24px + env(safe-area-inset-bottom));
+    /* ===== LANGUAGE ===== */
+    .option-list {
+      background: var(--tg-theme-secondary-bg-color);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .option-item {
+      display: flex; align-items: center;
+      padding: 14px 16px; gap: 14px;
+      cursor: pointer; position: relative;
+    }
+    .option-item:active { background: rgba(0,0,0,0.04); }
+    .option-item:not(:last-child)::after {
+      content: ""; position: absolute;
+      left: 60px; right: 0; bottom: 0;
+      height: 0.5px; background: var(--tg-theme-section-separator-color);
+    }
+    .option-flag { font-size: 24px; line-height: 1; width: 28px; text-align: center; flex-shrink: 0; }
+    .option-text { flex: 1; font-size: 16px; }
+    .option-check {
+      color: var(--tg-theme-button-color);
+      display: none; flex-shrink: 0;
+    }
+    .option-item.active .option-check { display: flex; }
+
+    /* ===== BALANCE ===== */
+    .balance-card {
+      background: linear-gradient(135deg, var(--tg-theme-button-color), color-mix(in srgb, var(--tg-theme-button-color) 70%, #000));
+      color: #fff;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .balance-label { font-size: 13px; opacity: 0.8; margin-bottom: 6px; }
+    .balance-value { font-size: 32px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 16px; }
+    .balance-btn {
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: #fff;
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .balance-btn:active { opacity: 0.8; }
+
+    /* ===== SECURITY ===== */
+    .security-status {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 13px 16px;
+      cursor: pointer;
+      position: relative;
+    }
+    .security-status:not(:last-child)::after {
+      content: ""; position: absolute;
+      left: 16px; right: 0; bottom: 0;
+      height: 0.5px; background: var(--tg-theme-section-separator-color);
     }
 
-    /* ===== NAV ISLAND (упрощённый, в стиле Telegram) ===== */
+    /* ===== TOPUP ===== */
+    .topup-amounts {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .topup-amount {
+      height: 48px;
+      border: 1.5px solid var(--tg-theme-section-separator-color);
+      background: var(--tg-theme-section-bg-color);
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--tg-theme-text-color);
+      cursor: pointer;
+      font-family: inherit;
+      transition: border-color 0.15s;
+    }
+    .topup-amount.selected {
+      border-color: var(--tg-theme-button-color);
+      color: var(--tg-theme-button-color);
+    }
+    .topup-amount:active { opacity: 0.85; }
+
+    /* ===== NAV ISLAND ===== */
     .nav-island {
       position: fixed;
       left: 50%;
-      bottom: calc(14px + env(safe-area-inset-bottom));
+      bottom: var(--island-bottom);
       transform: translateX(-50%);
-      height: 60px;
-      padding: 6px;
+      height: var(--island-h);
+      padding: var(--island-pad);
       display: none;
       align-items: center;
       justify-content: space-around;
       gap: 2px;
       border-radius: 50px;
-      background: var(--tg-theme-secondary-bg-color);
+      background: var(--island-bg);
       backdrop-filter: blur(20px) saturate(180%);
       -webkit-backdrop-filter: blur(20px) saturate(180%);
-      border: 0.5px solid var(--tg-theme-section-separator-color);
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+      border: 1px solid var(--island-border);
+      box-shadow:
+        inset 0px 2px 4px var(--island-inset),
+        0 8px 24px rgba(0, 0, 0, 0.28),
+        0 2px 6px rgba(0, 0, 0, 0.2);
       z-index: 60;
-      min-width: 260px;
+      min-width: 280px;
       max-width: calc(100vw - 32px);
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
       contain: layout paint;
     }
     .nav-island.visible { display: flex; }
@@ -320,68 +924,66 @@
       z-index: 2;
       flex: 1;
       height: 100%;
-      padding: 0 12px;
+      padding: 0;
       border: none;
       background: transparent;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 3px;
+      gap: 2px;
       font-size: 10px;
-      font-weight: 500;
+      font-weight: 600;
       cursor: pointer;
       border-radius: 50px;
       white-space: nowrap;
       pointer-events: none;
-      color: var(--tg-theme-hint-color);
       -webkit-font-smoothing: antialiased;
     }
-
-    .nav-btn.active {
-      color: var(--tg-theme-button-color);
-    }
-
-    .nav-btn svg {
+    .nav-btn svg { display: block; }
+    .nav-btn .nav-text {
       display: block;
-      width: 22px;
-      height: 22px;
+      width: 100%;
+      text-align: center;
+      background-repeat: no-repeat;
+      background-size: 100% 100%;
+      background-position: 0 0;
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      color: transparent;
     }
-
     .nav-lens {
       position: absolute;
-      top: 6px;
+      top: var(--island-pad);
       left: 0;
-      height: calc(60px - 12px);
+      height: calc(var(--island-h) - var(--island-pad) * 2);
       border-radius: 50px;
-      background: var(--tg-theme-bg-color);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      background: var(--island-lens-bg);
+      box-shadow:
+        inset 0px 3px 6px var(--island-lens-inset),
+        inset 0px -1px 2px rgba(255, 255, 255, 0.25),
+        0 2px 8px rgba(0, 0, 0, 0.18);
       z-index: 1;
       pointer-events: none;
       will-change: transform, width;
       transform: translate3d(0, 0, 0);
-      transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1),
-                  width 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+      transition: transform 0.32s cubic-bezier(0.25, 1, 0.5, 1),
+                  width 0.32s cubic-bezier(0.25, 1, 0.5, 1);
     }
     .nav-island.dragging .nav-lens { transition: none; }
 
-    /* ===== MODAL SHEET ===== */
+    /* ===== SHEET ===== */
     .sheet-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.4);
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.4);
       z-index: 100;
-      opacity: 0;
-      visibility: hidden;
+      opacity: 0; visibility: hidden;
       transition: opacity 0.25s, visibility 0.25s;
     }
     .sheet-overlay.open { opacity: 1; visibility: visible; }
-
     .sheet {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
+      position: absolute; bottom: 0; left: 0; right: 0;
       background: var(--tg-theme-bg-color);
       border-radius: 16px 16px 0 0;
       padding: 12px 16px calc(16px + env(safe-area-inset-bottom));
@@ -389,438 +991,2395 @@
       transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
     }
     .sheet-overlay.open .sheet { transform: translateY(0); }
-
     .sheet-title {
-      font-size: 13px;
-      font-weight: 600;
+      font-size: 13px; font-weight: 600;
       color: var(--tg-theme-hint-color);
       text-align: center;
       margin-bottom: 12px;
       text-transform: uppercase;
     }
-
     .sheet-btn {
-      width: 100%;
-      height: 50px;
-      border: none;
-      border-radius: var(--tg-radius);
+      width: 100%; height: 50px;
+      border: none; border-radius: 12px;
       background: var(--tg-theme-secondary-bg-color);
       color: var(--tg-theme-text-color);
-      font-size: 17px;
-      font-weight: 500;
+      font-size: 16px; font-weight: 500;
       cursor: pointer;
       margin-bottom: 8px;
       font-family: inherit;
     }
-
     .sheet-btn.danger { color: var(--tg-theme-destructive-text-color); }
     .sheet-btn.cancel {
       background: transparent;
       color: var(--tg-theme-button-color);
       font-weight: 600;
     }
+
+    /* ===== MODAL (country) ===== */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 100;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.25s, visibility 0.25s;
+    }
+    .modal-overlay.open { opacity: 1; visibility: visible; }
+    .modal {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      max-height: 85vh;
+      background: var(--tg-theme-bg-color);
+      border-radius: 16px 16px 0 0;
+      display: flex;
+      flex-direction: column;
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    .modal-overlay.open .modal { transform: translateY(0); }
+    .modal-header {
+      padding: 12px 16px 8px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 0.5px solid var(--tg-theme-section-separator-color);
+    }
+    .modal-search {
+      flex: 1;
+      height: 36px;
+      border: none;
+      border-radius: 10px;
+      background: var(--tg-theme-secondary-bg-color);
+      padding: 0 12px;
+      font-size: 16px;
+      color: var(--tg-theme-text-color);
+      outline: none;
+      font-family: inherit;
+    }
+    .modal-search::placeholder { color: var(--tg-theme-hint-color); }
+    .modal-close {
+      font-size: 16px;
+      color: var(--tg-theme-link-color);
+      background: none;
+      border: none;
+      font-weight: 500;
+      cursor: pointer;
+      padding: 6px 4px;
+      font-family: inherit;
+    }
+    .modal-list { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    .country-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+    .country-item:active { background: var(--tg-theme-secondary-bg-color); }
+    .country-item .flag {
+      font-size: 26px;
+      width: 36px;
+      margin-right: 14px;
+      text-align: center;
+    }
+    .country-item .name { flex: 1; font-size: 17px; }
+    .country-item .code { font-size: 16px; color: var(--tg-theme-hint-color); }
+    .no-results {
+      padding: 40px 16px;
+      text-align: center;
+      color: var(--tg-theme-hint-color);
+      font-size: 16px;
+    }
+
+    /* Form input для новых экранов */
+    .form-row {
+      display: flex;
+      align-items: center;
+      background: var(--tg-theme-section-bg-color);
+      border-radius: 12px;
+      padding: 4px 16px;
+      min-height: 52px;
+      margin-bottom: 12px;
+      border: 1.5px solid var(--tg-theme-button-color);
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .form-row:focus-within {
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--tg-theme-button-color) 18%, transparent);
+    }
+    .form-input {
+      flex: 1;
+      border: none;
+      outline: none;
+      background: transparent;
+      font-size: 17px;
+      color: var(--tg-theme-text-color);
+      font-family: inherit;
+      min-width: 0;
+      padding: 12px 0;
+    }
+    .form-input::placeholder { color: var(--tg-theme-hint-color); }
+    .form-textarea {
+      width: 100%;
+      min-height: 120px;
+      border: 1.5px solid var(--tg-theme-button-color);
+      border-radius: 12px;
+      background: var(--tg-theme-section-bg-color);
+      padding: 12px 16px;
+      font-size: 17px;
+      color: var(--tg-theme-text-color);
+      font-family: inherit;
+      outline: none;
+      resize: none;
+      margin-bottom: 12px;
+      transition: box-shadow 0.15s;
+    }
+    .form-textarea:focus {
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--tg-theme-button-color) 18%, transparent);
+    }
+    .form-textarea::placeholder { color: var(--tg-theme-hint-color); }
+
+    /* OS выбор */
+    .os-picker {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .os-option {
+      background: var(--tg-theme-section-bg-color);
+      border: 1.5px solid var(--tg-theme-section-separator-color);
+      border-radius: 12px;
+      padding: 16px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      font-family: inherit;
+      color: var(--tg-theme-text-color);
+      transition: border-color 0.15s;
+    }
+    .os-option.selected {
+      border-color: var(--tg-theme-button-color);
+      background: color-mix(in srgb, var(--tg-theme-button-color) 8%, var(--tg-theme-section-bg-color));
+    }
+    .os-option:active { opacity: 0.85; }
+    .os-option-label { font-size: 14px; font-weight: 500; }
   </style>
 </head>
 <body>
 
-  <!-- ==================== HOME ==================== -->
-  <div class="screen active" id="screen-home">
-    <!-- Telegram-style header -->
-    <header class="tg-header">
-      <div class="tg-title">DxS Connect</div>
-      <div class="tg-subtitle">По-настоящему быстрый интернет</div>
+  <!-- ==================== AUTH: PHONE ==================== -->
+  <div class="screen slide active" id="screen-phone">
+    <div class="lottie-wrap">
+      <div class="lottie-anim" id="lottie-redphone"></div>
+    </div>
+
+    <div class="header">
+      <h1>Ваш номер телефона</h1>
+      <p>Пожалуйста, подтвердите код вашей страны и введите свой номер телефона.</p>
+    </div>
+
+    <div class="country-row" id="country-selector">
+      <div class="country-flag" id="current-flag">🇷🇺</div>
+      <div class="country-name" id="current-name">Россия</div>
+      <div class="country-arrow">›</div>
+    </div>
+
+    <div class="phone-row">
+      <div class="phone-code" id="phone-code">+7</div>
+      <input type="tel" class="phone-input" id="phone-input" placeholder="" inputmode="numeric" autocomplete="tel">
+    </div>
+    <div class="error-text" id="phone-error"></div>
+
+    <div class="bottom">
+      <button class="btn" id="btn-continue" disabled>
+        <span class="btn-text">Продолжить</span>
+        <div class="spinner"></div>
+      </button>
+    </div>
+  </div>
+
+  <!-- ==================== AUTH: CODE ==================== -->
+  <div class="screen slide" id="screen-code">
+    <div class="lottie-wrap">
+      <div class="lottie-anim" id="lottie-message"></div>
+    </div>
+
+    <div class="header">
+      <h1>Введите код</h1>
+      <p id="code-subtitle">Мы отправили SMS с кодом подтверждения на номер <b id="sent-phone"></b></p>
+    </div>
+
+    <div class="code-inputs" id="code-inputs">
+      <input type="tel" class="code-digit" maxlength="1" inputmode="numeric" data-index="0">
+      <input type="tel" class="code-digit" maxlength="1" inputmode="numeric" data-index="1">
+      <input type="tel" class="code-digit" maxlength="1" inputmode="numeric" data-index="2">
+      <input type="tel" class="code-digit" maxlength="1" inputmode="numeric" data-index="3">
+      <input type="tel" class="code-digit" maxlength="1" inputmode="numeric" data-index="4">
+      <input type="tel" class="code-digit" maxlength="1" inputmode="numeric" data-index="5">
+    </div>
+    <div class="error-text" id="code-error" style="text-align:center"></div>
+
+    <div class="resend" id="resend-block">
+      Отправить код повторно через <span id="timer">60</span> сек
+    </div>
+
+    <div class="bottom">
+      <button class="btn" id="btn-verify" disabled>
+        <span class="btn-text">Подтвердить</span>
+        <div class="spinner"></div>
+      </button>
+      <button class="link-back" id="btn-back-phone">Назад</button>
+    </div>
+  </div>
+
+  <!-- ==================== AUTH: 2FA SETUP ==================== -->
+  <div class="screen slide" id="screen-2fa">
+    <div class="lottie-wrap">
+      <div class="lottie-anim" id="lottie-2fa"></div>
+    </div>
+
+    <div class="header">
+      <h1>Защитите аккаунт</h1>
+      <p>Придумайте пароль для двухфакторной аутентификации. Он понадобится при следующем входе.</p>
+    </div>
+
+    <div class="password-row">
+      <input type="password" class="password-input" id="password-1" placeholder="Придумайте пароль" autocomplete="new-password">
+    </div>
+
+    <div class="password-row">
+      <input type="password" class="password-input" id="password-2" placeholder="Повторите пароль" autocomplete="new-password">
+    </div>
+
+    <div class="error-text" id="password-error" style="text-align:center"></div>
+
+    <div class="bottom">
+      <button class="btn" id="btn-2fa-continue" disabled>
+        <span class="btn-text">Продолжить</span>
+        <div class="spinner"></div>
+      </button>
+      <button class="link-back" id="btn-2fa-skip">Пропустить</button>
+    </div>
+  </div>
+
+  <!-- ==================== AUTH: 2FA VERIFY ==================== -->
+  <div class="screen slide" id="screen-2fa-verify">
+    <div class="lottie-wrap">
+      <div class="lottie-anim" id="lottie-2fa-verify"></div>
+    </div>
+
+    <div class="header">
+      <h1>Введите пароль</h1>
+      <p>Введите пароль двухфакторной аутентификации для входа в аккаунт.</p>
+    </div>
+
+    <div class="password-row">
+      <input type="password" class="password-input" id="verify-password" placeholder="Пароль" autocomplete="current-password">
+    </div>
+
+    <div class="error-text" id="verify-error" style="text-align:center"></div>
+
+    <div class="bottom">
+      <button class="btn" id="btn-verify-2fa" disabled>
+        <span class="btn-text">Войти</span>
+        <div class="spinner"></div>
+      </button>
+      <button class="link-back" id="btn-forgot-2fa">Забыли пароль?</button>
+    </div>
+  </div>
+
+  <!-- ==================== TAB: HOME ==================== -->
+  <div class="screen tab-screen active" id="screen-home" style="display:none">
+    <header class="brand-header">
+      <div class="shield-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-title">DxS Connect</div>
+        <div class="brand-subtitle">По-настоящему быстрый интернет</div>
+      </div>
     </header>
 
-    <!-- Подписка -->
-    <section class="tg-section">
-      <div class="tg-section-header">Подписка</div>
-      <div class="tg-section-body">
-        <div class="tg-list-item" style="cursor: default;">
-          <span class="tg-status-dot"></span>
-          <div class="tg-list-text">
-            <div class="tg-list-title">Активна</div>
-            <div class="tg-list-subtitle">1 месяц · осталось 24 дня</div>
-          </div>
-          <div class="tg-list-value">12.10.2025</div>
+    <!-- Подписка активна -->
+    <section class="sub-card" id="home-sub-active">
+      <div class="status-row">
+        <span class="status-dot"></span>
+        <span>Подписка активна</span>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-label">Тариф</div>
+          <div class="stat-value">Plus</div>
         </div>
-        <div class="tg-stats">
-          <div class="tg-stat">
-            <div class="tg-stat-label">Тариф</div>
-            <div class="tg-stat-value">1 месяц</div>
-          </div>
-          <div class="tg-stat">
-            <div class="tg-stat-label">Осталось</div>
-            <div class="tg-stat-value">24 дня</div>
-          </div>
-          <div class="tg-stat">
-            <div class="tg-stat-label">Действует до</div>
-            <div class="tg-stat-value">12.10.25</div>
-          </div>
+        <div class="stat-item">
+          <div class="stat-label">Осталось</div>
+          <div class="stat-value">24 дня</div>
         </div>
-        <div style="padding: 0 16px 16px;">
-          <button class="tg-btn tg-btn-primary" data-go="subscription">
-            Управление подпиской
-          </button>
+        <div class="stat-item">
+          <div class="stat-label">Действует до</div>
+          <div class="stat-value">12.10.2025</div>
         </div>
       </div>
+      <button class="btn btn-primary" data-go="subscription" data-from="home" style="width:100%;height:48px;border:none;border-radius:12px;font-size:16px;font-weight:600;background:var(--tg-theme-button-color);color:var(--tg-theme-button-text-color);cursor:pointer;font-family:inherit;">Управление подпиской</button>
     </section>
 
-    <!-- Меню -->
-    <section class="tg-section">
-      <div class="tg-section-header">Сервис</div>
-      <div class="tg-section-body">
-        <div class="tg-list-item" data-go="tariffs">
-          <div class="tg-list-icon">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="2" y="5" width="20" height="14" rx="2"/>
-              <path d="M2 10h20"/>
-            </svg>
-          </div>
-          <div class="tg-list-text">
-            <div class="tg-list-title">Тарифы</div>
-            <div class="tg-list-subtitle">Выбрать или продлить план</div>
-          </div>
-          <div class="tg-list-arrow">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
-          </div>
-        </div>
+    <!-- Подписка заблокирована -->
+    <section class="sub-card blocked" id="home-sub-blocked" style="display:none">
+      <div class="status-row">
+        <span class="status-dot red"></span>
+        <span>Подписка заблокирована</span>
+      </div>
+      <p style="font-size:14px;color:var(--tg-theme-hint-color);line-height:1.4;margin-bottom:16px;">
+        На балансе недостаточно средств. Пополните баланс для продолжения использования.
+      </p>
+      <button class="btn" data-go="balance" data-from="home" style="width:100%;height:48px;border:none;border-radius:12px;font-size:16px;font-weight:600;background:var(--tg-theme-button-color);color:var(--tg-theme-button-text-color);cursor:pointer;font-family:inherit;">Пополнить баланс</button>
+    </section>
 
-        <div class="tg-list-item" data-go="devices">
-          <div class="tg-list-icon">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="4" width="12" height="9" rx="1.5"/>
-              <path d="M1.5 17h15"/>
-              <rect x="16" y="9" width="6.5" height="11" rx="1.5"/>
-              <path d="M18.2 18.2h2.1"/>
-            </svg>
-          </div>
-          <div class="tg-list-text">
-            <div class="tg-list-title">Мои устройства</div>
-            <div class="tg-list-subtitle">Управление подключёнными устройствами</div>
-          </div>
-          <div class="tg-list-arrow">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
-          </div>
+    <section class="menu-section">
+      <div class="menu-item" data-go="tariffs" data-from="home">
+        <div class="menu-icon blue">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
         </div>
-
-        <div class="tg-list-item" data-go="connection">
-          <div class="tg-list-icon">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M5 12.55a11 11 0 0 1 14.08 0"/>
-              <path d="M1.42 9a16 16 0 0 1 21.16 0"/>
-              <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
-              <circle cx="12" cy="20" r="1"/>
-            </svg>
-          </div>
-          <div class="tg-list-text">
-            <div class="tg-list-title">Подключение</div>
-            <div class="tg-list-subtitle">Конфигурации и инструкции</div>
-          </div>
-          <div class="tg-list-arrow">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
-          </div>
+        <div class="menu-text">
+          <div class="menu-title">Тарифы</div>
+          <div class="menu-desc">Выбрать или продлить план</div>
         </div>
-
-        <div class="tg-list-item" data-go="promo">
-          <div class="tg-list-icon">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L3 13V4a1 1 0 0 1 1-1h9l7.6 7.6a2 2 0 0 1 0 2.8z"/>
-              <circle cx="7.8" cy="7.8" r="1.4"/>
-            </svg>
-          </div>
-          <div class="tg-list-text">
-            <div class="tg-list-title">Промокод</div>
-            <div class="tg-list-subtitle">Активировать бонусный код</div>
-          </div>
-          <div class="tg-list-arrow">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
-          </div>
+        <div class="menu-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+      </div>
+      <div class="menu-item" data-go="devices" data-from="home">
+        <div class="menu-icon purple">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="12" height="9" rx="1.5"/>
+            <path d="M1.5 17h15"/>
+            <rect x="16" y="9" width="6.5" height="11" rx="1.5"/>
+            <path d="M18.2 18.2h2.1"/>
+          </svg>
         </div>
+        <div class="menu-text">
+          <div class="menu-title">Мои устройства</div>
+          <div class="menu-desc">Управление подключёнными устройствами</div>
+        </div>
+        <div class="menu-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+      </div>
+      <div class="menu-item" data-go="connection" data-from="home">
+        <div class="menu-icon green">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1"/></svg>
+        </div>
+        <div class="menu-text">
+          <div class="menu-title">Подключение</div>
+          <div class="menu-desc">Конфигурации и инструкции</div>
+        </div>
+        <div class="menu-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+      </div>
+      <div class="menu-item" data-go="promo" data-from="home">
+        <div class="menu-icon orange">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L3 13V4a1 1 0 0 1 1-1h9l7.6 7.6a2 2 0 0 1 0 2.8z"/>
+            <circle cx="7.8" cy="7.8" r="1.4"/>
+          </svg>
+        </div>
+        <div class="menu-text">
+          <div class="menu-title">Промокод</div>
+          <div class="menu-desc">Активировать бонусный код</div>
+        </div>
+        <div class="menu-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+      </div>
+      <div class="menu-item" data-go="help" data-from="home">
+        <div class="menu-icon gray">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M9.5 9.2a2.5 2.5 0 0 1 4.86.83c0 1.67-2.5 2.14-2.5 3.6"/>
+            <circle cx="12" cy="17" r="0.6" fill="#fff" stroke="none"/>
+          </svg>
+        </div>
+        <div class="menu-text">
+          <div class="menu-title">Помощь</div>
+          <div class="menu-desc">FAQ и поддержка</div>
+        </div>
+        <div class="menu-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+      </div>
+    </section>
+  </div>
 
-        <div class="tg-list-item" data-go="help">
-          <div class="tg-list-icon">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="9"/>
-              <path d="M9.5 9.2a2.5 2.5 0 0 1 4.86.83c0 1.67-2.5 2.14-2.5 3.6"/>
-              <circle cx="12" cy="17" r="0.6" fill="currentColor"/>
-            </svg>
+  <!-- ==================== TAB: SUBSCRIPTION ==================== -->
+  <div class="screen tab-screen" id="screen-subscription">
+    <div class="page-header">
+      <div class="page-title">Подписки</div>
+    </div>
+    <div class="content">
+      <!-- Баланс -->
+      <div class="balance-card">
+        <div class="balance-label">Баланс</div>
+        <div class="balance-value" id="balance-value">0 ₽</div>
+        <button class="balance-btn" data-go="topup" data-from="subscription">Пополнить</button>
+      </div>
+
+      <!-- Статус подписки -->
+      <div class="sub-status-card" id="sub-status-active">
+        <div class="sub-status-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+        </div>
+        <div class="sub-status-title">Активна</div>
+        <div class="sub-status-plan">DxS Connect — Plus</div>
+      </div>
+
+      <div class="sub-status-card blocked" id="sub-status-blocked" style="display:none">
+        <div class="sub-status-icon red">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+        </div>
+        <div class="sub-status-title">Заблокирована</div>
+        <div class="sub-status-plan">Пополните баланс для продолжения</div>
+      </div>
+
+      <div class="settings-group">
+        <div class="settings-list">
+          <div class="settings-item" data-action="autorenew">
+            <div class="settings-item-text">Автопродление</div>
+            <div class="settings-item-value" id="autorenew-value">Включено</div>
+            <div class="settings-item-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
           </div>
-          <div class="tg-list-text">
-            <div class="tg-list-title">Помощь</div>
-            <div class="tg-list-subtitle">FAQ и поддержка</div>
+          <div class="settings-item" data-action="history">
+            <div class="settings-item-text">История платежей</div>
+            <div class="settings-item-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
           </div>
-          <div class="tg-list-arrow">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+          <div class="settings-item" data-go="tariffs" data-from="subscription">
+            <div class="settings-item-text">Изменить тариф</div>
+            <div class="settings-item-value">Plus</div>
+            <div class="settings-item-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
           </div>
         </div>
       </div>
-    </section>
 
-    <div style="height: 100px;"></div>
+      <button class="btn btn-destructive" id="btn-cancel-sub" style="width:100%;height:50px;border:none;border-radius:12px;font-size:17px;font-weight:500;background:transparent;color:var(--tg-theme-destructive-text-color);cursor:pointer;font-family:inherit;margin-bottom:24px;">Отменить подписку</button>
+    </div>
+  </div>
+
+  <!-- ==================== TAB: SETTINGS ==================== -->
+  <div class="screen tab-screen" id="screen-settings">
+    <div class="profile-header">
+      <div class="profile-glow"></div>
+      <div class="profile-pattern"></div>
+      <div class="profile-center">
+        <div class="profile-avatar">
+          <img id="profile-photo" src="" alt="">
+          <div id="profile-photo-fallback" class="profile-avatar-fallback"></div>
+        </div>
+        <div class="profile-name" id="profile-name">user</div>
+        <div class="profile-username" id="profile-username">@username</div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="settings-group">
+        <div class="settings-group-title">Приложение</div>
+        <div class="settings-list">
+          <div class="settings-item" data-go="security" data-from="settings">
+            <div class="settings-item-icon" style="background:#ff9500">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </div>
+            <div class="settings-item-text">Безопасность</div>
+            <div class="settings-item-value" id="security-value">2FA включена</div>
+            <div class="settings-item-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+          </div>
+          <div class="settings-item" data-go="language" data-from="settings">
+            <div class="settings-item-icon" style="background:#34c759">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            </div>
+            <div class="settings-item-text">Язык</div>
+            <div class="settings-item-value" id="lang-value">Русский</div>
+            <div class="settings-item-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <div class="settings-group-title">Поддержка</div>
+        <div class="settings-list">
+          <div class="settings-item" data-go="help" data-from="settings">
+            <div class="settings-item-icon" style="background:#8e8e93">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.2a2.5 2.5 0 0 1 4.86.83c0 1.67-2.5 2.14-2.5 3.6"/><circle cx="12" cy="17" r="0.6" fill="#fff" stroke="none"/></svg>
+            </div>
+            <div class="settings-item-text">Помощь</div>
+            <div class="settings-item-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+          </div>
+          <div class="settings-item" data-go="support-new" data-from="settings">
+            <div class="settings-item-icon" style="background:#3390ec">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            </div>
+            <div class="settings-item-text">Связаться с поддержкой</div>
+            <div class="settings-item-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <div class="settings-group-title">Информация</div>
+        <div class="settings-list">
+          <div class="settings-item" data-action="terms">
+            <div class="settings-item-text">Пользовательское соглашение</div>
+            <div class="settings-item-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+          </div>
+          <div class="settings-item" data-action="privacy">
+            <div class="settings-item-text">Политика конфиденциальности</div>
+            <div class="settings-item-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+          </div>
+          <div class="settings-item" data-action="about">
+            <div class="settings-item-text">О DxS Connect</div>
+            <div class="settings-item-value">v1.0.0</div>
+            <div class="settings-item-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <div class="settings-list">
+          <div class="settings-item" id="btn-logout">
+            <div class="settings-item-text" style="color:var(--tg-theme-destructive-text-color);">Выйти из аккаунта</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== TARIFFS ==================== -->
+  <div class="screen slide" id="screen-tariffs">
+    <div class="page-header with-back">
+      <button class="back-btn" data-back>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div>
+        <div class="page-title">Тарифы</div>
+        <div class="page-subtitle">Выберите подходящий план</div>
+      </div>
+    </div>
+    <div class="content">
+      <div class="tariff-card" data-plan="lite">
+        <div class="tariff-top">
+          <div class="tariff-name">Lite</div>
+          <div class="tariff-price">100 ₽/мес</div>
+        </div>
+        <div class="tariff-desc">Базовый тариф для одного устройства</div>
+        <div class="tariff-features">
+          <div class="tariff-feature">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+            <span>1 сервер</span>
+          </div>
+          <div class="tariff-feature">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+            <span>До 3 устройств</span>
+          </div>
+          <div class="tariff-feature">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+            <span>100 ГБ/мес</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tariff-card selected" data-plan="plus">
+        <div class="tariff-badge">Популярный</div>
+        <div class="tariff-top">
+          <div class="tariff-name">Plus</div>
+          <div class="tariff-price">150 ₽/мес</div>
+        </div>
+        <div class="tariff-desc">Оптимальный выбор для семьи</div>
+        <div class="tariff-features">
+          <div class="tariff-feature">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+            <span>2 сервера</span>
+          </div>
+          <div class="tariff-feature">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+            <span>До 5 устройств (3 базово + 2 за +30₽)</span>
+          </div>
+          <div class="tariff-feature">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+            <span>100 ГБ/мес</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tariff-card" data-plan="ultra">
+        <div class="tariff-top">
+          <div class="tariff-name">Ultra</div>
+          <div class="tariff-price">300 ₽/мес</div>
+        </div>
+        <div class="tariff-desc">Максимум возможностей</div>
+        <div class="tariff-features">
+          <div class="tariff-feature">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+            <span>3 сервера</span>
+          </div>
+          <div class="tariff-feature">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+            <span>До 7 устройств (5 базово + 2 за +20₽)</span>
+          </div>
+          <div class="tariff-feature">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+            <span>100 ГБ/мес</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tariff-badge gray" style="display:inline-block;margin-top:4px;">
+        Смена тарифа доступна после окончания текущего периода
+      </div>
+
+      <button class="btn" id="btn-pay" style="margin-top:16px;width:100%;height:50px;border:none;border-radius:12px;font-size:17px;font-weight:600;background:var(--tg-theme-button-color);color:var(--tg-theme-button-text-color);cursor:pointer;font-family:inherit;">Оплатить с баланса</button>
+    </div>
+  </div>
+
+  <!-- ==================== DEVICES ==================== -->
+  <div class="screen slide" id="screen-devices">
+    <div class="page-header with-back">
+      <button class="back-btn" data-back>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div>
+        <div class="page-title">Мои устройства</div>
+        <div class="page-subtitle" id="devices-subtitle">3 из 5 устройств подключено</div>
+      </div>
+    </div>
+    <div class="content">
+      <div class="device-card" data-device="iphone">
+        <div class="device-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg>
+        </div>
+        <div class="device-info">
+          <div class="device-name">iPhone 16 Pro</div>
+          <div class="device-meta">iOS · <span class="device-badge">Сейчас подключено</span></div>
+        </div>
+        <button class="device-more" data-device-action="iphone">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+        </button>
+      </div>
+      <div class="device-card" data-device="mac">
+        <div class="device-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg>
+        </div>
+        <div class="device-info">
+          <div class="device-name">Mac mini</div>
+          <div class="device-meta">macOS · Был в сети 4 мин назад</div>
+        </div>
+        <button class="device-more" data-device-action="mac">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+        </button>
+      </div>
+      <div class="device-card" data-device="ipad">
+        <div class="device-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M11 18h2"/></svg>
+        </div>
+        <div class="device-info">
+          <div class="device-name">iPad</div>
+          <div class="device-meta">iPadOS · Был в сети вчера</div>
+        </div>
+        <button class="device-more" data-device-action="ipad">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+        </button>
+      </div>
+
+      <button class="btn" id="btn-add-device" data-go="add-device" data-from="devices" style="margin-top:16px;width:100%;height:50px;border:none;border-radius:12px;font-size:17px;font-weight:600;background:var(--tg-theme-secondary-bg-color);color:var(--tg-theme-button-color);cursor:pointer;font-family:inherit;">
+        + Добавить устройство
+      </button>
+    </div>
+  </div>
+
+  <!-- ==================== ADD DEVICE ==================== -->
+  <div class="screen slide" id="screen-add-device">
+    <div class="page-header with-back">
+      <button class="back-btn" data-back>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div>
+        <div class="page-title">Добавить устройство</div>
+      </div>
+    </div>
+    <div class="content">
+      <p style="font-size:14px;color:var(--tg-theme-hint-color);line-height:1.4;margin-bottom:16px;">
+        Введите название устройства (необязательно) и выберите операционную систему.
+      </p>
+
+      <div class="form-row">
+        <input type="text" class="form-input" id="device-name-input" placeholder="Название устройства" autocomplete="off" maxlength="32">
+      </div>
+
+      <div style="font-size:13px;color:var(--tg-theme-hint-color);font-weight:600;text-transform:uppercase;letter-spacing:0.3px;margin-bottom:8px;padding-left:4px;">Операционная система</div>
+      <div class="os-picker" id="os-picker">
+        <button class="os-option" data-os="ios">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+          <span class="os-option-label">iOS</span>
+        </button>
+        <button class="os-option" data-os="android">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M17.6 9.48l1.84-3.18c.16-.31.04-.69-.26-.85-.29-.15-.65-.06-.83.22l-1.88 3.24a11.43 11.43 0 0 0-8.94 0L5.65 5.67c-.19-.28-.54-.37-.83-.22-.3.16-.42.54-.26.85L6.4 9.48C3.3 11.25 1.28 14.44 1 18h22c-.28-3.56-2.3-6.75-5.4-8.52zM7 15.25a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5zm10 0a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5z"/></svg>
+          <span class="os-option-label">Android</span>
+        </button>
+        <button class="os-option" data-os="macos">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg>
+          <span class="os-option-label">macOS</span>
+        </button>
+        <button class="os-option" data-os="windows">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M3 5.5L10.5 4.5v6.5H3V5.5zm0 13L10.5 19.5v-6.5H3v5.5zM11.5 4.3L21 3v8h-9.5V4.3zm0 16.4L21 21v-8h-9.5v7.7z"/></svg>
+          <span class="os-option-label">Windows</span>
+        </button>
+      </div>
+
+      <div class="error-text" id="add-device-error" style="text-align:center"></div>
+
+      <button class="btn" id="btn-add-device-continue" disabled style="margin-top:16px;width:100%;height:50px;border:none;border-radius:12px;font-size:17px;font-weight:600;background:var(--tg-theme-button-color);color:var(--tg-theme-button-text-color);cursor:pointer;font-family:inherit;opacity:0.45;">
+        Добавить
+      </button>
+    </div>
+  </div>
+
+  <!-- ==================== CONNECTION ==================== -->
+  <div class="screen slide" id="screen-connection">
+    <div class="page-header with-back">
+      <button class="back-btn" data-back>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div>
+        <div class="page-title">Подключение</div>
+        <div class="page-subtitle">Настройте DxS Connect на своём устройстве</div>
+      </div>
+    </div>
+    <div class="content" id="conn-list">
+      <div class="conn-item" data-platform="ios">
+        <div class="conn-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+        </div>
+        <div class="conn-text">
+          <div class="conn-title">iPhone / iPad</div>
+          <div class="conn-desc">Подключить на iOS</div>
+        </div>
+        <div class="menu-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+      </div>
+      <div class="conn-item" data-platform="mac">
+        <div class="conn-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg>
+        </div>
+        <div class="conn-text">
+          <div class="conn-title">Mac</div>
+          <div class="conn-desc">Подключить на macOS</div>
+        </div>
+        <div class="menu-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+      </div>
+      <div class="conn-item" data-platform="android">
+        <div class="conn-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M17.6 9.48l1.84-3.18c.16-.31.04-.69-.26-.85-.29-.15-.65-.06-.83.22l-1.88 3.24a11.43 11.43 0 0 0-8.94 0L5.65 5.67c-.19-.28-.54-.37-.83-.22-.3.16-.42.54-.26.85L6.4 9.48C3.3 11.25 1.28 14.44 1 18h22c-.28-3.56-2.3-6.75-5.4-8.52zM7 15.25a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5zm10 0a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5z"/></svg>
+        </div>
+        <div class="conn-text">
+          <div class="conn-title">Android</div>
+          <div class="conn-desc">Подключить на Android</div>
+        </div>
+        <div class="menu-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+      </div>
+      <div class="conn-item" data-platform="windows">
+        <div class="conn-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M3 5.5L10.5 4.5v6.5H3V5.5zm0 13L10.5 19.5v-6.5H3v5.5zM11.5 4.3L21 3v8h-9.5V4.3zm0 16.4L21 21v-8h-9.5v7.7z"/></svg>
+        </div>
+        <div class="conn-text">
+          <div class="conn-title">Windows</div>
+          <div class="conn-desc">Подключить на Windows</div>
+        </div>
+        <div class="menu-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+      </div>
+    </div>
+
+    <div class="content" id="conn-guide" style="display:none">
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">Скачайте Happ</div>
+            <div class="step-desc">Установите рекомендованный клиент Happ из App Store / Google Play.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Добавьте подписку</div>
+            <div class="step-desc">Нажмите кнопку ниже — Happ откроется автоматически и подписка добавится.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">Нажмите «Подключиться»</div>
+            <div class="step-desc">Выберите сервер и подключитесь. Готово!</div>
+          </div>
+        </div>
+      </div>
+      <button class="btn" id="btn-get-config" style="width:100%;height:50px;border:none;border-radius:12px;font-size:17px;font-weight:600;background:var(--tg-theme-button-color);color:var(--tg-theme-button-text-color);cursor:pointer;font-family:inherit;">Добавить подписку в Happ</button>
+      <button class="btn-secondary" style="margin-top:10px;width:100%;height:50px;border:none;border-radius:12px;font-size:17px;font-weight:600;background:var(--tg-theme-secondary-bg-color);color:var(--tg-theme-button-color);cursor:pointer;font-family:inherit;" id="btn-back-platforms">Назад к выбору</button>
+    </div>
+  </div>
+
+  <!-- ==================== PROMO ==================== -->
+  <div class="screen slide" id="screen-promo">
+    <div class="page-header with-back">
+      <button class="back-btn" data-back>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div class="page-title">Промокод</div>
+    </div>
+    <div class="promo-center">
+      <div class="promo-icon-wrap">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+      </div>
+      <div class="promo-title">Промокод</div>
+      <div class="promo-desc">Введите промокод, чтобы получить скидку или бонус.</div>
+      <input type="text" class="promo-input" id="promo-input" placeholder="Введите промокод" autocomplete="off">
+      <button class="btn" id="btn-promo" style="width:100%;height:50px;border:none;border-radius:12px;font-size:17px;font-weight:600;background:var(--tg-theme-button-color);color:var(--tg-theme-button-text-color);cursor:pointer;font-family:inherit;">Активировать</button>
+      <div class="promo-success" id="promo-success">
+        <div class="promo-success-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#34c759" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+          Промокод активирован
+        </div>
+        <div class="promo-success-desc">Ваша скидка — 20%</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== HELP ==================== -->
+  <div class="screen slide" id="screen-help">
+    <div class="page-header with-back">
+      <button class="back-btn" data-back>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div class="page-title">Помощь</div>
+    </div>
+    <div class="content">
+      <div class="search-box">
+        <div class="search-wrap">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          <input type="text" class="search-input" id="faq-search" placeholder="Поиск по вопросам">
+        </div>
+      </div>
+
+      <div class="faq-group">
+        <div class="faq-group-title">Начало работы</div>
+        <div class="faq-item">
+          <div class="faq-question">
+            Как подключить VPN?
+            <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+          <div class="faq-answer">Откройте раздел «Подключение», выберите ваше устройство и следуйте пошаговой инструкции. Подписка добавится в Happ автоматически.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-question">
+            Какое приложение использовать?
+            <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+          <div class="faq-answer">Мы рекомендуем Happ для iOS, Android, Windows и macOS.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-question">
+            На каких устройствах работает DxS Connect?
+            <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+          <div class="faq-answer">iOS, Android, Windows, macOS. Лимит устройств зависит от тарифа.</div>
+        </div>
+      </div>
+
+      <div class="faq-group">
+        <div class="faq-group-title">Подписка и оплата</div>
+        <div class="faq-item">
+          <div class="faq-question">
+            Как пополнить баланс?
+            <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+          <div class="faq-answer">Откройте «Подписки» → «Пополнить» или отправьте команду /topbalance в боте. После перевода нажмите «Я оплатил» — администратор подтвердит, и деньги зачислятся.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-question">
+            Как сменить тариф?
+            <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+          <div class="faq-answer">Смена тарифа доступна после окончания текущего периода, либо через техподдержку.</div>
+        </div>
+      </div>
+
+      <div class="help-footer">
+        <div class="help-footer-text">Не нашли ответ?</div>
+        <button class="btn" id="btn-support" style="width:100%;height:50px;border:none;border-radius:12px;font-size:17px;font-weight:600;background:var(--tg-theme-button-color);color:var(--tg-theme-button-text-color);cursor:pointer;font-family:inherit;">Написать в поддержку</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SUPPORT NEW ==================== -->
+  <div class="screen slide" id="screen-support-new">
+    <div class="page-header with-back">
+      <button class="back-btn" data-back>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div>
+        <div class="page-title">Поддержка</div>
+        <div class="page-subtitle">Опишите ваш вопрос</div>
+      </div>
+    </div>
+    <div class="content">
+      <div class="form-row">
+        <input type="text" class="form-input" id="support-topic" placeholder="Тема" autocomplete="off" maxlength="100">
+      </div>
+      <textarea class="form-textarea" id="support-message" placeholder="Опишите ваш вопрос подробно" maxlength="2000"></textarea>
+      <div class="error-text" id="support-error" style="text-align:center"></div>
+
+      <button class="btn" id="btn-send-support" disabled style="width:100%;height:50px;border:none;border-radius:12px;font-size:17px;font-weight:600;background:var(--tg-theme-button-color);color:var(--tg-theme-button-text-color);cursor:pointer;font-family:inherit;opacity:0.45;">
+        Отправить
+      </button>
+    </div>
+  </div>
+
+  <!-- ==================== BALANCE ==================== -->
+  <div class="screen slide" id="screen-balance">
+    <div class="page-header with-back">
+      <button class="back-btn" data-back>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div>
+        <div class="page-title">Баланс</div>
+      </div>
+    </div>
+    <div class="content">
+      <div class="balance-card">
+        <div class="balance-label">Текущий баланс</div>
+        <div class="balance-value" id="balance-value-screen">0 ₽</div>
+        <button class="balance-btn" data-go="topup" data-from="balance">Пополнить</button>
+      </div>
+
+      <div class="settings-group">
+        <div class="settings-group-title">История операций</div>
+        <div class="settings-list">
+          <div class="settings-item" style="cursor:default;">
+            <div class="settings-item-text">Пополнение</div>
+            <div class="settings-item-value" style="color:#34c759;">+500 ₽</div>
+          </div>
+          <div class="settings-item" style="cursor:default;">
+            <div class="settings-item-text">Оплата подписки Plus</div>
+            <div class="settings-item-value" style="color:var(--tg-theme-destructive-text-color);">−150 ₽</div>
+          </div>
+          <div class="settings-item" style="cursor:default;">
+            <div class="settings-item-text">Пополнение</div>
+            <div class="settings-item-value" style="color:#34c759;">+1000 ₽</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== TOPUP ==================== -->
+  <div class="screen slide" id="screen-topup">
+    <div class="page-header with-back">
+      <button class="back-btn" data-back>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div>
+        <div class="page-title">Пополнение баланса</div>
+      </div>
+    </div>
+    <div class="content">
+      <p style="font-size:14px;color:var(--tg-theme-hint-color);line-height:1.4;margin-bottom:16px;">
+        Выберите сумму или введите свою. Минимальная сумма — 50 ₽.
+      </p>
+
+      <div class="topup-amounts">
+        <button class="topup-amount" data-amount="100">100 ₽</button>
+        <button class="topup-amount selected" data-amount="300">300 ₽</button>
+        <button class="topup-amount" data-amount="500">500 ₽</button>
+        <button class="topup-amount" data-amount="1000">1 000 ₽</button>
+        <button class="topup-amount" data-amount="2000">2 000 ₽</button>
+        <button class="topup-amount" data-amount="custom">Другая</button>
+      </div>
+
+      <div class="form-row" id="custom-amount-row" style="display:none;">
+        <input type="tel" class="form-input" id="custom-amount-input" placeholder="Сумма в ₽" inputmode="numeric">
+      </div>
+
+      <button class="btn" id="btn-topup" style="margin-top:16px;width:100%;height:50px;border:none;border-radius:12px;font-size:17px;font-weight:600;background:var(--tg-theme-button-color);color:var(--tg-theme-button-text-color);cursor:pointer;font-family:inherit;">Перейти к оплате</button>
+    </div>
+  </div>
+
+  <!-- ==================== SECURITY ==================== -->
+  <div class="screen slide" id="screen-security">
+    <div class="page-header with-back">
+      <button class="back-btn" data-back>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div>
+        <div class="page-title">Безопасность</div>
+      </div>
+    </div>
+    <div class="content">
+      <div class="settings-group">
+        <div class="settings-group-title">Вход</div>
+        <div class="settings-list">
+          <div class="settings-item" data-action="2fa-toggle">
+            <div class="settings-item-icon" style="background:#3390ec">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+            </div>
+            <div class="settings-item-text">Двухфакторная аутентификация</div>
+            <div class="settings-item-value" id="2fa-toggle-value">Включена</div>
+            <div class="settings-item-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+          </div>
+          <div class="settings-item" data-action="2fa-change">
+            <div class="settings-item-text">Сменить пароль 2FA</div>
+            <div class="settings-item-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <div class="settings-group-title">Покупки</div>
+        <div class="settings-list">
+          <div class="settings-item" data-action="pin-toggle">
+            <div class="settings-item-icon" style="background:#ff9500">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+            </div>
+            <div class="settings-item-text">Пин-код для оплаты</div>
+            <div class="settings-item-value" id="pin-toggle-value">Выключен</div>
+            <div class="settings-item-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+          </div>
+          <div class="settings-item" data-action="pin-change" id="pin-change-item" style="display:none;">
+            <div class="settings-item-text">Сменить пин-код</div>
+            <div class="settings-item-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== LANGUAGE ==================== -->
+  <div class="screen slide" id="screen-language">
+    <div class="page-header with-back">
+      <button class="back-btn" data-back>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div class="page-title">Язык</div>
+    </div>
+    <div class="content">
+      <div class="option-list" id="lang-list">
+        <div class="option-item" data-lang="ru">
+          <div class="option-flag">🇷🇺</div>
+          <div class="option-text">Русский</div>
+          <div class="option-check">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+          </div>
+        </div>
+        <div class="option-item" data-lang="be">
+          <div class="option-flag">🇧🇾</div>
+          <div class="option-text">Беларуская</div>
+          <div class="option-check">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+          </div>
+        </div>
+        <div class="option-item" data-lang="en">
+          <div class="option-flag">🇬🇧</div>
+          <div class="option-text">English</div>
+          <div class="option-check">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- ==================== NAV ISLAND ==================== -->
-  <nav class="nav-island visible" id="nav-island">
+  <nav class="nav-island" id="nav-island">
     <div class="nav-lens" id="nav-lens"></div>
 
-    <button class="nav-btn active" data-tab="home">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M3 10.5L12 3l9 7.5"/>
-        <path d="M5 9.5V21h14V9.5"/>
+    <button class="nav-btn" data-tab="home">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-icon>
+        <defs>
+          <linearGradient id="iconGrad-home" gradientUnits="userSpaceOnUse" x1="-10" y1="0" x2="34" y2="0">
+            <stop offset="-10" stop-color="var(--island-gray)"/>
+            <stop offset="0" stop-color="var(--island-gray)"/>
+            <stop offset="10" stop-color="var(--island-accent)"/>
+            <stop offset="14" stop-color="var(--island-accent)"/>
+            <stop offset="24" stop-color="var(--island-gray)"/>
+            <stop offset="34" stop-color="var(--island-gray)"/>
+          </linearGradient>
+        </defs>
+        <path d="M3 10.5L12 3l9 7.5" stroke="url(#iconGrad-home)"/>
+        <path d="M5 9.5V21h14V9.5" stroke="url(#iconGrad-home)"/>
       </svg>
-      <span>Главное</span>
+      <span class="nav-text" data-text>Главное</span>
     </button>
 
     <button class="nav-btn" data-tab="subscription">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="2" y="5" width="20" height="14" rx="2"/>
-        <path d="M2 10h20"/>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-icon>
+        <defs>
+          <linearGradient id="iconGrad-sub" gradientUnits="userSpaceOnUse" x1="-10" y1="0" x2="34" y2="0">
+            <stop offset="-10" stop-color="var(--island-gray)"/>
+            <stop offset="0" stop-color="var(--island-gray)"/>
+            <stop offset="10" stop-color="var(--island-accent)"/>
+            <stop offset="14" stop-color="var(--island-accent)"/>
+            <stop offset="24" stop-color="var(--island-gray)"/>
+            <stop offset="34" stop-color="var(--island-gray)"/>
+          </linearGradient>
+        </defs>
+        <rect x="2" y="5" width="20" height="14" rx="2" stroke="url(#iconGrad-sub)"/>
+        <path d="M2 10h20" stroke="url(#iconGrad-sub)"/>
       </svg>
-      <span>Подписки</span>
+      <span class="nav-text" data-text>Подписки</span>
     </button>
 
     <button class="nav-btn" data-tab="settings">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="8" r="4"/>
-        <path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-icon>
+        <defs>
+          <linearGradient id="iconGrad-set" gradientUnits="userSpaceOnUse" x1="-10" y1="0" x2="34" y2="0">
+            <stop offset="-10" stop-color="var(--island-gray)"/>
+            <stop offset="0" stop-color="var(--island-gray)"/>
+            <stop offset="10" stop-color="var(--island-accent)"/>
+            <stop offset="14" stop-color="var(--island-accent)"/>
+            <stop offset="24" stop-color="var(--island-gray)"/>
+            <stop offset="34" stop-color="var(--island-gray)"/>
+          </linearGradient>
+        </defs>
+        <circle cx="12" cy="8" r="4" stroke="url(#iconGrad-set)"/>
+        <path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8" stroke="url(#iconGrad-set)"/>
       </svg>
-      <span>Профиль</span>
+      <span class="nav-text" data-text>Профиль</span>
     </button>
   </nav>
 
-  <script>
-    (function() {
-      if (!window.Telegram || !window.Telegram.WebApp) {
-        window.Telegram = {
-          WebApp: {
-            ready: () => {},
-            expand: () => {},
-            themeParams: {},
-            colorScheme: 'light',
-            initDataUnsafe: { user: { first_name: 'User', username: 'username', photo_url: null } },
-            showAlert: (m) => alert(m),
-            BackButton: { show: () => {}, hide: () => {}, onClick: () => {}, offClick: () => {} },
-            HapticFeedback: {
-              impactOccurred: () => {},
-              notificationOccurred: () => {},
-              selectionChanged: () => {}
-            }
-          }
-        };
-      }
+  <!-- ==================== MODALS ==================== -->
+  <div class="modal-overlay" id="modal">
+    <div class="modal">
+      <div class="modal-header">
+        <input type="text" class="modal-search" id="search" placeholder="Поиск" autocomplete="off">
+        <button class="modal-close" id="modal-close">Готово</button>
+      </div>
+      <div class="modal-list" id="country-list"></div>
+    </div>
+  </div>
 
-      const tg = window.Telegram.WebApp;
-      tg.ready();
-      tg.expand();
+  <!-- Device action sheet -->
+  <div class="sheet-overlay" id="device-sheet">
+    <div class="sheet">
+      <div class="sheet-title" id="device-sheet-title">Устройство</div>
+      <button class="sheet-btn" id="sheet-add-sub">Добавить подписку в Happ</button>
+      <button class="sheet-btn danger" id="sheet-disconnect">Удалить устройство</button>
+      <button class="sheet-btn cancel" id="sheet-cancel">Отмена</button>
+    </div>
+  </div>
 
-      // ===== AUTO-MAP THEME PARAMS =====
-      if (tg.themeParams) {
-        const root = document.documentElement;
-        const map = {
-          bg_color: '--tg-theme-bg-color',
-          secondary_bg_color: '--tg-theme-secondary-bg-color',
-          text_color: '--tg-theme-text-color',
-          hint_color: '--tg-theme-hint-color',
-          link_color: '--tg-theme-link-color',
-          button_color: '--tg-theme-button-color',
-          button_text_color: '--tg-theme-button-text-color',
-          destructive_text_color: '--tg-theme-destructive-text-color',
-          section_bg_color: '--tg-theme-section-bg-color',
-          section_header_text_color: '--tg-theme-section-header-text-color',
-          section_separator_color: '--tg-theme-section-separator-color',
-          accent_text_color: '--tg-theme-accent-text-color'
-        };
-        for (const [k, v] of Object.entries(map)) {
-          if (tg.themeParams[k]) root.style.setProperty(v, tg.themeParams[k]);
+<script>
+/* ==================== TELEGRAM ==================== */
+(function() {
+  if (!window.Telegram || !window.Telegram.WebApp) {
+    window.Telegram = {
+      WebApp: {
+        ready: () => {}, expand: () => {}, themeParams: {}, colorScheme: 'light',
+        initDataUnsafe: { user: { first_name: 'User', username: 'username', photo_url: null } },
+        close: () => {}, showAlert: (m) => alert(m),
+        MainButton: { hide: () => {}, show: () => {} },
+        HapticFeedback: {
+          impactOccurred: () => {}, notificationOccurred: () => {}, selectionChanged: () => {}
         }
       }
+    };
+  }
+  const tg = window.Telegram.WebApp;
+  tg.ready();
+  tg.expand();
+})();
 
-      // ===== HAPTIC =====
-      function haptic(type) {
-        try {
-          const hf = tg.HapticFeedback;
-          if (!hf) return;
-          if (type === 'light') hf.impactOccurred('light');
-          else if (type === 'medium') hf.impactOccurred('medium');
-          else if (type === 'success') hf.notificationOccurred('success');
-          else if (type === 'error') hf.notificationOccurred('error');
-          else if (type === 'select') hf.selectionChanged();
-        } catch (e) {}
-      }
+const tg = window.Telegram.WebApp;
 
-      // ===== NAV ISLAND =====
-      const island = document.getElementById('nav-island');
-      const lens = document.getElementById('nav-lens');
-      const buttons = Array.from(island.querySelectorAll('.nav-btn'));
+/* ==================== HAPTIC ==================== */
+function haptic(type) {
+  try {
+    const hf = tg.HapticFeedback;
+    if (!hf) return;
+    if (type === 'light') hf.impactOccurred('light');
+    else if (type === 'medium') hf.impactOccurred('medium');
+    else if (type === 'heavy') hf.impactOccurred('heavy');
+    else if (type === 'success') hf.notificationOccurred('success');
+    else if (type === 'error') hf.notificationOccurred('error');
+    else if (type === 'warning') hf.notificationOccurred('warning');
+    else if (type === 'select') hf.selectionChanged();
+  } catch (e) {}
+}
 
-      let geo = null;
-      let hoverTab = 'home';
-      let currentTab = 'home';
+/* ==================== THEME ==================== */
+const LIGHT_THEME = {
+  '--tg-theme-bg-color': '#ffffff',
+  '--tg-theme-secondary-bg-color': '#f4f4f5',
+  '--tg-theme-text-color': '#000000',
+  '--tg-theme-hint-color': '#8e8e93',
+  '--tg-theme-button-color': '#3390ec',
+  '--tg-theme-button-text-color': '#ffffff',
+  '--tg-theme-link-color': '#3390ec',
+  '--tg-theme-destructive-text-color': '#ff3b30',
+  '--tg-theme-section-bg-color': '#ffffff',
+  '--tg-theme-section-separator-color': 'rgba(0,0,0,0.08)',
+  '--island-bg': 'rgba(36, 123, 192, 0.18)',
+  '--island-border': 'rgba(36, 123, 192, 0.32)',
+  '--island-inset': 'rgba(255, 255, 255, 0.6)',
+  '--island-text': 'rgba(20, 60, 100, 0.75)',
+  '--island-lens-bg': 'rgba(255, 255, 255, 0.6)',
+  '--island-lens-inset': 'rgba(255, 255, 255, 0.95)',
+  '--island-gray': 'rgba(20, 60, 100, 0.75)',
+  '--island-accent': '#6AB3F3'
+};
+const DARK_THEME = {
+  '--tg-theme-bg-color': '#17212b',
+  '--tg-theme-secondary-bg-color': '#232e3c',
+  '--tg-theme-text-color': '#ffffff',
+  '--tg-theme-hint-color': '#7d8b99',
+  '--tg-theme-button-color': '#5288c1',
+  '--tg-theme-button-text-color': '#ffffff',
+  '--tg-theme-link-color': '#6ab3f3',
+  '--tg-theme-destructive-text-color': '#ec3942',
+  '--tg-theme-section-bg-color': '#232e3c',
+  '--tg-theme-section-separator-color': 'rgba(255,255,255,0.08)',
+  '--island-bg': 'rgba(255, 255, 255, 0.12)',
+  '--island-border': 'rgba(255, 255, 255, 0.28)',
+  '--island-inset': 'rgba(255, 255, 255, 0.35)',
+  '--island-text': 'rgba(255, 255, 255, 0.7)',
+  '--island-lens-bg': 'rgba(255, 255, 255, 0.22)',
+  '--island-lens-inset': 'rgba(255, 255, 255, 0.55)',
+  '--island-gray': 'rgba(255, 255, 255, 0.55)',
+  '--island-accent': '#FFFFFF'
+};
 
-      function rebuildGeometry() {
-        const ir = island.getBoundingClientRect();
-        if (ir.width === 0) return;
+let currentTheme = localStorage.getItem('dxs_theme') || 'light';
+if (currentTheme !== 'light' && currentTheme !== 'dark') currentTheme = 'light';
 
-        const bs = buttons.map(b => {
-          const r = b.getBoundingClientRect();
-          return {
-            tab: b.dataset.tab,
-            left: r.left - ir.left,
-            width: r.width,
-            center: r.left - ir.left + r.width / 2
-          };
-        });
+function applyTheme(theme) {
+  const root = document.documentElement;
+  const palette = theme === 'dark' ? DARK_THEME : LIGHT_THEME;
+  for (const [k, v] of Object.entries(palette)) {
+    root.style.setProperty(k, v);
+  }
+  document.documentElement.setAttribute('data-theme', theme);
+}
+applyTheme(currentTheme);
 
-        const mids = [];
-        for (let i = 0; i < bs.length - 1; i++) {
-          mids.push((bs[i].center + bs[i + 1].center) / 2);
-        }
+/* ==================== LOTTIE ==================== */
+const lottieAnims = {};
 
-        geo = { islandW: ir.width, buttons: bs, mids };
-      }
+async function fetchLottieData(path) {
+  const res = await fetch(path);
+  if (!res.ok) throw new Error(`Failed to load ${path}: ${res.status}`);
+  const data = await res.json();
+  if (data && typeof data === 'object' && data.lottie && Array.isArray(data.lottie.layers)) {
+    return data.lottie;
+  }
+  if (data && Array.isArray(data.layers)) return data;
+  throw new Error(`Invalid Lottie data in ${path}`);
+}
 
-      function btnByTab(tab) {
-        return geo && geo.buttons.find(b => b.tab === tab);
-      }
+async function initLottie(containerId, path, key, opts = {}) {
+  const container = document.getElementById(containerId);
+  if (!container || typeof lottie === 'undefined') return null;
+  try {
+    const animData = await fetchLottieData(path);
+    const anim = lottie.loadAnimation({
+      container, renderer: 'svg',
+      loop: opts.loop ?? false,
+      autoplay: opts.autoplay ?? true,
+      animationData: animData,
+      rendererSettings: { preserveAspectRatio: 'xMidYMid meet', progressiveLoad: false }
+    });
+    lottieAnims[key] = anim;
+    return anim;
+  } catch (err) {
+    console.warn('Lottie init failed for', key, err);
+    return null;
+  }
+}
 
-      function applyLens(left, width, useTransition) {
-        lens.style.transition = useTransition ? '' : 'none';
-        lens.style.transform = `translate3d(${left}px, 0, 0)`;
-        lens.style.width = width + 'px';
-      }
+initLottie('lottie-redphone', 'redphone.json', 'redphone', { loop: false, autoplay: true });
+initLottie('lottie-message', 'message.json', 'message', { loop: false, autoplay: false });
+initLottie('lottie-2fa', '2fa.json', '2fa', { loop: false, autoplay: false });
+initLottie('lottie-2fa-verify', '2fa.json', '2fa-verify', { loop: false, autoplay: false });
 
-      function snapTo(tab, useTransition) {
-        const b = btnByTab(tab);
-        if (!b) return;
-        applyLens(b.left, b.width, useTransition);
+/* ==================== SCREEN NAVIGATION ==================== */
+const TAB_SCREENS = new Set(['home', 'subscription', 'settings']);
+let currentScreen = 'phone';
+let historyStack = [];
 
-        buttons.forEach(btn => {
-          btn.classList.toggle('active', btn.dataset.tab === tab);
-        });
-      }
+const island = document.getElementById('nav-island');
+const lens = document.getElementById('nav-lens');
+const buttons = Array.from(island.querySelectorAll('.nav-btn'));
 
-      function tabFromCenter(x) {
-        if (!geo) return currentTab;
-        if (x < geo.mids[0]) return geo.buttons[0].tab;
-        if (x > geo.mids[geo.mids.length - 1]) return geo.buttons[geo.buttons.length - 1].tab;
-        for (let i = 0; i < geo.mids.length - 1; i++) {
-          if (x >= geo.mids[i] && x <= geo.mids[i + 1]) return geo.buttons[i + 1].tab;
-        }
-        let best = geo.buttons[0], bd = Infinity;
-        for (const b of geo.buttons) {
-          const d = Math.abs(b.center - x);
-          if (d < bd) { bd = d; best = b; }
-        }
-        return best.tab;
-      }
+/* Табы — резко */
+function showTab(name, instant) {
+  document.querySelectorAll('.screen:not(.slide)').forEach(s => s.classList.remove('active'));
+  const next = document.getElementById('screen-' + name);
+  if (!next) return;
+  next.classList.add('active');
+  currentScreen = name;
+  next.scrollTop = 0;
 
-      let pointerId = null;
-      let startX = 0;
-      let pendingX = 0;
-      let didDrag = false;
-      const DRAG_THRESHOLD = 8;
+  island.classList.add('visible');
+  requestAnimationFrame(() => {
+    rebuildGeometry();
+    snapTo(name, !instant);
+  });
+}
 
-      function pointerToLocal(clientX) {
-        const ir = island.getBoundingClientRect();
-        return clientX - ir.left;
-      }
+/* Push-экраны — слайд */
+function switchScreen(fromEl, toEl, direction = 'forward') {
+  if (!fromEl || !toEl) return;
+  fromEl.classList.remove("active");
+  fromEl.classList.add(direction === 'back' ? "leaving-right" : "leaving-left");
+  toEl.classList.remove("leaving-left", "leaving-right");
 
-      function onPointerDown(e) {
-        if (pointerId !== null) return;
-        if (!geo) rebuildGeometry();
-        if (!geo) return;
+  if (direction === 'back') {
+    toEl.style.transition = 'none';
+    toEl.style.transform = 'translateX(-30%)';
+    toEl.style.opacity = '0';
+    void toEl.offsetWidth;
+    toEl.style.transition = '';
+    toEl.style.transform = '';
+    toEl.style.opacity = '';
+  }
 
-        pointerId = e.pointerId;
-        try { island.setPointerCapture(pointerId); } catch (_) {}
+  void toEl.offsetWidth;
+  toEl.classList.add("active");
+  currentScreen = toEl.id.replace('screen-', '');
 
-        const localX = pointerToLocal(e.clientX);
-        startX = localX;
-        pendingX = localX;
-        didDrag = false;
-      }
+  setTimeout(() => fromEl.classList.remove("leaving-left", "leaving-right"), 350);
+  toEl.scrollTop = 0;
 
-      function onPointerMove(e) {
-        if (e.pointerId !== pointerId) return;
+  // Play lottie for target screen
+  if (toEl.id === 'screen-code' && lottieAnims.message) lottieAnims.message.goToAndPlay(0, true);
+  if (toEl.id === 'screen-2fa' && lottieAnims['2fa']) lottieAnims['2fa'].goToAndPlay(0, true);
+  if (toEl.id === 'screen-2fa-verify' && lottieAnims['2fa-verify']) lottieAnims['2fa-verify'].goToAndPlay(0, true);
+}
 
-        const localX = pointerToLocal(e.clientX);
-        const dxTotal = Math.abs(localX - startX);
+/* Универсальный переход на экран по имени */
+function goTo(name, direction) {
+  const from = document.getElementById('screen-' + currentScreen);
+  const to = document.getElementById('screen-' + name);
+  if (!from || !to || from === to) return;
 
-        if (!didDrag && dxTotal > DRAG_THRESHOLD) {
-          didDrag = true;
-          island.classList.add('dragging');
-        }
-        if (!didDrag) return;
-
-        pendingX = localX;
-        const targetTab = tabFromCenter(localX);
-        const b = btnByTab(targetTab);
-        if (!b) return;
-
-        applyLens(b.left, b.width, false);
-
-        if (hoverTab !== targetTab) {
-          hoverTab = targetTab;
-          haptic('select');
-        }
-      }
-
-      function onPointerUp(e) {
-        if (e.pointerId !== pointerId) return;
-        try { island.releasePointerCapture(pointerId); } catch (_) {}
-        island.classList.remove('dragging');
-        pointerId = null;
-
-        if (didDrag) {
-          commit(hoverTab);
-        } else {
-          commit(tabFromCenter(pointerToLocal(e.clientX)));
-        }
-      }
-
-      function commit(tab) {
-        if (tab === currentTab) {
-          snapTo(currentTab, true);
-          return;
-        }
-
-        haptic('light');
-        currentTab = tab;
-        snapTo(tab, true);
-      }
-
-      island.addEventListener('pointerdown', onPointerDown);
-      island.addEventListener('pointermove', onPointerMove);
-      island.addEventListener('pointerup', onPointerUp);
-      island.addEventListener('pointercancel', onPointerUp);
-
-      island.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
-
-      // ===== BACK BUTTON =====
-      const backBtn = document.querySelector('[data-back]');
-      if (backBtn && tg.BackButton) {
-        // Показываем нативная кнопка "Назад" только когда есть куда возвращаться
-        // В Telegram Web App это делается через tg.BackButton.show()
-      }
-
-      // ===== INIT =====
-      function init() {
+  if (TAB_SCREENS.has(name)) {
+    // Переход на таб — резко, скрываем island если не на табе
+    if (TAB_SCREENS.has(currentScreen)) {
+      // С таба на таб — резко
+      showTab(name, false);
+    } else {
+      // С push-экрана на таб — слайд (back)
+      switchScreen(from, to, 'back');
+      island.classList.add('visible');
+      requestAnimationFrame(() => {
         rebuildGeometry();
-        snapTo('home', false);
-      }
-
-      if (document.fonts && document.fonts.ready) {
-        document.fonts.ready.then(() => requestAnimationFrame(init));
-      }
-      requestAnimationFrame(init);
-      window.addEventListener('load', () => requestAnimationFrame(init));
-      window.addEventListener('resize', () => {
-        if (pointerId === null) {
-          rebuildGeometry();
-          snapTo(currentTab, false);
-        }
+        snapTo(name, false);
       });
+    }
+  } else if (TAB_SCREENS.has(currentScreen)) {
+    // С таба на push-экран — слайд, скрываем island
+    island.classList.remove('visible');
+    switchScreen(from, to, direction || 'forward');
+  } else {
+    // Push на push — слайд
+    switchScreen(from, to, direction || 'forward');
+  }
+}
 
-    })();
-  </script>
+function goBack() {
+  haptic('light');
+  if (currentScreen === 'connection') {
+    const guide = document.getElementById('conn-guide');
+    if (guide && guide.style.display !== 'none') {
+      document.getElementById('conn-list').style.display = 'block';
+      guide.style.display = 'none';
+      return;
+    }
+  }
+  const prev = historyStack.pop() || 'home';
+  goTo(prev, 'back');
+}
+
+/* ==================== NAV ISLAND ==================== */
+let geo = null;
+let hoverTab = 'home';
+let pointerId = null, startX = 0, startY = 0, lastX = 0, lastT = 0;
+let velocity = 0, didDrag = false, pendingFrame = false, pendingX = 0;
+const DRAG_THRESHOLD = 8;
+const TRANSITION_SOFTNESS = 2;
+const MIN_STRETCH = 0, MAX_STRETCH = 10, STRETCH_K = 60;
+
+function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+
+function rebuildGeometry() {
+  const ir = island.getBoundingClientRect();
+  if (ir.width === 0) return;
+  const bs = buttons.map(b => {
+    const r = b.getBoundingClientRect();
+    const svg = b.querySelector('[data-icon]');
+    const sr = svg ? svg.getBoundingClientRect() : null;
+    return {
+      tab: b.dataset.tab,
+      left: r.left - ir.left, width: r.width, center: r.left - ir.left + r.width / 2,
+      svgLeft: sr ? sr.left - ir.left : 0, svgWidth: sr ? sr.width : 0
+    };
+  });
+  const mids = [];
+  for (let i = 0; i < bs.length - 1; i++) mids.push((bs[i].center + bs[i + 1].center) / 2);
+  geo = { islandW: ir.width, buttons: bs, mids };
+}
+
+function btnByTab(tab) { return geo && geo.buttons.find(b => b.tab === tab); }
+
+function updateGradients(lensLeft, lensWidth) {
+  if (!geo) return;
+  geo.buttons.forEach((b, i) => {
+    const btn = buttons[i];
+    const btnWidth = b.width;
+    const localLensLeft = lensLeft - b.left;
+    const localLensRight = localLensLeft + lensWidth;
+
+    const textEl = btn.querySelector('[data-text]');
+    if (textEl) {
+      const soft = TRANSITION_SOFTNESS;
+      textEl.style.backgroundImage = `linear-gradient(90deg,
+        var(--island-gray) 0px,
+        var(--island-gray) ${localLensLeft - soft}px,
+        var(--island-accent) ${localLensLeft}px,
+        var(--island-accent) ${localLensRight}px,
+        var(--island-gray) ${localLensRight + soft}px,
+        var(--island-gray) ${btnWidth}px)`;
+    }
+
+    const svg = btn.querySelector('[data-icon]');
+    if (svg && b.svgWidth > 0) {
+      const svgOffsetX = b.svgLeft - b.left;
+      const scale = 24 / b.svgWidth;
+      const svgLensLeft = (localLensLeft - svgOffsetX) * scale;
+      const svgLensRight = (localLensRight - svgOffsetX) * scale;
+      const svgSoft = TRANSITION_SOFTNESS * scale;
+      const grad = svg.querySelector('linearGradient');
+      if (grad) {
+        const clampV = (v) => Math.max(-10, Math.min(34, v));
+        const stops = [
+          { off: -10, color: 'var(--island-gray)' },
+          { off: clampV(svgLensLeft - svgSoft), color: 'var(--island-gray)' },
+          { off: clampV(svgLensLeft), color: 'var(--island-accent)' },
+          { off: clampV(svgLensRight), color: 'var(--island-accent)' },
+          { off: clampV(svgLensRight + svgSoft), color: 'var(--island-gray)' },
+          { off: 34, color: 'var(--island-gray)' }
+        ];
+        stops.sort((a, b) => a.off - b.off);
+        while (grad.firstChild) grad.removeChild(grad.firstChild);
+        stops.forEach(s => {
+          const stop = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+          stop.setAttribute('offset', s.off + '');
+          stop.setAttribute('stop-color', s.color);
+          grad.appendChild(stop);
+        });
+        grad.setAttribute('x1', '-10');
+        grad.setAttribute('x2', '34');
+      }
+    }
+  });
+}
+
+function applyLens(left, width, useTransition) {
+  lens.style.transition = useTransition ? '' : 'none';
+  lens.style.transform = `translate3d(${left}px, 0, 0)`;
+  lens.style.width = width + 'px';
+  updateGradients(left, width);
+}
+
+function snapTo(tab, useTransition) {
+  const b = btnByTab(tab);
+  if (!b) return;
+  applyLens(b.left, b.width, useTransition);
+}
+
+function setHover(tab) {
+  if (hoverTab === tab) return;
+  hoverTab = tab;
+  haptic('select');
+}
+
+function tabFromCenter(x) {
+  if (!geo) return currentScreen;
+  if (x < geo.mids[0]) return geo.buttons[0].tab;
+  if (x > geo.mids[geo.mids.length - 1]) return geo.buttons[geo.buttons.length - 1].tab;
+  for (let i = 0; i < geo.mids.length - 1; i++) {
+    if (x >= geo.mids[i] && x <= geo.mids[i + 1]) return geo.buttons[i + 1].tab;
+  }
+  let best = geo.buttons[0], bd = Infinity;
+  for (const b of geo.buttons) {
+    const d = Math.abs(b.center - x);
+    if (d < bd) { bd = d; best = b; }
+  }
+  return best.tab;
+}
+
+function pointerToLocal(clientX) {
+  return clientX - island.getBoundingClientRect().left;
+}
+
+function onPointerDown(e) {
+  if (pointerId !== null) return;
+  if (!TAB_SCREENS.has(currentScreen)) return;
+  if (!geo) rebuildGeometry();
+  if (!geo) return;
+  pointerId = e.pointerId;
+  try { island.setPointerCapture(pointerId); } catch (_) {}
+  const localX = pointerToLocal(e.clientX);
+  startX = localX; startY = e.clientY; lastX = localX;
+  lastT = performance.now(); velocity = 0; didDrag = false; pendingX = localX;
+}
+
+function onPointerMove(e) {
+  if (e.pointerId !== pointerId) return;
+  const localX = pointerToLocal(e.clientX);
+  const dxTotal = Math.abs(localX - startX);
+  const dyTotal = Math.abs(e.clientY - startY);
+  if (!didDrag && (dxTotal > DRAG_THRESHOLD || dyTotal > DRAG_THRESHOLD)) {
+    didDrag = true;
+    island.classList.add('dragging');
+  }
+  if (!didDrag) return;
+  pendingX = localX;
+  const now = performance.now();
+  const dt = Math.max(1, now - lastT);
+  velocity = (localX - lastX) / dt;
+  lastX = localX; lastT = now;
+  if (!pendingFrame) {
+    pendingFrame = true;
+    requestAnimationFrame(renderDragFrame);
+  }
+}
+
+function renderDragFrame() {
+  pendingFrame = false;
+  if (pointerId === null) return;
+  const x = pendingX;
+  const targetTab = tabFromCenter(x);
+  const b = btnByTab(targetTab);
+  if (!b) return;
+  const stretch = clamp(Math.abs(velocity) * STRETCH_K, MIN_STRETCH, MAX_STRETCH);
+  const width = b.width + stretch;
+  let left = clamp(x - width / 2, 0, geo.islandW - width);
+  applyLens(left, width, false);
+  setHover(targetTab);
+}
+
+function onPointerUp(e) {
+  if (e.pointerId !== pointerId) return;
+  try { island.releasePointerCapture(pointerId); } catch (_) {}
+  island.classList.remove('dragging');
+  pointerId = null;
+  if (didDrag && geo) {
+    const targetTab = tabFromCenter(pendingX);
+    setHover(targetTab);
+    commit(targetTab);
+    return;
+  }
+  const localX = pointerToLocal(e.clientX);
+  commit(tabFromCenter(localX));
+}
+
+function onPointerCancel(e) {
+  if (e.pointerId !== pointerId) return;
+  island.classList.remove('dragging');
+  pointerId = null;
+  commit(currentScreen);
+}
+
+function commit(tab) {
+  if (!TAB_SCREENS.has(tab)) tab = currentScreen;
+  hoverTab = tab;
+  const b = btnByTab(tab);
+  if (b) {
+    lens.style.transition = '';
+    void lens.offsetWidth;
+    applyLens(b.left, b.width, true);
+    startGradientTracking();
+  }
+  if (tab !== currentScreen) {
+    haptic('light');
+    showTab(tab, false);
+  } else {
+    haptic('light');
+  }
+}
+
+let tracking = false, trackEnd = 0;
+function startGradientTracking() {
+  if (tracking) return;
+  tracking = true;
+  trackEnd = performance.now() + 400;
+  requestAnimationFrame(trackFrame);
+}
+function trackFrame() {
+  if (!tracking) return;
+  const cs = getComputedStyle(lens);
+  const m = new DOMMatrixReadOnly(cs.transform);
+  const tx = m.m41;
+  const w = parseFloat(cs.width);
+  if (!isNaN(tx) && !isNaN(w)) updateGradients(tx, w);
+  if (performance.now() < trackEnd) requestAnimationFrame(trackFrame);
+  else tracking = false;
+}
+
+island.addEventListener('pointerdown', onPointerDown);
+island.addEventListener('pointermove', onPointerMove);
+island.addEventListener('pointerup', onPointerUp);
+island.addEventListener('pointercancel', onPointerCancel);
+buttons.forEach(btn => btn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); }));
+island.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
+
+/* ==================== COUNTRIES ==================== */
+let COUNTRIES = [];
+let currentCountry = null;
+let phoneDigits = "";
+let requiredLength = 10;
+let currentMask = "";
+
+fetch("numbers.json")
+  .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+  .then(data => {
+    COUNTRIES = data;
+    currentCountry = COUNTRIES.find(c => c.страна === "Россия") || COUNTRIES[0];
+    setCountry(currentCountry);
+  })
+  .catch(err => { console.error(err); haptic('error'); });
+
+const $ = (id) => document.getElementById(id);
+const phoneInput = $("phone-input");
+const btnContinue = $("btn-continue");
+const phoneError = $("phone-error");
+const modal = $("modal");
+const countryList = $("country-list");
+const searchInput = $("search");
+
+function setCountry(country) {
+  currentCountry = country;
+  $("current-flag").textContent = country.флаг;
+  $("current-name").textContent = country.страна;
+  $("phone-code").textContent = country.индекс;
+  requiredLength = country.длина;
+  currentMask = country.маска || "";
+  phoneInput.placeholder = currentMask.replace(/9/g, "0");
+  phoneDigits = "";
+  phoneInput.value = "";
+  updateButton();
+  phoneError.classList.remove("visible");
+}
+
+function formatPhone(digits, mask) {
+  if (!digits) return "";
+  let result = "";
+  let digitIdx = 0;
+  for (let i = 0; i < mask.length && digitIdx < digits.length; i++) {
+    const m = mask[i];
+    if (m === "9") result += digits[digitIdx++];
+    else result += m;
+  }
+  return result;
+}
+
+function maskCapacity(mask) { return (mask.match(/9/g) || []).length; }
+
+function stripCountryCode(digits, countryCode) {
+  const code = (countryCode || "").replace(/\D/g, "");
+  if (!code) return digits;
+  if (digits.startsWith(code)) return digits.slice(code.length);
+  return digits;
+}
+
+phoneInput.addEventListener("input", (e) => {
+  const maxDigits = Math.min(requiredLength, maskCapacity(currentMask));
+  let raw = e.target.value.replace(/\D/g, "");
+  const prevLen = phoneDigits.length;
+  const isSuddenFill = raw.length >= maxDigits && prevLen < 3;
+  if (isSuddenFill) raw = stripCountryCode(raw, currentCountry.индекс);
+  raw = raw.slice(0, maxDigits);
+  const wasComplete = phoneDigits.length >= requiredLength;
+  phoneDigits = raw;
+  e.target.value = formatPhone(raw, currentMask);
+  const len = e.target.value.length;
+  e.target.setSelectionRange(len, len);
+  updateButton();
+  phoneError.classList.remove("visible");
+  const nowComplete = phoneDigits.length >= requiredLength;
+  if (nowComplete && !wasComplete) haptic('light');
+});
+
+phoneInput.addEventListener("paste", (e) => {
+  e.preventDefault();
+  const pasted = (e.clipboardData || window.clipboardData).getData("text") || "";
+  let raw = stripCountryCode(pasted.replace(/\D/g, ""), currentCountry.индекс);
+  raw = raw.slice(0, Math.min(requiredLength, maskCapacity(currentMask)));
+  phoneDigits = raw;
+  phoneInput.value = formatPhone(raw, currentMask);
+  updateButton();
+  phoneError.classList.remove("visible");
+});
+
+phoneInput.addEventListener("keydown", (e) => {
+  if (e.key === "Backspace") {
+    e.preventDefault();
+    if (phoneDigits.length > 0) {
+      phoneDigits = phoneDigits.slice(0, -1);
+      phoneInput.value = formatPhone(phoneDigits, currentMask);
+      updateButton();
+    }
+  }
+});
+
+function updateButton() { btnContinue.disabled = phoneDigits.length < requiredLength; }
+
+function renderCountries(filter = "") {
+  const q = filter.toLowerCase().trim();
+  const filtered = COUNTRIES.filter(c =>
+    c.страна.toLowerCase().includes(q) || c.индекс.includes(q)
+  );
+  if (filtered.length === 0) {
+    countryList.innerHTML = `<div class="no-results">Ничего не найдено</div>`;
+    return;
+  }
+  countryList.innerHTML = filtered.map(c => `
+    <div class="country-item" data-name="${c.страна}">
+      <div class="flag">${c.флаг}</div>
+      <div class="name">${c.страна}</div>
+      <div class="code">${c.индекс}</div>
+    </div>
+  `).join("");
+  countryList.querySelectorAll(".country-item").forEach(el => {
+    el.addEventListener("click", () => {
+      const country = COUNTRIES.find(c => c.страна === el.dataset.name);
+      if (country) {
+        haptic('select');
+        setCountry(country);
+        closeModal();
+      }
+    });
+  });
+}
+
+function openModal() {
+  haptic('select');
+  searchInput.value = "";
+  renderCountries();
+  modal.classList.add("open");
+  setTimeout(() => searchInput.focus(), 300);
+}
+function closeModal() { modal.classList.remove("open"); }
+
+$("country-selector").addEventListener("click", openModal);
+$("modal-close").addEventListener("click", closeModal);
+modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
+searchInput.addEventListener("input", () => renderCountries(searchInput.value));
+
+/* Phone continue */
+btnContinue.addEventListener("click", async () => {
+  if (btnContinue.disabled || btnContinue.classList.contains("loading")) return;
+  haptic('medium');
+  const fullPhone = currentCountry.индекс + phoneDigits;
+  btnContinue.classList.add("loading");
+  phoneError.classList.remove("visible");
+  try {
+    await new Promise(r => setTimeout(r, 1500));
+    $("sent-phone").textContent = fullPhone;
+    switchScreen($("screen-phone"), $("screen-code"), 'forward');
+    startTimer();
+    setTimeout(() => document.querySelectorAll(".code-digit")[0].focus(), 320);
+  } catch (err) {
+    haptic('error');
+    phoneError.textContent = err.message || "Не удалось отправить код";
+    phoneError.classList.add("visible");
+  } finally {
+    btnContinue.classList.remove("loading");
+  }
+});
+
+/* ==================== CODE ==================== */
+const codeDigits = document.querySelectorAll(".code-digit");
+const btnVerify = $("btn-verify");
+const codeError = $("code-error");
+let timerInterval = null, timerSeconds = 60;
+
+codeDigits.forEach((input, idx) => {
+  input.addEventListener("input", (e) => {
+    const val = e.target.value.replace(/\D/g, "");
+    e.target.value = val.slice(0, 1);
+    if (val && idx < codeDigits.length - 1) codeDigits[idx + 1].focus();
+    const wasComplete = Array.from(codeDigits).every(d => d.value);
+    checkCodeComplete();
+    const nowComplete = Array.from(codeDigits).every(d => d.value);
+    if (nowComplete && !wasComplete) haptic('light');
+  });
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Backspace" && !e.target.value && idx > 0) codeDigits[idx - 1].focus();
+  });
+  input.addEventListener("paste", (e) => {
+    e.preventDefault();
+    const paste = (e.clipboardData || window.clipboardData).getData("text").replace(/\D/g, "").slice(0, 6);
+    paste.split("").forEach((ch, i) => { if (codeDigits[i]) codeDigits[i].value = ch; });
+    if (paste.length > 0) codeDigits[Math.min(paste.length, 5)].focus();
+    checkCodeComplete();
+  });
+});
+
+function checkCodeComplete() {
+  const code = Array.from(codeDigits).map(i => i.value).join("");
+  btnVerify.disabled = code.length < 6;
+}
+
+btnVerify.addEventListener("click", async () => {
+  if (btnVerify.disabled || btnVerify.classList.contains("loading")) return;
+  haptic('medium');
+  const code = Array.from(codeDigits).map(i => i.value).join("");
+  btnVerify.classList.add("loading");
+  codeError.classList.remove("visible");
+  try {
+    await new Promise(r => setTimeout(r, 1200));
+    if (code !== "123456") throw new Error("Неверный код подтверждения");
+
+    haptic('success');
+
+    // Определяем: первый вход или повторный
+    const hasAccount = localStorage.getItem('dxs_registered') === 'true';
+    if (hasAccount) {
+      const has2FA = localStorage.getItem('dxs_2fa') === 'true';
+      if (has2FA) {
+        switchScreen($("screen-code"), $("screen-2fa-verify"), 'forward');
+      } else {
+        completeAuth();
+      }
+    } else {
+      // Регистрация — предлагаем 2FA
+      switchScreen($("screen-code"), $("screen-2fa"), 'forward');
+    }
+  } catch (err) {
+    haptic('error');
+    codeError.textContent = err.message || "Ошибка проверки кода";
+    codeError.classList.add("visible");
+  } finally {
+    btnVerify.classList.remove("loading");
+  }
+});
+
+function startTimer() {
+  timerSeconds = 60;
+  $("resend-block").innerHTML = `Отправить код повторно через <span id="timer">${timerSeconds}</span> сек`;
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    timerSeconds--;
+    const t = $("timer");
+    if (t) t.textContent = timerSeconds;
+    if (timerSeconds <= 0) {
+      clearInterval(timerInterval);
+      $("resend-block").innerHTML = `<a href="#" id="resend-link">Отправить код повторно</a>`;
+      $("resend-link").addEventListener("click", (e) => {
+        e.preventDefault();
+        haptic('light');
+        startTimer();
+      });
+    }
+  }, 1000);
+}
+
+$("btn-back-phone").addEventListener("click", () => {
+  haptic('light');
+  codeDigits.forEach(d => d.value = "");
+  checkCodeComplete();
+  codeError.classList.remove("visible");
+  clearInterval(timerInterval);
+  switchScreen($("screen-code"), $("screen-phone"), 'back');
+  setTimeout(() => phoneInput.focus(), 320);
+});
+
+/* ==================== 2FA SETUP ==================== */
+const password1 = $("password-1");
+const password2 = $("password-2");
+const btn2faContinue = $("btn-2fa-continue");
+const passwordError = $("password-error");
+const MIN_PASSWORD_LENGTH = 6;
+
+function isPasswordValid() {
+  const p1 = password1.value, p2 = password2.value;
+  return p1.length >= MIN_PASSWORD_LENGTH && p2.length >= MIN_PASSWORD_LENGTH && p1 === p2;
+}
+
+function update2faButton() {
+  const wasDisabled = btn2faContinue.disabled;
+  btn2faContinue.disabled = !isPasswordValid();
+  if (wasDisabled && !btn2faContinue.disabled) haptic('light');
+}
+
+function updatePasswordError() {
+  const p1 = password1.value, p2 = password2.value;
+  if (!p1 || !p2) { passwordError.classList.remove("visible"); return; }
+  if (p1.length < MIN_PASSWORD_LENGTH) {
+    passwordError.textContent = `Пароль должен быть не короче ${MIN_PASSWORD_LENGTH} символов`;
+    passwordError.classList.add("visible");
+    return;
+  }
+  if (p1 !== p2) {
+    passwordError.textContent = "Пароли не совпадают";
+    passwordError.classList.add("visible");
+    return;
+  }
+  passwordError.classList.remove("visible");
+}
+
+password1.addEventListener("input", () => { update2faButton(); updatePasswordError(); });
+password2.addEventListener("input", () => { update2faButton(); updatePasswordError(); });
+
+btn2faContinue.addEventListener("click", async () => {
+  if (btn2faContinue.disabled || btn2faContinue.classList.contains("loading")) return;
+  haptic('medium');
+  if (!isPasswordValid()) { haptic('error'); updatePasswordError(); return; }
+  btn2faContinue.classList.add("loading");
+  passwordError.classList.remove("visible");
+  try {
+    await new Promise(r => setTimeout(r, 1200));
+    localStorage.setItem('dxs_2fa', 'true');
+    haptic('success');
+    completeAuth();
+  } catch (err) {
+    haptic('error');
+    passwordError.textContent = err.message || "Не удалось сохранить пароль";
+    passwordError.classList.add("visible");
+  } finally {
+    btn2faContinue.classList.remove("loading");
+  }
+});
+
+$("btn-2fa-skip").addEventListener("click", () => {
+  haptic('medium');
+  localStorage.setItem('dxs_2fa', 'false');
+  completeAuth();
+});
+
+/* ==================== 2FA VERIFY ==================== */
+const verifyPassword = $("verify-password");
+const btnVerify2fa = $("btn-verify-2fa");
+const verifyError = $("verify-error");
+
+verifyPassword.addEventListener("input", () => {
+  btnVerify2fa.disabled = verifyPassword.value.length < MIN_PASSWORD_LENGTH;
+});
+
+btnVerify2fa.addEventListener("click", async () => {
+  if (btnVerify2fa.disabled || btnVerify2fa.classList.contains("loading")) return;
+  haptic('medium');
+  btnVerify2fa.classList.add("loading");
+  verifyError.classList.remove("visible");
+  try {
+    await new Promise(r => setTimeout(r, 1000));
+    // MOCK: в реальности проверить на сервере
+    if (verifyPassword.value.length < MIN_PASSWORD_LENGTH) throw new Error("Неверный пароль");
+    haptic('success');
+    completeAuth();
+  } catch (err) {
+    haptic('error');
+    verifyError.textContent = err.message || "Неверный пароль";
+    verifyError.classList.add("visible");
+  } finally {
+    btnVerify2fa.classList.remove("loading");
+  }
+});
+
+$("btn-forgot-2fa").addEventListener("click", () => {
+  haptic('warning');
+  tg.showAlert("Для сброса пароля обратитесь в поддержку");
+});
+
+/* ==================== COMPLETE AUTH ==================== */
+function completeAuth() {
+  localStorage.setItem('dxs_token', 'mock_jwt_' + Date.now());
+  localStorage.setItem('dxs_registered', 'true');
+
+  // Скрываем все auth-экраны, показываем главное
+  document.querySelectorAll('.screen').forEach(s => {
+    s.classList.remove('active', 'leaving-left', 'leaving-right');
+  });
+  currentScreen = 'home';
+  showTab('home', true);
+
+  renderProfile();
+}
+
+/* ==================== PROFILE ==================== */
+function renderProfile() {
+  const nameEl = $('profile-name');
+  const usernameEl = $('profile-username');
+  const photoEl = $('profile-photo');
+  const fallbackEl = $('profile-photo-fallback');
+  const u = tg.initDataUnsafe?.user;
+  const displayName = (u?.first_name || 'user').toLowerCase();
+  nameEl.textContent = displayName;
+  usernameEl.textContent = u?.username ? '@' + u.username : '@' + displayName.replace(/\s+/g, '_');
+  if (u?.photo_url) {
+    photoEl.src = u.photo_url;
+    photoEl.style.display = 'block';
+    fallbackEl.style.display = 'none';
+    photoEl.onerror = () => {
+      photoEl.style.display = 'none';
+      fallbackEl.style.display = 'flex';
+      fallbackEl.textContent = displayName.charAt(0);
+    };
+  } else {
+    photoEl.style.display = 'none';
+    fallbackEl.style.display = 'flex';
+    fallbackEl.textContent = displayName.charAt(0);
+  }
+}
+
+/* ==================== INIT ==================== */
+function initApp() {
+  const token = localStorage.getItem('dxs_token');
+  const hasAccount = localStorage.getItem('dxs_registered') === 'true';
+  const has2FA = localStorage.getItem('dxs_2fa') === 'true';
+
+  if (token && hasAccount) {
+    // Уже авторизован
+    if (has2FA) {
+      // Показываем 2FA verify
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      const target = $('screen-2fa-verify');
+      target.classList.add('active');
+      currentScreen = '2fa-verify';
+      island.classList.remove('visible');
+      if (lottieAnims['2fa-verify']) lottieAnims['2fa-verify'].goToAndPlay(0, true);
+    } else {
+      completeAuth();
+    }
+  } else {
+    // Первый вход
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    const target = $('screen-phone');
+    target.classList.add('active');
+    currentScreen = 'phone';
+    island.classList.remove('visible');
+    if (lottieAnims.redphone) lottieAnims.redphone.goToAndPlay(0, true);
+  }
+}
+
+/* ==================== BINDINGS ==================== */
+document.querySelectorAll('[data-go]').forEach(el => {
+  el.addEventListener('click', () => {
+    const to = el.dataset.go;
+    const from = currentScreen;
+    if (from && to) historyStack.push(from);
+    haptic('light');
+    goTo(to, 'forward');
+  });
+});
+
+document.querySelectorAll('[data-back]').forEach(el => {
+  el.addEventListener('click', goBack);
+});
+
+/* Tariff selection */
+document.querySelectorAll('.tariff-card').forEach(card => {
+  card.addEventListener('click', () => {
+    if (card.classList.contains('disabled')) return;
+    haptic('select');
+    document.querySelectorAll('.tariff-card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+  });
+});
+
+$('btn-pay').addEventListener('click', () => {
+  haptic('medium');
+  const selected = document.querySelector('.tariff-card.selected');
+  tg.showAlert('Оплата тарифа: ' + (selected ? selected.dataset.plan : '—'));
+});
+
+/* Devices */
+const deviceSheet = $('device-sheet');
+let activeDevice = null;
+document.querySelectorAll('[data-device-action]').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    haptic('light');
+    activeDevice = btn.dataset.deviceAction;
+    const names = { iphone: 'iPhone 16 Pro', mac: 'Mac mini', ipad: 'iPad' };
+    $('device-sheet-title').textContent = names[activeDevice] || 'Устройство';
+    deviceSheet.classList.add('open');
+  });
+});
+$('sheet-cancel').addEventListener('click', () => { haptic('light'); deviceSheet.classList.remove('open'); });
+$('sheet-disconnect').addEventListener('click', () => {
+  haptic('warning');
+  deviceSheet.classList.remove('open');
+  tg.showAlert('Устройство удалено');
+});
+$('sheet-add-sub').addEventListener('click', () => {
+  haptic('medium');
+  deviceSheet.classList.remove('open');
+  // Открываем диплинк Happ
+  tg.openLink('happ://add/https://example.com/sub/' + activeDevice);
+});
+deviceSheet.addEventListener('click', (e) => {
+  if (e.target === deviceSheet) { haptic('light'); deviceSheet.classList.remove('open'); }
+});
+
+/* Connection platform */
+document.querySelectorAll('[data-platform]').forEach(item => {
+  item.addEventListener('click', () => {
+    haptic('light');
+    $('conn-list').style.display = 'none';
+    $('conn-guide').style.display = 'block';
+  });
+});
+$('btn-back-platforms').addEventListener('click', () => {
+  haptic('light');
+  $('conn-list').style.display = 'block';
+  $('conn-guide').style.display = 'none';
+});
+$('btn-get-config').addEventListener('click', () => {
+  haptic('success');
+  tg.openLink('happ://add/https://example.com/sub/demo');
+});
+
+/* Promo */
+$('btn-promo').addEventListener('click', () => {
+  const val = $('promo-input').value.trim();
+  if (!val) { haptic('error'); tg.showAlert('Введите промокод'); return; }
+  haptic('success');
+  $('promo-success').classList.add('visible');
+});
+
+/* FAQ */
+document.querySelectorAll('.faq-question').forEach(q => {
+  q.addEventListener('click', () => {
+    haptic('select');
+    q.parentElement.classList.toggle('open');
+  });
+});
+$('faq-search').addEventListener('input', function() {
+  const q = this.value.toLowerCase().trim();
+  document.querySelectorAll('.faq-item').forEach(item => {
+    const text = item.textContent.toLowerCase();
+    item.style.display = !q || text.includes(q) ? '' : 'none';
+  });
+  document.querySelectorAll('.faq-group').forEach(g => {
+    const visible = [...g.querySelectorAll('.faq-item')].some(i => i.style.display !== 'none');
+    g.style.display = visible ? '' : 'none';
+  });
+});
+$('btn-support').addEventListener('click', () => {
+  haptic('light');
+  const from = currentScreen;
+  historyStack.push(from);
+  goTo('support-new', 'forward');
+});
+
+/* Support new */
+const supportTopic = $('support-topic');
+const supportMessage = $('support-message');
+const btnSendSupport = $('btn-send-support');
+const supportError = $('support-error');
+
+function updateSupportButton() {
+  const valid = supportTopic.value.trim().length > 0 && supportMessage.value.trim().length >= 10;
+  const wasDisabled = btnSendSupport.disabled;
+  btnSendSupport.disabled = !valid;
+  btnSendSupport.style.opacity = valid ? '1' : '0.45';
+  if (wasDisabled && !btnSendSupport.disabled) haptic('light');
+}
+supportTopic.addEventListener('input', updateSupportButton);
+supportMessage.addEventListener('input', updateSupportButton);
+
+btnSendSupport.addEventListener('click', async () => {
+  if (btnSendSupport.disabled) return;
+  haptic('medium');
+  btnSendSupport.classList.add('loading');
+  supportError.classList.remove('visible');
+  try {
+    await new Promise(r => setTimeout(r, 1000));
+    haptic('success');
+    tg.showAlert('Диалог создан. Открываем бота...');
+    // В реальности: tg.close() + открытие бота
+  } catch (err) {
+    haptic('error');
+    supportError.textContent = err.message || 'Ошибка отправки';
+    supportError.classList.add('visible');
+  } finally {
+    btnSendSupport.classList.remove('loading');
+  }
+});
+
+/* Subscription actions */
+let autorenew = true;
+document.querySelectorAll('#screen-subscription [data-action]').forEach(el => {
+  el.addEventListener('click', () => {
+    haptic('light');
+    const action = el.dataset.action;
+    if (action === 'autorenew') {
+      autorenew = !autorenew;
+      $('autorenew-value').textContent = autorenew ? 'Включено' : 'Выключено';
+      haptic(autorenew ? 'success' : 'warning');
+    } else if (action === 'history') {
+      tg.showAlert('История платежей');
+    }
+  });
+});
+$('btn-cancel-sub').addEventListener('click', () => {
+  haptic('warning');
+  tg.showAlert('Отменить подписку?');
+});
+
+/* Settings actions */
+document.querySelectorAll('#screen-settings [data-action]').forEach(el => {
+  el.addEventListener('click', () => {
+    haptic('light');
+    const action = el.dataset.action;
+    const map = {
+      terms: 'Пользовательское соглашение',
+      privacy: 'Политика конфиденциальности',
+      about: 'DxS Connect v1.0.0'
+    };
+    tg.showAlert(map[action] || action);
+  });
+});
+
+$('btn-logout').addEventListener('click', () => {
+  haptic('warning');
+  if (confirm('Выйти из аккаунта?')) {
+    localStorage.removeItem('dxs_token');
+    // Не удаляем dxs_registered и dxs_2fa — при следующем входе спросим 2FA
+    location.reload();
+  }
+});
+
+/* Security */
+let is2FAEnabled = localStorage.getItem('dxs_2fa') === 'true';
+function updateSecurityUI() {
+  $('2fa-toggle-value').textContent = is2FAEnabled ? 'Включена' : 'Выключена';
+}
+updateSecurityUI();
+
+document.querySelectorAll('#screen-security [data-action]').forEach(el => {
+  el.addEventListener('click', () => {
+    haptic('light');
+    const action = el.dataset.action;
+    if (action === '2fa-toggle') {
+      is2FAEnabled = !is2FAEnabled;
+      localStorage.setItem('dxs_2fa', is2FAEnabled ? 'true' : 'false');
+      updateSecurityUI();
+      haptic(is2FAEnabled ? 'success' : 'warning');
+    } else if (action === '2fa-change') {
+      tg.showAlert('Смена пароля 2FA');
+    } else if (action === 'pin-toggle') {
+      tg.showAlert('Настройка пин-кода');
+    } else if (action === 'pin-change') {
+      tg.showAlert('Смена пин-кода');
+    }
+  });
+});
+
+/* Language */
+const LANG_NAMES = { ru: 'Русский', be: 'Беларуская', en: 'English' };
+let currentLang = localStorage.getItem('dxs_lang') || 'ru';
+if (!LANG_NAMES[currentLang]) currentLang = 'ru';
+
+function updateLangUI() {
+  $('lang-value').textContent = LANG_NAMES[currentLang];
+  document.querySelectorAll('#lang-list .option-item').forEach(item => {
+    item.classList.toggle('active', item.dataset.lang === currentLang);
+  });
+}
+updateLangUI();
+
+document.querySelectorAll('#lang-list .option-item').forEach(item => {
+  item.addEventListener('click', () => {
+    haptic('select');
+    currentLang = item.dataset.lang;
+    localStorage.setItem('dxs_lang', currentLang);
+    updateLangUI();
+    haptic('success');
+  });
+});
+
+/* Add device */
+let selectedOS = null;
+document.querySelectorAll('.os-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    haptic('select');
+    document.querySelectorAll('.os-option').forEach(o => o.classList.remove('selected'));
+    opt.classList.add('selected');
+    selectedOS = opt.dataset.os;
+    $('btn-add-device-continue').disabled = false;
+    $('btn-add-device-continue').style.opacity = '1';
+  });
+});
+
+$('btn-add-device-continue').addEventListener('click', async () => {
+  if (!selectedOS) return;
+  haptic('medium');
+  // MOCK
+  await new Promise(r => setTimeout(r, 800));
+  haptic('success');
+  historyStack.push('add-device');
+  goTo('devices', 'back');
+});
+
+/* Topup */
+let topupAmount = 300;
+document.querySelectorAll('.topup-amount').forEach(btn => {
+  btn.addEventListener('click', () => {
+    haptic('select');
+    document.querySelectorAll('.topup-amount').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    if (btn.dataset.amount === 'custom') {
+      $('custom-amount-row').style.display = 'flex';
+      $('custom-amount-input').focus();
+      topupAmount = null;
+    } else {
+      $('custom-amount-row').style.display = 'none';
+      topupAmount = parseInt(btn.dataset.amount);
+    }
+  });
+});
+
+$('custom-amount-input').addEventListener('input', function() {
+  this.value = this.value.replace(/\D/g, '');
+  topupAmount = parseInt(this.value) || 0;
+});
+
+$('btn-topup').addEventListener('click', async () => {
+  if (!topupAmount || topupAmount < 50) {
+    haptic('error');
+    tg.showAlert('Минимальная сумма — 50 ₽');
+    return;
+  }
+  haptic('medium');
+  tg.showAlert('Переход в бота для оплаты ' + topupAmount + ' ₽');
+  // В реальности: tg.close() + бот открывается
+});
+
+/* ==================== INIT ==================== */
+requestAnimationFrame(() => {
+  initApp();
+});
+
+window.addEventListener('resize', () => {
+  if (pointerId === null && TAB_SCREENS.has(currentScreen)) {
+    rebuildGeometry();
+    snapTo(currentScreen, false);
+  }
+});
+
+if (document.fonts && document.fonts.ready) {
+  document.fonts.ready.then(() => {
+    if (TAB_SCREENS.has(currentScreen)) {
+      rebuildGeometry();
+      snapTo(currentScreen, false);
+    }
+  });
+}
+</script>
 </body>
 </html>
